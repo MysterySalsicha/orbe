@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { format, addMonths, subMonths, startOfMonth } from 'date-fns';
+import { format, addMonths, subMonths } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import Carousel from '@/components/media/Carousel';
 import { realApi } from '@/data/realApi';
@@ -23,7 +23,7 @@ export default function Home() {
   // Estados para navegação temporal
   const [currentFilmesMonth, setCurrentFilmesMonth] = useState(new Date());
   const [currentSeriesMonth, setCurrentSeriesMonth] = useState(new Date());
-  const [currentJogosYear] = useState(new Date().getFullYear());
+  const currentYear = new Date().getFullYear();
 
   // Carrega dados reais da API
   useEffect(() => {
@@ -55,80 +55,193 @@ export default function Home() {
     loadData();
   }, []);
 
+  // Função para filtrar por ano corrente
+  const filterByCurrentYear = (items: any[]) => {
+    return items.filter(item => {
+      const releaseDate = new Date(item.data_lancamento_api);
+      return releaseDate.getFullYear() === currentYear;
+    });
+  };
+
+  // Função para encontrar o próximo lançamento a partir de hoje
+  const findNextRelease = (items: any[]) => {
+    const today = new Date();
+    const futureReleases = items.filter(item => {
+      const releaseDate = new Date(item.data_lancamento_api);
+      return releaseDate >= today;
+    });
+    
+    if (futureReleases.length > 0) {
+      return futureReleases.sort((a, b) => 
+        new Date(a.data_lancamento_api).getTime() - new Date(b.data_lancamento_api).getTime()
+      )[0];
+    }
+    
+    return null;
+  };
+
+  // Função para obter a estação atual
+  const getCurrentSeason = () => {
+    const currentMonth = new Date().getMonth();
+    if (currentMonth >= 2 && currentMonth <= 4) return 'Primavera';
+    else if (currentMonth >= 5 && currentMonth <= 7) return 'Verão';
+    else if (currentMonth >= 8 && currentMonth <= 10) return 'Outono';
+    else return 'Inverno';
+  };
+
   // Funções para gerar títulos dinâmicos
   const getFilmesTitle = () => {
     const monthName = format(currentFilmesMonth, 'MMMM', { locale: ptBR });
     const capitalizedMonth = monthName.charAt(0).toUpperCase() + monthName.slice(1);
-    return `Filmes que estreiam em ${capitalizedMonth}`;
+    return capitalizedMonth;
   };
 
   const getSeriesTitle = () => {
     const monthName = format(currentSeriesMonth, 'MMMM', { locale: ptBR });
     const capitalizedMonth = monthName.charAt(0).toUpperCase() + monthName.slice(1);
-    return `Séries que estreiam em ${capitalizedMonth}`;
+    return capitalizedMonth;
   };
 
   const getAnimesTitle = () => {
-    const currentMonth = new Date().getMonth();
-    let season = '';
-
-    if (currentMonth >= 2 && currentMonth <= 4) season = 'Primavera';
-    else if (currentMonth >= 5 && currentMonth <= 7) season = 'Verão';
-    else if (currentMonth >= 8 && currentMonth <= 10) season = 'Outono';
-    else season = 'Inverno';
-
-    return `Animes da Temporada de ${season}`;
+    return `Animes da Temporada de ${getCurrentSeason()}`;
   };
 
   const getJogosTitle = () => {
-    return `Estreias de jogos de ${currentJogosYear}`;
+    return `Estreias de jogos de ${currentYear}`;
   };
 
   // Handlers para navegação temporal
   const handleFilmesNavigate = (direction: 'prev' | 'next') => {
-    setCurrentFilmesMonth(prev => 
-      direction === 'next' ? addMonths(prev, 1) : subMonths(prev, 1)
-    );
+    setCurrentFilmesMonth(prev => {
+      const newMonth = direction === 'next' ? addMonths(prev, 1) : subMonths(prev, 1);
+      // Garantir que não saia do ano corrente
+      if (newMonth.getFullYear() === currentYear) {
+        return newMonth;
+      }
+      return prev;
+    });
   };
 
   const handleSeriesNavigate = (direction: 'prev' | 'next') => {
-    setCurrentSeriesMonth(prev => 
-      direction === 'next' ? addMonths(prev, 1) : subMonths(prev, 1)
-    );
+    setCurrentSeriesMonth(prev => {
+      const newMonth = direction === 'next' ? addMonths(prev, 1) : subMonths(prev, 1);
+      // Garantir que não saia do ano corrente
+      if (newMonth.getFullYear() === currentYear) {
+        return newMonth;
+      }
+      return prev;
+    });
   };
 
-  // Handlers para reset (clique no título)
+  // Handlers para reset (clique no título) - volta para o primeiro item a ser visualizado
   const handleFilmesTitleClick = () => {
-    // setCurrentFilmesMonth(new Date()); // Comentado para teste de performance
-    filmesCarouselRef.current?.scrollTo({ left: 0, behavior: 'auto' });
-  };
-
-  const handleAnimesTitleClick = () => {
-    // console.log('Reset animes carousel'); // Comentado para teste de performance
-    animesCarouselRef.current?.scrollTo({ left: 0, behavior: 'auto' });
+    // Encontrar o próximo lançamento e ajustar o mês
+    const currentYearFilmes = filterByCurrentYear(filmes);
+    const nextRelease = findNextRelease(currentYearFilmes);
+    
+    if (nextRelease) {
+      const releaseDate = new Date(nextRelease.data_lancamento_api);
+      setCurrentFilmesMonth(releaseDate);
+    } else {
+      // Se não há próximos lançamentos, voltar para janeiro do ano corrente
+      setCurrentFilmesMonth(new Date(currentYear, 0, 1));
+    }
+    
+    // Scroll para o início
+    filmesCarouselRef.current?.scrollTo({ left: 0, behavior: 'smooth' });
   };
 
   const handleSeriesTitleClick = () => {
-    // setCurrentSeriesMonth(new Date()); // Comentado para teste de performance
+    // Encontrar o próximo lançamento e ajustar o mês
+    const currentYearSeries = filterByCurrentYear(series);
+    const nextRelease = findNextRelease(currentYearSeries);
+    
+    if (nextRelease) {
+      const releaseDate = new Date(nextRelease.data_lancamento_api);
+      setCurrentSeriesMonth(releaseDate);
+    } else {
+      // Se não há próximos lançamentos, voltar para janeiro do ano corrente
+      setCurrentSeriesMonth(new Date(currentYear, 0, 1));
+    }
+    
+    // Scroll para o início
     seriesCarouselRef.current?.scrollTo({ left: 0, behavior: 'smooth' });
   };
 
-  const handleJogosTitleClick = () => {
-    // console.log('Reset jogos carousel'); // Comentado para teste de performance
-    jogosCarouselRef.current?.scrollTo({ left: 0, behavior: 'auto' });
+  const handleAnimesTitleClick = () => {
+    // Para animes, volta para o primeiro item mais relevante (próximo episódio)
+    animesCarouselRef.current?.scrollTo({ left: 0, behavior: 'smooth' });
   };
 
-  // Filtra itens por data (simulação - em produção seria feito no backend)
+  const handleJogosTitleClick = () => {
+    // Para jogos, volta para o próximo lançamento
+    jogosCarouselRef.current?.scrollTo({ left: 0, behavior: 'smooth' });
+  };
+
+  // Funções para filtrar e ordenar os dados conforme especificações
   const getFilteredFilmes = () => {
-    return filmes;
+    // Filtrar apenas filmes do ano corrente
+    const currentYearFilmes = filterByCurrentYear(filmes);
+    
+    // Filtrar por mês atual selecionado
+    const monthFiltered = currentYearFilmes.filter(filme => {
+      const releaseDate = new Date(filme.data_lancamento_api);
+      return releaseDate.getMonth() === currentFilmesMonth.getMonth() &&
+             releaseDate.getFullYear() === currentFilmesMonth.getFullYear();
+    });
+    
+    // Ordenar por data futura primeiro
+    return monthFiltered.sort((a, b) => {
+      const dateA = new Date(a.data_lancamento_api);
+      const dateB = new Date(b.data_lancamento_api);
+      const now = new Date();
+      
+      const aFuture = dateA >= now;
+      const bFuture = dateB >= now;
+      
+      if (aFuture && !bFuture) return -1;
+      if (!aFuture && bFuture) return 1;
+      
+      return aFuture ? dateA.getTime() - dateB.getTime() : dateB.getTime() - dateA.getTime();
+    });
   };
 
   const getFilteredSeries = () => {
-    return series;
+    // Filtrar apenas séries do ano corrente
+    const currentYearSeries = filterByCurrentYear(series);
+    
+    // Filtrar por mês atual selecionado
+    const monthFiltered = currentYearSeries.filter(serie => {
+      const releaseDate = new Date(serie.data_lancamento_api);
+      return releaseDate.getMonth() === currentSeriesMonth.getMonth() &&
+             releaseDate.getFullYear() === currentSeriesMonth.getFullYear();
+    });
+    
+    // Ordenar por data futura primeiro
+    return monthFiltered.sort((a, b) => {
+      const dateA = new Date(a.data_lancamento_api);
+      const dateB = new Date(b.data_lancamento_api);
+      const now = new Date();
+      
+      const aFuture = dateA >= now;
+      const bFuture = dateB >= now;
+      
+      if (aFuture && !bFuture) return -1;
+      if (!aFuture && bFuture) return 1;
+      
+      return aFuture ? dateA.getTime() - dateB.getTime() : dateB.getTime() - dateA.getTime();
+    });
   };
 
   const getFilteredAnimes = () => {
-    return animes.sort((a, b) => {
+    // Filtrar animes finalizados (remover do carrossel)
+    const activeAnimes = animes.filter(anime => {
+      // Se não tem próximo episódio, considerar finalizado
+      return anime.proximo_episodio !== null && anime.proximo_episodio !== undefined;
+    });
+    
+    // Ordenar por proximidade do próximo episódio
+    return activeAnimes.sort((a, b) => {
       if (!a.proximo_episodio && !b.proximo_episodio) return 0;
       if (!a.proximo_episodio) return 1;
       if (!b.proximo_episodio) return -1;
@@ -140,7 +253,11 @@ export default function Home() {
   };
 
   const getFilteredJogos = () => {
-    return jogos.sort((a, b) => {
+    // Filtrar apenas jogos do ano corrente
+    const currentYearJogos = filterByCurrentYear(jogos);
+    
+    // Ordenar: próximos lançamentos primeiro, mas manter os já lançados no carrossel
+    return currentYearJogos.sort((a, b) => {
       const dateA = new Date(a.data_lancamento_api);
       const dateB = new Date(b.data_lancamento_api);
       const now = new Date();
@@ -148,12 +265,38 @@ export default function Home() {
       const aFuture = dateA > now;
       const bFuture = dateB > now;
       
+      // Próximos lançamentos primeiro
       if (aFuture && !bFuture) return -1;
       if (!aFuture && bFuture) return 1;
       
+      // Entre futuros, ordenar por data mais próxima
+      // Entre passados, ordenar por data mais recente
       return aFuture ? dateA.getTime() - dateB.getTime() : dateB.getTime() - dateA.getTime();
     });
   };
+
+  // Inicializar os meses com base no próximo lançamento
+  useEffect(() => {
+    if (filmes.length > 0) {
+      const currentYearFilmes = filterByCurrentYear(filmes);
+      const nextRelease = findNextRelease(currentYearFilmes);
+      if (nextRelease) {
+        const releaseDate = new Date(nextRelease.data_lancamento_api);
+        setCurrentFilmesMonth(releaseDate);
+      }
+    }
+  }, [filmes]);
+
+  useEffect(() => {
+    if (series.length > 0) {
+      const currentYearSeries = filterByCurrentYear(series);
+      const nextRelease = findNextRelease(currentYearSeries);
+      if (nextRelease) {
+        const releaseDate = new Date(nextRelease.data_lancamento_api);
+        setCurrentSeriesMonth(releaseDate);
+      }
+    }
+  }, [series]);
 
   if (isLoading) {
     return (
@@ -169,7 +312,9 @@ export default function Home() {
   return (
     <div className="bg-background">
       <main className="container mx-auto px-4 py-8 space-y-12">
-        {/* Carrossel de Filmes */}
+        {/* Ordem conforme especificação: 1. Filmes, 2. Animes, 3. Séries, 4. Jogos */}
+        
+        {/* 1. Carrossel de Filmes */}
         <Carousel
           ref={filmesCarouselRef}
           title={getFilmesTitle()}
@@ -180,7 +325,7 @@ export default function Home() {
           onNavigate={handleFilmesNavigate}
         />
 
-        {/* Carrossel de Animes */}
+        {/* 2. Carrossel de Animes */}
         <Carousel
           ref={animesCarouselRef}
           title={getAnimesTitle()}
@@ -190,7 +335,7 @@ export default function Home() {
           onTitleClick={handleAnimesTitleClick}
         />
 
-        {/* Carrossel de Séries */}
+        {/* 3. Carrossel de Séries */}
         <Carousel
           ref={seriesCarouselRef}
           title={getSeriesTitle()}
@@ -201,7 +346,7 @@ export default function Home() {
           onNavigate={handleSeriesNavigate}
         />
 
-        {/* Carrossel de Jogos */}
+        {/* 4. Carrossel de Jogos */}
         <Carousel
           ref={jogosCarouselRef}
           title={getJogosTitle()}

@@ -7,6 +7,7 @@ import Footer from "@/components/layout/Footer";
 import SearchOverlay from "@/components/modals/SearchOverlay";
 import SuperModal from "@/components/modals/SuperModal";
 import NotificationModal from "@/components/modals/NotificationModal";
+import RatingModal from "@/components/modals/RatingModalWrapper";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -77,6 +78,7 @@ export default function RootLayout({
             <SearchOverlay />
             <SuperModal />
             <NotificationModal />
+            <RatingModal />
           </div>
         </AppProvider>
       </body>

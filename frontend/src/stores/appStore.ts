@@ -22,6 +22,17 @@ interface AppState {
     midia: Filme | Serie | Anime | Jogo | null;
     type: 'filme' | 'serie' | 'anime' | 'jogo' | null;
   };
+  isRatingModalOpen: boolean;
+  ratingModalData: {
+    midia: Filme | Serie | Anime | Jogo | null;
+    type: 'filme' | 'serie' | 'anime' | 'jogo' | null;
+    action: 'ja_assisti' | 'ja_joguei' | null;
+  };
+  isCalendarModalOpen: boolean;
+  calendarModalData: {
+    midia: Filme | Serie | Anime | Jogo | null;
+    type: 'filme' | 'serie' | 'anime' | 'jogo' | null;
+  };
   currentDetailModal: {
     isOpen: boolean;
     midia: any;
@@ -52,6 +63,10 @@ interface AppState {
   closeNotificationModal: () => void;
   openSuperModal: (midia: Filme | Serie | Anime | Jogo, type: 'filme' | 'serie' | 'anime' | 'jogo') => void;
   closeSuperModal: () => void;
+  openRatingModal: (midia: Filme | Serie | Anime | Jogo, type: 'filme' | 'serie' | 'anime' | 'jogo', action: 'ja_assisti' | 'ja_joguei') => void;
+  closeRatingModal: () => void;
+  openCalendarModal: (data: { midia: Filme | Serie | Anime | Jogo | null; type: 'filme' | 'serie' | 'anime' | 'jogo' | null; }) => void;
+  closeCalendarModal: () => void;
   openDetailModal: (midia: any, type: string) => void;
   closeDetailModal: () => void;
   
@@ -97,6 +112,17 @@ export const useAppStore = create<AppState>()(
       isNotificationModalOpen: false,
       isSuperModalOpen: false,
       superModalData: {
+        midia: null,
+        type: null
+      },
+      isRatingModalOpen: false,
+      ratingModalData: {
+        midia: null,
+        type: null,
+        action: null
+      },
+      isCalendarModalOpen: false,
+      calendarModalData: {
         midia: null,
         type: null
       },
@@ -182,6 +208,33 @@ export const useAppStore = create<AppState>()(
         set({ 
           isSuperModalOpen: false,
           superModalData: { midia: null, type: null }
+        });
+      },
+
+      openRatingModal: (midia: Filme | Serie | Anime | Jogo, type: 'filme' | 'serie' | 'anime' | 'jogo', action: 'ja_assisti' | 'ja_joguei') => {
+        set({ 
+          isRatingModalOpen: true,
+          ratingModalData: { midia, type, action }
+        });
+      },
+
+      closeRatingModal: () => {
+        set({ 
+          isRatingModalOpen: false,
+          ratingModalData: { midia: null, type: null, action: null }
+        });
+      },
+
+      openCalendarModal: (data) => {
+        set({ 
+          isCalendarModalOpen: true,
+          calendarModalData: data
+        });
+      },
+      closeCalendarModal: () => {
+        set({ 
+          isCalendarModalOpen: false,
+          calendarModalData: { midia: null, type: null }
         });
       },
       
