@@ -4,7 +4,7 @@
       "src": "frontend/package.json",
       "use": "@vercel/next",
       "config": {
-        "installCommand": "cd frontend && npm install"
+        "installCommand": "ls -la && cd frontend && npm install"
       }
     }
   ]
