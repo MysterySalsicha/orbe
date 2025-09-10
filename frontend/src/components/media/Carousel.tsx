@@ -1,4 +1,4 @@
-import React, { useRef, useState, useEffect, forwardRef, Ref, useCallback } from "react";
+import React, { useRef, useState, useEffect, forwardRef, useCallback } from "react";
 import MidiaCard from "./MidiaCard";
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
@@ -45,7 +45,7 @@ const Carousel = forwardRef<HTMLDivElement, CarouselProps>(({
   }, [ref]);
 
   const handlePointerDown = (e: React.PointerEvent) => {
-    if (e.pointerType === "mouse" && (e as any).button !== 0) return;
+    if (e.pointerType === "mouse" && e.button !== 0) return;
     const el = localRef.current;
     if (!el) return;
 
@@ -191,5 +191,7 @@ const Carousel = forwardRef<HTMLDivElement, CarouselProps>(({
     </div>
   );
 });
+
+Carousel.displayName = 'Carousel';
 
 export default Carousel;

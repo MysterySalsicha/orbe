@@ -56,7 +56,7 @@ export default function Home() {
   }, []);
 
   // Função para filtrar por ano corrente
-  const filterByCurrentYear = (items: any[]) => {
+  const filterByCurrentYear = (items: (Filme | Serie | Anime | Jogo)[]) => {
     return items.filter(item => {
       const releaseDate = new Date(item.data_lancamento_api);
       return releaseDate.getFullYear() === currentYear;
@@ -64,7 +64,7 @@ export default function Home() {
   };
 
   // Função para encontrar o próximo lançamento a partir de hoje
-  const findNextRelease = (items: any[]) => {
+  const findNextRelease = (items: (Filme | Serie | Anime | Jogo)[]) => {
     const today = new Date();
     const futureReleases = items.filter(item => {
       const releaseDate = new Date(item.data_lancamento_api);
@@ -285,7 +285,7 @@ export default function Home() {
         setCurrentFilmesMonth(releaseDate);
       }
     }
-  }, [filmes]);
+  }, [filmes, filterByCurrentYear, findNextRelease]);
 
   useEffect(() => {
     if (series.length > 0) {
@@ -296,7 +296,7 @@ export default function Home() {
         setCurrentSeriesMonth(releaseDate);
       }
     }
-  }, [series]);
+  }, [series, filterByCurrentYear, findNextRelease]);
 
   if (isLoading) {
     return (

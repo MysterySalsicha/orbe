@@ -25,7 +25,7 @@ export const removeToken = (): void => {
 
 // Cliente HTTP centralizado
 export const apiClient = {
-  get: async (endpoint: string, params?: Record<string, any>) => {
+  get: async (endpoint: string, params?: Record<string, string | number | boolean | undefined | null>) => {
     const url = new URL(`${API_BASE_URL}${endpoint}`);
     
     if (params) {
@@ -57,7 +57,7 @@ export const apiClient = {
     return response.json();
   },
 
-  post: async (endpoint: string, data: any) => {
+  post: async (endpoint: string, data: Record<string, unknown>) => {
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
     };
@@ -80,7 +80,7 @@ export const apiClient = {
     return response.json();
   },
 
-  put: async (endpoint: string, data: any) => {
+  put: async (endpoint: string, data: Record<string, unknown>) => {
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
     };

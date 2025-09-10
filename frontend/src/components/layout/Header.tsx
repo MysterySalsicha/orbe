@@ -18,9 +18,7 @@ import { useAppStore } from '@/stores/appStore';
 import type { HeaderProps } from '@/types';
 
 const Header: React.FC<HeaderProps> = ({ 
-  user, 
   notificationCount = 0,
-  onSearch,
   onThemeToggle 
 }) => {
   const pathname = usePathname();

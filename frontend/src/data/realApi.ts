@@ -1,5 +1,29 @@
 import orbeNerdApi from '@/lib/api';
-import type { Filme, Serie, Anime, Jogo, User, Notification } from '@/types';
+import type { Filme, Serie, Anime, Jogo, Notification } from '@/types';
+
+type ApiResponseItem = {
+  id: number;
+  titulo: string;
+  poster: string;
+  data_lancamento: string;
+  sinopse: string;
+  plataformas: string[];
+  generos: string[];
+  duracao?: string;
+  direcao?: string;
+  roteiro?: string;
+  em_prevenda?: boolean;
+  numero_temporadas?: number;
+  numero_episodios?: number;
+  criadores?: string[];
+  fonte?: string;
+  estudio?: string;
+  status_dublagem?: string;
+  proximo_episodio?: string;
+  desenvolvedores?: string[];
+  publicadoras?: string[];
+  tipo?: string;
+};
 
 // API real substituindo os dados mockados
 export const realApi = {
@@ -9,7 +33,7 @@ export const realApi = {
       const response = await orbeNerdApi.getFilmes({ page, filtro, genero });
       
       // Mapear dados do backend para o formato esperado pelo frontend
-      const mappedResults = response.results.map((filme: any) => ({
+      const mappedResults = response.results.map((filme: ApiResponseItem) => ({
         id: filme.id,
         titulo_curado: filme.titulo,
         titulo_api: filme.titulo,
@@ -69,7 +93,7 @@ export const realApi = {
     try {
       const response = await orbeNerdApi.getSeries({ page, genero });
       
-      const mappedResults = response.results.map((serie: any) => ({
+      const mappedResults = response.results.map((serie: ApiResponseItem) => ({
         id: serie.id,
         titulo_curado: serie.titulo,
         titulo_api: serie.titulo,
@@ -125,7 +149,7 @@ export const realApi = {
     try {
       const response = await orbeNerdApi.getAnimes({ page, genero });
       
-      const mappedResults = response.results.map((anime: any) => ({
+      const mappedResults = response.results.map((anime: ApiResponseItem) => ({
         id: anime.id,
         titulo_curado: anime.titulo,
         titulo_api: anime.titulo,
@@ -189,7 +213,7 @@ export const realApi = {
     try {
       const response = await orbeNerdApi.getJogos({ page, genero });
       
-      const mappedResults = response.results.map((jogo: any) => ({
+      const mappedResults = response.results.map((jogo: ApiResponseItem) => ({
         id: jogo.id,
         titulo_curado: jogo.titulo,
         titulo_api: jogo.titulo,
@@ -256,7 +280,7 @@ export const realApi = {
       const response = await orbeNerdApi.search(query, type, page);
       
       // Mapear resultados para o formato esperado
-      const mappedResults = response.results.map((item: any) => {
+      const mappedResults = response.results.map((item: ApiResponseItem) => {
         const baseItem = {
           id: item.id,
           titulo_curado: item.titulo,
@@ -318,10 +342,10 @@ export const realApi = {
       });
 
       return {
-        filmes: mappedResults.filter((item: any) => item.duracao !== undefined),
-        series: mappedResults.filter((item: any) => item.numero_temporadas !== undefined),
-        animes: mappedResults.filter((item: any) => item.fonte !== undefined),
-        jogos: mappedResults.filter((item: any) => item.desenvolvedores !== undefined),
+        filmes: mappedResults.filter((item: Filme) => item.duracao !== undefined),
+        series: mappedResults.filter((item: Serie) => item.numero_temporadas !== undefined),
+        animes: mappedResults.filter((item: Anime) => item.fonte !== undefined),
+        jogos: mappedResults.filter((item: Jogo) => item.desenvolvedores !== undefined),
         total: response.total_results || mappedResults.length
       };
     } catch (error) {
@@ -336,7 +360,7 @@ export const realApi = {
       const response = await orbeNerdApi.getTrending(type, limit);
       
       // Mapear resultados para o formato esperado
-      return response.results.map((item: any) => {
+      return response.results.map((item: ApiResponseItem) => {
         const baseItem = {
           id: item.id,
           titulo_curado: item.titulo,
@@ -434,4 +458,3 @@ export const realApi = {
 };
 
 export default realApi;
-

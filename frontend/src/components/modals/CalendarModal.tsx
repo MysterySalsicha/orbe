@@ -10,7 +10,7 @@ interface CalendarModalProps {
   midia: Filme | Serie | Anime | Jogo | null;
   type: string;
   onClose: () => void;
-  onAddEvent: (eventType: 'release' | 'ticket', details?: any) => void;
+  onAddEvent: (eventType: 'release' | 'ticket', details?: { date?: string; time?: string; location?: string; recurring?: boolean }) => void;
 }
 
 const CalendarModal: React.FC<CalendarModalProps> = ({

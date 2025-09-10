@@ -35,7 +35,7 @@ interface AppState {
   };
   currentDetailModal: {
     isOpen: boolean;
-    midia: any;
+    midia: Filme | Serie | Anime | Jogo | null;
     type: string;
   } | null;
   
@@ -67,7 +67,7 @@ interface AppState {
   closeRatingModal: () => void;
   openCalendarModal: (data: { midia: Filme | Serie | Anime | Jogo | null; type: 'filme' | 'serie' | 'anime' | 'jogo' | null; }) => void;
   closeCalendarModal: () => void;
-  openDetailModal: (midia: any, type: string) => void;
+  openDetailModal: (midia: Filme | Serie | Anime | Jogo, type: string) => void;
   closeDetailModal: () => void;
   
   // Ações de carregamento
