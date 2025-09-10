@@ -25,6 +25,16 @@ type ApiResponseItem = {
   tipo?: string;
 };
 
+type ApiNotification = {
+  id: number;
+  titulo: string;
+  tipo: string;
+  lida: boolean;
+  data_criacao: string;
+  midia_id: number;
+  tipo_midia: string;
+};
+
 // API real substituindo os dados mockados
 export const realApi = {
   // Filmes
@@ -431,7 +441,7 @@ export const realApi = {
     try {
       const notifications = await orbeNerdApi.getNotifications();
       
-      return notifications.map((notif: any) => ({
+      return notifications.map((notif: ApiNotification) => ({
         id: notif.id,
         titulo: notif.titulo,
         tipo_notificacao: notif.tipo?.toUpperCase() || 'NOVO_ITEM',

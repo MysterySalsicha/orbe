@@ -64,7 +64,7 @@ export default function TermosPage() {
             <section>
               <h2 className="text-2xl font-bold orbe-text-primary mb-4">6. Limitação de Responsabilidade</h2>
               <p className="text-muted-foreground leading-relaxed">
-                O Orbe Nerd é fornecido 'como está' sem garantias de qualquer tipo. Não nos 
+                O Orbe Nerd é fornecido &apos;como está&apos; sem garantias de qualquer tipo. Não nos 
                 responsabilizamos por danos diretos, indiretos, incidentais ou consequenciais 
                 resultantes do uso do serviço.
               </p>

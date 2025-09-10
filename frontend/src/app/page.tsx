@@ -56,15 +56,15 @@ export default function Home() {
   }, []);
 
   // Função para filtrar por ano corrente
-  const filterByCurrentYear = (items: (Filme | Serie | Anime | Jogo)[]) => {
+  const filterByCurrentYear = useCallback((items: (Filme | Serie | Anime | Jogo)[]) => {
     return items.filter(item => {
       const releaseDate = new Date(item.data_lancamento_api);
       return releaseDate.getFullYear() === currentYear;
     });
-  };
+  }, [currentYear]);
 
   // Função para encontrar o próximo lançamento a partir de hoje
-  const findNextRelease = (items: (Filme | Serie | Anime | Jogo)[]) => {
+  const findNextRelease = useCallback((items: (Filme | Serie | Anime | Jogo)[]) => {
     const today = new Date();
     const futureReleases = items.filter(item => {
       const releaseDate = new Date(item.data_lancamento_api);
@@ -78,7 +78,7 @@ export default function Home() {
     }
     
     return null;
-  };
+  }, []);
 
   // Função para obter a estação atual
   const getCurrentSeason = () => {

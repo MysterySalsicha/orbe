@@ -218,7 +218,7 @@ const SearchOverlay: React.FC = () => {
             ) : searchQuery.trim() ? (
               <div className="text-center py-12">
                 <p className="text-muted-foreground">
-                  Nenhum resultado encontrado para "{searchQuery}"
+                  Nenhum resultado encontrado para '{searchQuery}'
                 </p>
                 <p className="text-sm text-muted-foreground mt-2">
                   Tente pesquisar por outro termo ou categoria

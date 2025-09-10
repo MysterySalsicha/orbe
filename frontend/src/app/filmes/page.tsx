@@ -32,7 +32,7 @@ export default function FilmesPage() {
 
   useEffect(() => {
     applyFilters();
-  }, [filmes, selectedFilter, selectedGenre]);
+  }, [applyFilters]);
 
   const loadFilmes = async () => {
     setIsLoading(true);
@@ -46,7 +46,7 @@ export default function FilmesPage() {
     }
   };
 
-  const applyFilters = () => {
+  const applyFilters = useCallback(() => {
     let filtered = [...filmes];
 
     // Filtro por categoria
@@ -72,7 +72,7 @@ export default function FilmesPage() {
     }
 
     setFilteredFilmes(filtered);
-  };
+  }, [filmes, selectedFilter, selectedGenre]);
 
   return (
     <div className="container mx-auto px-4 py-8">
