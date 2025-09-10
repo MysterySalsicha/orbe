@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { Eye, EyeOff, Mail, Lock, Github, Google } from 'lucide-react';
+import { Eye, EyeOff, Mail, Lock, Github } from 'lucide-react';
 import { useAppStore } from '@/stores/appStore';
 
 export default function LoginPage() {
@@ -156,10 +156,7 @@ export default function LoginPage() {
 
           {/* Login Social */}
           <div className="grid grid-cols-2 gap-3">
-            <button className="flex items-center justify-center gap-2 px-4 py-2 bg-background border border-border rounded-lg hover:bg-muted/80 transition-colors">
-              <Google className="h-4 w-4" />
-              <span className="text-sm">Google</span>
-            </button>
+            
             <button className="flex items-center justify-center gap-2 px-4 py-2 bg-background border border-border rounded-lg hover:bg-muted/80 transition-colors">
               <Github className="h-4 w-4" />
               <span className="text-sm">GitHub</span>
