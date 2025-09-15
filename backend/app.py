@@ -22,7 +22,7 @@ app.config["SECRET_KEY"] = "orbe_nerd_secret_key_2025"
 
 # Inicializar extensões
 db.init_app(app)
-CORS(app, origins="*")
+CORS(app, origins=["http://localhost:3000", "https://orbe-nerd.vercel.app", "https://orbe-seven.vercel.app"])
 
 # Funções auxiliares de autenticação
 def hash_password(password):
