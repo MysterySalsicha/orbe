@@ -40,13 +40,15 @@ const MidiaCard: React.FC<MidiaCardProps> = ({
   const isSerie = type === 'serie';
   const isJogo = type === 'jogo';
 
+  const proximoEpisodio = isAnime ? midia.proximo_episodio : undefined;
+
   // Calcula countdown em tempo real para animes
   useEffect(() => {
-    if (!isAnime || !midia.proximo_episodio) return;
+    if (!isAnime || !proximoEpisodio) return;
 
     const updateCountdown = () => {
       const now = new Date();
-      const nextEpisode = parseISO(midia.proximo_episodio!);
+      const nextEpisode = parseISO(proximoEpisodio!);
       
       if (nextEpisode > now) {
         const days = differenceInDays(nextEpisode, now);
@@ -70,7 +72,7 @@ const MidiaCard: React.FC<MidiaCardProps> = ({
     const interval = setInterval(updateCountdown, 60000); // Atualiza a cada minuto
 
     return () => clearInterval(interval);
-  }, [isAnime, midia.proximo_episodio]);
+  }, [isAnime, proximoEpisodio]);
 
   // Verifica interações do usuário
   const userInteraction = userInteractions.find(
