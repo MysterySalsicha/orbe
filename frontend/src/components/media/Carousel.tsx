@@ -2,12 +2,12 @@ import React, { useRef, useState, useEffect, forwardRef, useCallback } from "rea
 import MidiaCard from "./MidiaCard";
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
-import { Filme, Serie, Anime, Jogo } from "@/types";
+import { Filme, Serie, Anime, Jogo, TipoMidia } from "@/types";
 
 interface CarouselProps {
   items: (Filme | Serie | Anime | Jogo)[];
   className?: string;
-  type: string;
+  type: TipoMidia;
   title: string;
   showNavigation?: boolean;
   onTitleClick?: () => void;
