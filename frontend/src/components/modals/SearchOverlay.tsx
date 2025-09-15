@@ -3,7 +3,6 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { X, Search } from 'lucide-react';
 import { useAppStore } from '@/stores/appStore';
-import { mockApi } from '@/data/mockData';
 import MidiaCard from '@/components/media/MidiaCard';
 import type { SearchResult } from '@/types';
 
@@ -27,10 +26,7 @@ const SearchOverlay: React.FC = () => {
 
   const performSearch = useCallback(async (query: string) => {
     setIsLoading(true);
-    try {
-      const results = await mockApi.search(query, selectedCategory === 'todos' ? undefined : selectedCategory);
-      setSearchResults(results);
-    } catch (error) {
+     catch (error) {
       console.error('Erro na pesquisa:', error);
       setSearchResults([]);
     } finally {
@@ -42,12 +38,6 @@ const SearchOverlay: React.FC = () => {
     const loadTrendingContent = async () => {
       setIsLoading(true);
       try {
-        const [filmes, series, animes, jogos] = await Promise.all([
-          mockApi.getFilmes(),
-          mockApi.getSeries(),
-          mockApi.getAnimes(),
-          mockApi.getJogos()
-        ]);
         const trending: SearchResult[] = [
           ...filmes.slice(0, 3).map(item => ({ ...item, type: 'filme' as const })),
           ...series.slice(0, 3).map(item => ({ ...item, type: 'serie' as const })),

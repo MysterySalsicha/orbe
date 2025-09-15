@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { X, Bell, Check, Trash2, Settings, Calendar, Star, Play } from 'lucide-react';
 import { useAppStore } from '@/stores/appStore';
-import { mockApi } from '@/data/mockData';
+import { realApi } from '@/data/realApi';
 import type { Notification } from '@/types';
 
 const NotificationModal: React.FC = () => {
@@ -21,7 +21,7 @@ const NotificationModal: React.FC = () => {
   const loadNotifications = async () => {
     setIsLoading(true);
     try {
-      const data = await mockApi.getNotificacoes();
+      const data = await realApi.getNotifications();
       setNotifications(data);
     } catch (error) {
       console.error('Erro ao carregar notificações:', error);

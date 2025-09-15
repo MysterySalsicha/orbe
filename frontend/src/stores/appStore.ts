@@ -81,33 +81,8 @@ export const useAppStore = create<AppState>()(
       user: null,
       isAuthenticated: false,
       theme: 'system',
-      notifications: [
-        {
-          id: 1,
-          tipo: 'update',
-          titulo: 'Atualização de Data',
-          mensagem: 'A data de lançamento de "Duna: Parte Dois" foi atualizada',
-          data_criacao: new Date().toISOString(),
-          foi_visualizada: false
-        },
-        {
-          id: 2,
-          tipo: 'dubbing',
-          titulo: 'Dublagem Adicionada',
-          mensagem: 'Attack on Titan agora tem dublagem em português disponível',
-          data_criacao: new Date(Date.now() - 3600000).toISOString(),
-          foi_visualizada: false
-        },
-        {
-          id: 3,
-          tipo: 'award',
-          titulo: 'Vencedores do Oscar 2024',
-          mensagem: 'Confira todos os vencedores da premiação',
-          data_criacao: new Date(Date.now() - 7200000).toISOString(),
-          foi_visualizada: true
-        }
-      ],
-      unreadCount: 2,
+      notifications: [],
+      unreadCount: 0,
       isSearchOpen: false,
       isNotificationModalOpen: false,
       isSuperModalOpen: false,
