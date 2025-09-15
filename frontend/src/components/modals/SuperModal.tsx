@@ -30,7 +30,7 @@ import AnimeModalContent from './super-modal/AnimeModalContent';
 import FilmeModalContent from './super-modal/FilmeModalContent';
 import SerieModalContent from './super-modal/SerieModalContent';
 import JogoModalContent from './super-modal/JogoModalContent';
-import type { Filme, Serie, Jogo, Elenco, Staff, Plataforma, Comentario } from '@/types';
+import type { Filme, Serie, Jogo, CastMember, StaffMember, Plataforma, Comentario } from '@/types';
 
 // Tipos locais para o SuperModal
 interface Personagem {
@@ -57,8 +57,8 @@ interface Anime extends Serie {
 const SuperModal: React.FC = () => {
   const { isSuperModalOpen, superModalData, closeSuperModal, isAuthenticated, user, openCalendarModal, closeCalendarModal, isCalendarModalOpen } = useAppStore();
   
-  const [elenco, setElenco] = useState<Elenco[]>([]);
-  const [staff, setStaff] = useState<Staff[]>([]);
+  const [elenco, setElenco] = useState<CastMember[]>([]);
+  const [staff, setStaff] = useState<StaffMember[]>([]);
   const [personagens, setPersonagens] = useState<Personagem[]>([]);
   const [comentarios, setComentarios] = useState<Comentario[]>([]);
   const [newComment, setNewComment] = useState('');

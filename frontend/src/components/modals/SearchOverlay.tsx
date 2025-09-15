@@ -6,6 +6,7 @@ import { useAppStore } from '@/stores/appStore';
 import MidiaCard from '@/components/media/MidiaCard';
 import type { SearchResultItem } from '@/types';
 import { mockFilmes, mockSeries, mockAnimes, mockJogos } from '@/data/mockData';
+import { realApi } from '@/data/realApi';
 
 const SearchOverlay: React.FC = () => {
   const { isSearchOpen, closeSearch } = useAppStore();
@@ -28,10 +29,14 @@ const SearchOverlay: React.FC = () => {
   const performSearch = useCallback(async (query: string) => {
     setIsLoading(true);
     try {
-      // TODO: Implementar a lógica de busca aqui
-      // Exemplo: const results = await realApi.search(query, selectedCategory);
-      // setSearchResults(results);
-      console.log("Busca por:", query, "Categoria:", selectedCategory);
+      const results = await realApi.search(query, selectedCategory === 'todos' ? undefined : selectedCategory);
+      const flatResults: SearchResultItem[] = [
+        ...results.filmes.map(item => ({ ...item, type: 'filme' as const })),
+        ...results.series.map(item => ({ ...item, type: 'serie' as const })),
+        ...results.animes.map(item => ({ ...item, type: 'anime' as const })),
+        ...results.jogos.map(item => ({ ...item, type: 'jogo' as const })),
+      ];
+      setSearchResults(flatResults);
     } catch (error) {
       console.error('Erro na pesquisa:', error);
       setSearchResults([]);

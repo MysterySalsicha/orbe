@@ -145,6 +145,19 @@ export interface UserInteraction {
   data_interacao: string;
 }
 
+// Interface para comentários
+export interface Comentario {
+  id: number;
+  usuario: {
+    id: number;
+    nome: string;
+    avatar_url?: string;
+  };
+  texto: string;
+  data_criacao: string;
+  respostas?: Comentario[];
+}
+
 // Interface para notificações
 export interface Notification {
   id: number;
