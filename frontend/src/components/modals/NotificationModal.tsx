@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { X, Bell, Check, Trash2, Settings, Calendar, Star, Play } from 'lucide-react';
 import { useAppStore } from '@/stores/appStore';
 import { mockApi } from '@/data/mockData';
-import type { Notificacao } from '@/types';
+import type { Notification } from '@/types';
 
 const NotificationModal: React.FC = () => {
   const { isNotificationModalOpen, closeNotificationModal } = useAppStore();
