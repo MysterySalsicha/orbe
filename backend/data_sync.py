@@ -1,6 +1,7 @@
 import time
 import logging
 import schedule
+import argparse
 
 from .sync_modulos.sync_filmes import sync_filmes
 from .sync_modulos.sync_series import sync_series
@@ -50,20 +51,29 @@ def setup_schedule():
 
 def main():
     """Função principal"""
-    logger.info("Iniciando serviço de sincronização de dados")
-    run_sync()
-    setup_schedule()
-    logger.info("Iniciando loop de agendamento")
-    while True:
-        try:
-            schedule.run_pending()
-            time.sleep(60)
-        except KeyboardInterrupt:
-            logger.info("Serviço de sincronização interrompido pelo usuário")
-            break
-        except Exception as e:
-            logger.error(f"Erro no loop principal: {e}")
-            time.sleep(300)
+    parser = argparse.ArgumentParser(description="Serviço de sincronização de dados.")
+    parser.add_argument("--run-once", action="store_true", help="Executa a sincronização apenas uma vez e sai.")
+    args = parser.parse_args()
+
+    if args.run_once:
+        logger.info("Executando a sincronização uma vez...")
+        run_sync()
+        logger.info("Sincronização única concluída.")
+    else:
+        logger.info("Iniciando serviço de sincronização de dados com agendamento")
+        run_sync()
+        setup_schedule()
+        logger.info("Iniciando loop de agendamento")
+        while True:
+            try:
+                schedule.run_pending()
+                time.sleep(60)
+            except KeyboardInterrupt:
+                logger.info("Serviço de sincronização interrompido pelo usuário")
+                break
+            except Exception as e:
+                logger.error(f"Erro no loop principal: {e}")
+                time.sleep(300)
 
 if __name__ == "__main__":
     main()
