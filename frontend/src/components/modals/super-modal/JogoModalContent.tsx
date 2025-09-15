@@ -6,7 +6,7 @@ import type { Jogo } from '@/types';
 
 interface JogoModalContentProps {
   jogo: Jogo;
-  openCalendarModal: (data: object) => void;
+  openCalendarModal: (data: { midia: Jogo, type: 'jogo' }) => void;
 }
 
 const JogoModalContent: React.FC<JogoModalContentProps> = ({ jogo, openCalendarModal }) => {

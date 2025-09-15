@@ -6,13 +6,13 @@ import { Play, Calendar } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
 import { parseISO } from 'date-fns';
-import type { Anime, Staff, Personagem } from '@/types';
+import type { Anime, StaffMember, Character } from '@/types';
 
 interface AnimeModalContentProps {
   anime: Anime;
-  staff: Staff[];
-  personagens: Personagem[];
-  openCalendarModal: (data: object) => void;
+  staff: StaffMember[];
+  personagens: Character[];
+  openCalendarModal: (data: { midia: Anime, type: 'anime' }) => void;
 }
 
 const AnimeModalContent: React.FC<AnimeModalContentProps> = ({ anime, staff, personagens, openCalendarModal }) => {
@@ -40,10 +40,10 @@ const AnimeModalContent: React.FC<AnimeModalContentProps> = ({ anime, staff, per
             <Button variant="muted"><Calendar className="h-5 w-5 mr-2" />Adicionar ao Calendário</Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent>
-            <DropdownMenuItem disabled={hasLaunched} onClick={() => openCalendarModal({ midia: anime, type: 'anime', eventType: 'premiere' })}>
+            <DropdownMenuItem disabled={hasLaunched} onClick={() => openCalendarModal({ midia: anime, type: 'anime' })}>
               Adicionar evento de estreia
             </DropdownMenuItem>
-            <DropdownMenuItem disabled={!isAiring} onClick={() => openCalendarModal({ midia: anime, type: 'anime', eventType: 'recurring' })}>
+            <DropdownMenuItem disabled={!isAiring} onClick={() => openCalendarModal({ midia: anime, type: 'anime' })}>
               Adicionar eventos recorrentes
             </DropdownMenuItem>
           </DropdownMenuContent>

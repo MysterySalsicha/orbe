@@ -28,8 +28,10 @@ type ApiResponseItem = {
 type ApiNotification = {
   id: number;
   titulo: string;
+  mensagem: string;
   tipo: string;
   lida: boolean;
+  importante?: boolean;
   data_criacao: string;
   midia_id: number;
   tipo_midia: string;
@@ -444,8 +446,10 @@ export const realApi = {
       return notifications.map((notif: ApiNotification) => ({
         id: notif.id,
         titulo: notif.titulo,
+        mensagem: notif.mensagem,
         tipo_notificacao: notif.tipo?.toUpperCase() || 'NOVO_ITEM',
-        foi_visualizada: notif.lida || false,
+        lida: notif.lida || false,
+        importante: notif.importante || false,
         data_criacao: notif.data_criacao,
         midia_id: notif.midia_id,
         tipo_midia: notif.tipo_midia

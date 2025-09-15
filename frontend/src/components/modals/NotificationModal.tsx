@@ -48,13 +48,13 @@ const NotificationModal: React.FC = () => {
     setNotifications(prev => prev.filter(notif => notif.id !== id));
   };
 
-  const getNotificationIcon = (tipo: string) => {
-    switch (tipo) {
-      case 'lancamento':
+  const getNotificationIcon = (tipo_notificacao: string) => {
+    switch (tipo_notificacao) {
+      case 'LANCAMENTO':
         return <Calendar className="h-4 w-4 text-blue-500" />;
-      case 'avaliacao':
+      case 'AVALIACAO':
         return <Star className="h-4 w-4 text-yellow-500" />;
-      case 'episodio':
+      case 'EPISODIO':
         return <Play className="h-4 w-4 text-green-500" />;
       default:
         return <Bell className="h-4 w-4 text-primary" />;
@@ -170,7 +170,7 @@ const NotificationModal: React.FC = () => {
                   >
                     <div className="flex items-start gap-3">
                       <div className="flex-shrink-0 mt-1">
-                        {getNotificationIcon(notification.tipo)}
+                        {getNotificationIcon(notification.tipo_notificacao)}
                       </div>
                       
                       <div className="flex-1 min-w-0">
