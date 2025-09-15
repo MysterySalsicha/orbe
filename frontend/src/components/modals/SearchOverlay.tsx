@@ -26,7 +26,12 @@ const SearchOverlay: React.FC = () => {
 
   const performSearch = useCallback(async (query: string) => {
     setIsLoading(true);
-     catch (error) {
+    try {
+      // TODO: Implementar a lógica de busca aqui
+      // Exemplo: const results = await realApi.search(query, selectedCategory);
+      // setSearchResults(results);
+      console.log("Busca por:", query, "Categoria:", selectedCategory);
+    } catch (error) {
       console.error('Erro na pesquisa:', error);
       setSearchResults([]);
     } finally {
