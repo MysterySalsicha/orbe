@@ -179,6 +179,7 @@ export interface MidiaCardProps {
   showCountdown?: boolean;
   userInteractions?: UserInteraction[];
   onInteraction?: (action: string, midia: Filme | Serie | Anime | Jogo) => void;
+  onClick?: () => void;
 }
 
 export interface HeaderProps {
