@@ -346,7 +346,7 @@ const MidiaCard: React.FC<MidiaCardProps> = ({
                       className="h-3 w-3" 
                       size={12}
                     />
-                    <span className="text-xs">{platform}</span>
+                    <span className="text-xs">{platform.nome}</span>
                   </div>
                 ))}
                 {(midia.plataformas_curadas || midia.plataformas_api)?.length > 3 && (
