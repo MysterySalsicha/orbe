@@ -342,7 +342,7 @@ const MidiaCard: React.FC<MidiaCardProps> = ({
                 {(midia.plataformas_curadas || midia.plataformas_api)?.slice(0, 3).map((platform, index) => (
                   <div key={index} className="flex items-center space-x-1 bg-muted px-2 py-1 rounded">
                     <PlatformIcon 
-                      platform={platform} 
+                      platform={platform.nome} 
                       className="h-3 w-3" 
                       size={12}
                     />
