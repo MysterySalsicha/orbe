@@ -25,6 +25,8 @@ export default function LoginPage() {
         nome: 'Usuário Demo',
         email: formData.email,
         avatar: null,
+        role: 'user',
+        quer_avaliar: false,
         data_criacao: new Date().toISOString(),
         preferencias: {
           tema: 'system',
