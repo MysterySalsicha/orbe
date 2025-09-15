@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { Eye, EyeOff, Mail, Lock, Github } from 'lucide-react';
 import { useAppStore } from '@/stores/appStore';
+import { realApi } from '@/data/realApi';
 
 export default function LoginPage() {
   const { login } = useAppStore();
@@ -18,26 +19,24 @@ export default function LoginPage() {
     e.preventDefault();
     setIsLoading(true);
 
-    // Simulação de login
-    setTimeout(() => {
-      login({
-        id: 1,
-        nome: 'Usuário Demo',
-        email: formData.email,
-        avatar: null,
-        role: 'user',
-        quer_avaliar: false,
-        data_criacao: new Date().toISOString(),
-        preferencias: {
-          tema: 'system',
-          notificacoes_email: true,
-          notificacoes_push: true,
-          idioma: 'pt-BR'
-        }
-      });
+    try {
+      const response = await realApi.login(formData.email, formData.password);
+      if (response && response.user) {
+        login(response.user);
+        // Optionally store token in localStorage or cookies
+        // localStorage.setItem('token', response.token);
+        window.location.href = '/'; // Redirect on successful login
+      } else {
+        // Handle login error (e.g., display message to user)
+        console.error('Login failed: Invalid credentials or API error');
+        alert('Email ou senha inválidos.'); // Simple alert for now
+      }
+    } catch (error) {
+      console.error('Login API call failed:', error);
+      alert('Ocorreu um erro ao tentar fazer login. Tente novamente.');
+    } finally {
       setIsLoading(false);
-      window.location.href = '/';
-    }, 1500);
+    }
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {

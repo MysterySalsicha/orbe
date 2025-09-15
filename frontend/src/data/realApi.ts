@@ -464,6 +464,17 @@ export const realApi = {
     } catch (error) {
       console.error('Erro ao marcar notificação como lida:', error);
     }
+  },
+
+  // Login
+  login: async (email: string, password: string): Promise<{ token: string; user: User } | null> => {
+    try {
+      const response = await orbeNerdApi.post('/auth/login', { email, password });
+      return response;
+    } catch (error) {
+      console.error('Erro ao fazer login:', error);
+      return null;
+    }
   }
 };
 
