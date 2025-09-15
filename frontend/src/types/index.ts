@@ -118,7 +118,9 @@ export type TipoMidia = 'filme' | 'serie' | 'anime' | 'jogo';
 // Interface para usuário
 export interface User {
   id: number;
+  nome: string;
   email: string;
+  avatar: string | null;
   role: 'user' | 'admin';
   quer_avaliar: boolean;
   data_criacao: string;
