@@ -1,5 +1,5 @@
 import orbeNerdApi from '@/lib/api';
-import type { Filme, Serie, Anime, Jogo, Notification } from '@/types';
+import type { Filme, Serie, Anime, Jogo, Notification, User } from '@/types';
 
 type ApiResponseItem = {
   id: number;
@@ -473,7 +473,7 @@ export const realApi = {
   // Login
   login: async (email: string, password: string): Promise<{ token: string; user: User } | null> => {
     try {
-      const response = await orbeNerdApi.post('/auth/login', { email, password });
+      const response = await orbeNerdApi.login({ email, password });
       return response;
     } catch (error) {
       console.error('Erro ao fazer login:', error);

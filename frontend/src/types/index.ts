@@ -104,7 +104,6 @@ export interface Anime extends Midia {
   personagens: Character[];
   proximo_episodio?: string;
   numero_episodio_atual?: number;
-  numero_episodios?: number;
   eventos_recorrentes_calendario: boolean;
   tags?: string[];
   link_assistir_agora?: string;

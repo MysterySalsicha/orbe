@@ -9,7 +9,7 @@ export const mockFilmes: Filme[] = [
     poster_url_api: "https://image.tmdb.org/t/p/w500/1pdfLvkbY9ohJlCjQH2CZjjYVvJ.jpg",
     data_lancamento_api: "2024-03-01",
     sinopse_api: "Paul Atreides une-se a Chani e aos Fremen enquanto busca vingança contra os conspiradores que destruíram sua família.",
-    plataformas_api: ["Max", "Prime Video"],
+    plataformas_api: [{ nome: "Max" }, { nome: "Prime Video" }],
     generos_api: [
       { id: 1, name: "Ficção Científica" },
       { id: 2, name: "Aventura" }
@@ -33,7 +33,7 @@ export const mockFilmes: Filme[] = [
     poster_url_api: "https://image.tmdb.org/t/p/w500/8Gxv8gSFCU0XGDykEGv7zR1n2ua.jpg",
     data_lancamento_api: "2023-07-21",
     sinopse_api: "A história de J. Robert Oppenheimer e seu papel no desenvolvimento da bomba atômica.",
-    plataformas_api: ["Prime Video", "Apple TV"],
+    plataformas_api: [{ nome: "Prime Video" }, { nome: "Apple TV" }],
     generos_api: [
       { id: 3, name: "Drama" },
       { id: 4, name: "História" }
@@ -62,7 +62,7 @@ export const mockSeries: Serie[] = [
     poster_url_api: "https://image.tmdb.org/t/p/w500/7QMsOTMUswlwxJP0rTTZfmz2tX2.jpg",
     data_lancamento_api: "2022-08-21",
     sinopse_api: "A guerra civil Targaryen conhecida como a Dança dos Dragões.",
-    plataformas_api: ["Max"],
+    plataformas_api: [{ nome: "Max" }],
     generos_api: [
       { id: 5, name: "Drama" },
       { id: 6, name: "Fantasia" }
@@ -82,7 +82,7 @@ export const mockSeries: Serie[] = [
     poster_url_api: "https://image.tmdb.org/t/p/w500/uKvVjHNqB5VmOrdxqAt2F7J78ED.jpg",
     data_lancamento_api: "2023-01-15",
     sinopse_api: "Joel e Ellie navegam por um mundo pós-apocalíptico devastado por uma infecção fúngica.",
-    plataformas_api: ["Max"],
+    plataformas_api: [{ nome: "Max" }],
     generos_api: [
       { id: 7, name: "Drama" },
       { id: 8, name: "Terror" }
@@ -106,7 +106,7 @@ export const mockAnimes: Anime[] = [
     poster_url_api: "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx101922-PEn1CTc93blC.jpg",
     data_lancamento_api: "2019-04-06",
     sinopse_api: "Tanjiro Kamado se torna um caçador de demônios para salvar sua irmã transformada em demônio.",
-    plataformas_api: ["Crunchyroll", "Funimation"],
+    plataformas_api: [{ nome: "Crunchyroll" }, { nome: "Funimation" }],
     generos_api: [
       { id: 9, name: "Ação" },
       { id: 10, name: "Sobrenatural" }
@@ -149,7 +149,7 @@ export const mockAnimes: Anime[] = [
     poster_url_api: "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx16498-73IhOXpJZiMF.jpg",
     data_lancamento_api: "2013-04-07",
     sinopse_api: "A humanidade luta pela sobrevivência contra titãs gigantes.",
-    plataformas_api: ["Crunchyroll", "Funimation"],
+    plataformas_api: [{ nome: "Crunchyroll" }, { nome: "Funimation" }],
     generos_api: [
       { id: 9, name: "Ação" },
       { id: 11, name: "Drama" }
@@ -185,7 +185,7 @@ export const mockJogos: Jogo[] = [
     poster_url_api: "https://images.igdb.com/igdb/image/upload/t_cover_big/co5vmg.webp",
     data_lancamento_api: "2023-05-12",
     sinopse_api: "Link deve encontrar a Princesa Zelda e descobrir o segredo por trás da catástrofe que assola Hyrule.",
-    plataformas_api: ["Nintendo Switch"],
+    plataformas_api: [{ nome: "Nintendo Switch" }],
     generos_api: [
       { id: 12, name: "Aventura" },
       { id: 13, name: "RPG" }
@@ -208,7 +208,7 @@ export const mockJogos: Jogo[] = [
     poster_url_api: "https://images.igdb.com/igdb/image/upload/t_cover_big/co4jni.webp",
     data_lancamento_api: "2023-08-03",
     sinopse_api: "Um RPG épico baseado em Dungeons & Dragons onde suas escolhas moldam a história.",
-    plataformas_api: ["PC", "PlayStation 5", "Xbox Series X/S"],
+    plataformas_api: [{ nome: "PC" }, { nome: "PlayStation 5" }, { nome: "Xbox Series X/S" }],
     generos_api: [
       { id: 13, name: "RPG" },
       { id: 14, name: "Estratégia" }
@@ -240,8 +240,9 @@ export const mockNotifications: Notification[] = [
   {
     id: 1,
     titulo: "Novo episódio de Demon Slayer disponível!",
+    mensagem: "O episódio 12 já está disponível para assistir.",
     tipo_notificacao: "NOVO_ITEM",
-    foi_visualizada: false,
+    lida: false,
     data_criacao: "2024-09-03T10:00:00Z",
     midia_id: 1,
     tipo_midia: "anime"
@@ -249,8 +250,9 @@ export const mockNotifications: Notification[] = [
   {
     id: 2,
     titulo: "Data de lançamento de Duna 3 atualizada",
+    mensagem: "A data de lançamento de Duna 3 foi alterada para 2026.",
     tipo_notificacao: "ATUALIZACAO_DATA",
-    foi_visualizada: false,
+    lida: false,
     data_criacao: "2024-09-02T15:30:00Z",
     midia_id: 1,
     tipo_midia: "filme"
@@ -258,8 +260,9 @@ export const mockNotifications: Notification[] = [
   {
     id: 3,
     titulo: "Dublagem em português adicionada para Attack on Titan",
+    mensagem: "A dublagem em português para a temporada final já está disponível.",
     tipo_notificacao: "DUBLAGEM",
-    foi_visualizada: true,
+    lida: true,
     data_criacao: "2024-09-01T09:15:00Z",
     midia_id: 2,
     tipo_midia: "anime"
@@ -267,8 +270,9 @@ export const mockNotifications: Notification[] = [
   {
     id: 4,
     titulo: "Vencedores do Oscar 2024 anunciados!",
+    mensagem: "Confira a lista completa de vencedores do Oscar 2024.",
     tipo_notificacao: "VENCEDOR_PREMIO",
-    foi_visualizada: true,
+    lida: true,
     data_criacao: "2024-03-11T02:00:00Z"
   }
 ];
@@ -276,7 +280,9 @@ export const mockNotifications: Notification[] = [
 // Dados mockados para usuário
 export const mockUser: User = {
   id: 1,
+  nome: "Usuário Mock",
   email: "usuario@exemplo.com",
+  avatar: null,
   role: "user",
   quer_avaliar: true,
   data_criacao: "2024-01-15T10:00:00Z"
@@ -368,7 +374,7 @@ export const mockApi = {
     await delay(200);
     const notification = mockNotifications.find(n => n.id === id);
     if (notification) {
-      notification.foi_visualizada = true;
+      notification.lida = true;
     }
   }
 };

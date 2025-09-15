@@ -127,14 +127,14 @@ export const useAppStore = create<AppState>()(
 
       // Ações das notificações
       setNotifications: (notifications) => {
-        const unreadCount = notifications.filter(n => !n.foi_visualizada).length;
+        const unreadCount = notifications.filter(n => !n.lida).length;
         set({ notifications, unreadCount });
       },
       
       addNotification: (notification) => {
         const { notifications } = get();
         const newNotifications = [notification, ...notifications];
-        const unreadCount = newNotifications.filter(n => !n.foi_visualizada).length;
+        const unreadCount = newNotifications.filter(n => !n.lida).length;
         set({ 
           notifications: newNotifications, 
           unreadCount 
@@ -144,9 +144,9 @@ export const useAppStore = create<AppState>()(
       markNotificationAsRead: (id) => {
         const { notifications } = get();
         const updatedNotifications = notifications.map(n => 
-          n.id === id ? { ...n, foi_visualizada: true } : n
+          n.id === id ? { ...n, lida: true } : n
         );
-        const unreadCount = updatedNotifications.filter(n => !n.foi_visualizada).length;
+        const unreadCount = updatedNotifications.filter(n => !n.lida).length;
         set({ 
           notifications: updatedNotifications, 
           unreadCount 
@@ -157,7 +157,7 @@ export const useAppStore = create<AppState>()(
         const { notifications } = get();
         const updatedNotifications = notifications.map(n => ({ 
           ...n, 
-          foi_visualizada: true 
+          lida: true
         }));
         set({ 
           notifications: updatedNotifications, 
