@@ -181,14 +181,14 @@ const MidiaCard: React.FC<MidiaCardProps> = ({
   // Função para lidar com clique longo (mobile)
   const [pressTimer, setPressTimer] = useState<NodeJS.Timeout | null>(null);
   
-  const handleMouseDown = (e: React.MouseEvent) => {
+  const handlePressStart = (e: React.MouseEvent | React.TouchEvent) => {
     const timer = setTimeout(() => {
       setIsMenuOpen(true);
     }, 500); // 500ms para ativar o menu
     setPressTimer(timer);
   };
 
-  const handleMouseUp = () => {
+  const handlePressEnd = () => {
     if (pressTimer) {
       clearTimeout(pressTimer);
       setPressTimer(null);
@@ -214,11 +214,11 @@ const MidiaCard: React.FC<MidiaCardProps> = ({
         className="relative bg-card rounded-lg overflow-hidden shadow-md hover:shadow-lg transition-all duration-300 cursor-pointer hover:scale-105 w-[200px]"
         data-clickable-card
         onClick={handleCardClick}
-        onMouseDown={handleMouseDown}
-        onMouseUp={handleMouseUp}
-        onMouseLeave={handleMouseUp}
-        onTouchStart={handleMouseDown}
-        onTouchEnd={handleMouseUp}
+        onMouseDown={handlePressStart}
+        onMouseUp={handlePressEnd}
+        onMouseLeave={handlePressEnd}
+        onTouchStart={handlePressStart}
+        onTouchEnd={handlePressEnd}
       >
         {/* Container da Imagem */}
         <div className="relative w-[200px] h-[300px] overflow-hidden">
