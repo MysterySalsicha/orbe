@@ -255,6 +255,8 @@ export interface SearchResult {
   total: number;
 }
 
+export type SearchResultItem = (Filme & { type: 'filme' }) | (Serie & { type: 'serie' }) | (Anime & { type: 'anime' }) | (Jogo & { type: 'jogo' });
+
 // Tipos para tema
 export type Theme = 'light' | 'dark' | 'system';
 

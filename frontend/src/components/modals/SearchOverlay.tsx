@@ -4,15 +4,15 @@ import { useState, useEffect, useMemo, useCallback } from 'react';
 import { X, Search } from 'lucide-react';
 import { useAppStore } from '@/stores/appStore';
 import MidiaCard from '@/components/media/MidiaCard';
-import type { SearchResult } from '@/types';
+import type { SearchResultItem } from '@/types';
 import { mockFilmes, mockSeries, mockAnimes, mockJogos } from '@/data/mockData';
 
 const SearchOverlay: React.FC = () => {
   const { isSearchOpen, closeSearch } = useAppStore();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<'todos' | 'filmes' | 'series' | 'animes' | 'jogos'>('todos');
-  const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
-  const [trendingContent, setTrendingContent] = useState<SearchResult[]>([]);
+  const [searchResults, setSearchResults] = useState<SearchResultItem[]>([]);
+  const [trendingContent, setTrendingContent] = useState<SearchResultItem[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
   const categories = [
@@ -44,7 +44,7 @@ const SearchOverlay: React.FC = () => {
     const loadTrendingContent = async () => {
       setIsLoading(true);
       try {
-        const trending: SearchResult[] = [
+        const trending: SearchResultItem[] = [
           ...mockFilmes.slice(0, 3).map(item => ({ ...item, type: 'filme' as const })),
           ...mockSeries.slice(0, 3).map(item => ({ ...item, type: 'serie' as const })),
           ...mockAnimes.slice(0, 3).map(item => ({ ...item, type: 'anime' as const })),
