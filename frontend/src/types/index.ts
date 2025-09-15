@@ -162,6 +162,7 @@ export interface Notification {
     | 'LANCAMENTO_FAVORITO';
   foi_visualizada: boolean;
   data_criacao: string;
+  importante?: boolean;
 }
 
 // Interface para eventos de anúncio
