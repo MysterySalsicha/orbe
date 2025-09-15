@@ -124,6 +124,7 @@ export interface User {
   role: 'user' | 'admin';
   quer_avaliar: boolean;
   data_criacao: string;
+  preferencias?: any; // Adicionando a propriedade que faltava
 }
 
 // Interface para interações do usuário
