@@ -50,6 +50,10 @@ export interface GamePlatform {
   store_url?: string;
 }
 
+export interface Plataforma {
+  nome: string;
+}
+
 // Interface base para mídia
 export interface Midia {
   id: number;
@@ -61,13 +65,14 @@ export interface Midia {
   data_lancamento_api: string;
   sinopse_curada?: string;
   sinopse_api: string;
-  plataformas_curadas?: string[];
-  plataformas_api: string[];
+  plataformas_curadas?: Plataforma[];
+  plataformas_api: Plataforma[];
   generos_curados?: Genre[];
   generos_api: Genre[];
   premiacoes?: Award[];
   trailer_url_curado?: string;
   trailer_url_api?: string;
+  avaliacao?: number; // Propriedade adicionada
 }
 
 // Interfaces específicas por tipo de mídia
@@ -78,6 +83,7 @@ export interface Filme extends Midia {
   elenco: CastMember[];
   ingresso_link?: string;
   em_prevenda: boolean;
+  em_cartaz?: boolean; // Propriedade adicionada
   ultima_verificacao_ingresso?: string;
 }
 

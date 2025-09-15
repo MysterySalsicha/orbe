@@ -1,416 +1,200 @@
 import os
+import time
+import json
+import logging
 import requests
-from datetime import datetime
-from typing import List, Dict, Any, Optional
+from dotenv import load_dotenv
+
+# Configuração de logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger("api_clients")
+
+# Carregar variáveis de ambiente
+load_dotenv()
 
 class TMDBClient:
+    """Cliente para a API do The Movie Database (TMDB)"""
+    
     def __init__(self):
         self.api_key = os.getenv("TMDB_API_KEY")
-        self.read_access_token = os.getenv("TMDB_READ_ACCESS_TOKEN")
         self.base_url = "https://api.themoviedb.org/3"
-        self.image_base_url = "https://image.tmdb.org/t/p/w500"
+        self.language = "pt-BR"
         
-        self.headers = {
-            "Authorization": f"Bearer {self.read_access_token}",
-            "Content-Type": "application/json"
-        }
+        if not self.api_key:
+            logger.warning("TMDB_API_KEY não encontrada nas variáveis de ambiente")
     
-    def get_popular_movies(self, page: int = 1) -> Dict[str, Any]:
-        """Busca filmes populares"""
-        url = f"{self.base_url}/movie/popular"
-        params = {"page": page, "language": "pt-BR"}
-        response = requests.get(url, headers=self.headers, params=params)
-        return response.json()
-    
-    def get_now_playing_movies(self, page: int = 1) -> Dict[str, Any]:
-        """Busca filmes em cartaz"""
-        url = f"{self.base_url}/movie/now_playing"
-        params = {"page": page, "language": "pt-BR"}
-        response = requests.get(url, headers=self.headers, params=params)
-        return response.json()
-    
-    def get_upcoming_movies(self, page: int = 1) -> Dict[str, Any]:
-        """Busca filmes em breve"""
-        url = f"{self.base_url}/movie/upcoming"
-        params = {"page": page, "language": "pt-BR"}
-        response = requests.get(url, headers=self.headers, params=params)
-        return response.json()
-    
-    def get_movie_details(self, movie_id: int) -> Dict[str, Any]:
-        """Busca detalhes de um filme específico"""
-        url = f"{self.base_url}/movie/{movie_id}"
-        params = {"language": "pt-BR", "append_to_response": "credits,videos"}
-        response = requests.get(url, headers=self.headers, params=params)
-        return response.json()
-    
-    def get_popular_tv_shows(self, page: int = 1) -> Dict[str, Any]:
-        """Busca séries populares"""
-        url = f"{self.base_url}/tv/popular"
-        params = {"page": page, "language": "pt-BR"}
-        response = requests.get(url, headers=self.headers, params=params)
-        return response.json()
-    
-    def get_tv_show_details(self, tv_id: int) -> Dict[str, Any]:
-        """Busca detalhes de uma série específica"""
-        url = f"{self.base_url}/tv/{tv_id}"
-        params = {"language": "pt-BR", "append_to_response": "credits,videos"}
-        response = requests.get(url, headers=self.headers, params=params)
-        return response.json()
-    
-    def search_multi(self, query: str, page: int = 1) -> Dict[str, Any]:
-        """Busca geral (filmes, séries, pessoas)"""
-        url = f"{self.base_url}/search/multi"
-        params = {"query": query, "page": page, "language": "pt-BR"}
-        response = requests.get(url, headers=self.headers, params=params)
-        return response.json()
-    
-    def get_trending(self, media_type: str = "all", time_window: str = "day") -> Dict[str, Any]:
-        """Busca conteúdo em alta"""
-        url = f"{self.base_url}/trending/{media_type}/{time_window}"
-        params = {"language": "pt-BR"}
-        response = requests.get(url, headers=self.headers, params=params)
-        return response.json()
-
-class AnilistClient:
-    def __init__(self):
-        self.client_id = os.getenv("ANILIST_CLIENT_ID")
-        self.client_secret = os.getenv("ANILIST_CLIENT_SECRET")
-        self.base_url = "https://graphql.anilist.co"
-        
-    def get_access_token(self) -> str:
-        """Obtém token de acesso (se necessário para operações autenticadas)"""
-        # Para consultas públicas, não é necessário token
-        return ""
-    
-    def execute_query(self, query: str, variables: Dict = None) -> Dict[str, Any]:
-        """Executa uma query GraphQL"""
-        payload = {"query": query}
-        if variables:
-            payload["variables"] = variables
+    def _make_request(self, endpoint, params=None):
+        """Realiza uma requisição para a API do TMDB"""
+        if not self.api_key:
+            logger.error("API key não configurada para TMDB")
+            return None
             
-        response = requests.post(self.base_url, json=payload)
-        return response.json()
-    
-    def get_trending_anime(self, page: int = 1, per_page: int = 20) -> Dict[str, Any]:
-        """Busca animes em alta"""
-        query = """
-        query ($page: Int, $perPage: Int) {
-            Page(page: $page, perPage: $perPage) {
-                pageInfo {
-                    total
-                    currentPage
-                    lastPage
-                    hasNextPage
-                }
-                media(type: ANIME, sort: TRENDING_DESC) {
-                    id
-                    title {
-                        romaji
-                        english
-                        native
-                    }
-                    description
-                    coverImage {
-                        large
-                        medium
-                    }
-                    bannerImage
-                    startDate {
-                        year
-                        month
-                        day
-                    }
-                    endDate {
-                        year
-                        month
-                        day
-                    }
-                    season
-                    seasonYear
-                    episodes
-                    duration
-                    status
-                    genres
-                    averageScore
-                    popularity
-                    studios {
-                        nodes {
-                            name
-                        }
-                    }
-                    source
-                }
-            }
+        url = f"{self.base_url}{endpoint}"
+        default_params = {
+            "api_key": self.api_key,
+            "language": self.language
         }
-        """
-        variables = {"page": page, "perPage": per_page}
-        return self.execute_query(query, variables)
+        
+        if params:
+            default_params.update(params)
+        
+        try:
+            response = requests.get(url, params=default_params)
+            response.raise_for_status()
+            return response.json()
+        except requests.exceptions.RequestException as e:
+            logger.error(f"Erro na requisição para TMDB: {e}")
+            return None
     
-    def get_popular_anime(self, page: int = 1, per_page: int = 20) -> Dict[str, Any]:
-        """Busca animes populares"""
-        query = """
-        query ($page: Int, $perPage: Int) {
-            Page(page: $page, perPage: $perPage) {
-                pageInfo {
-                    total
-                    currentPage
-                    lastPage
-                    hasNextPage
-                }
-                media(type: ANIME, sort: POPULARITY_DESC) {
-                    id
-                    title {
-                        romaji
-                        english
-                        native
-                    }
-                    description
-                    coverImage {
-                        large
-                        medium
-                    }
-                    bannerImage
-                    startDate {
-                        year
-                        month
-                        day
-                    }
-                    endDate {
-                        year
-                        month
-                        day
-                    }
-                    season
-                    seasonYear
-                    episodes
-                    duration
-                    status
-                    genres
-                    averageScore
-                    popularity
-                    studios {
-                        nodes {
-                            name
-                        }
-                    }
-                    source
-                }
-            }
-        }
-        """
-        variables = {"page": page, "perPage": per_page}
-        return self.execute_query(query, variables)
+    def get_popular_movies(self, page=1):
+        """Obtém filmes populares"""
+        return self._make_request(
+            "/movie/popular",
+            {"page": page}
+        )
     
-    def get_anime_details(self, anime_id: int) -> Dict[str, Any]:
-        """Busca detalhes de um anime específico"""
-        query = """
-        query ($id: Int) {
-            Media(id: $id, type: ANIME) {
-                id
-                title {
-                    romaji
-                    english
-                    native
-                }
-                description
-                coverImage {
-                    large
-                    medium
-                }
-                bannerImage
-                startDate {
-                    year
-                    month
-                    day
-                }
-                endDate {
-                    year
-                    month
-                    day
-                }
-                season
-                seasonYear
-                episodes
-                duration
-                status
-                genres
-                averageScore
-                popularity
-                studios {
-                    nodes {
-                        name
-                    }
-                }
-                source
-                characters {
-                    nodes {
-                        id
-                        name {
-                            full
-                        }
-                        image {
-                            large
-                            medium
-                        }
-                    }
-                }
-                staff {
-                    nodes {
-                        id
-                        name {
-                            full
-                        }
-                        image {
-                            large
-                            medium
-                        }
-                    }
-                }
-            }
-        }
-        """
-        variables = {"id": anime_id}
-        return self.execute_query(query, variables)
+    def get_popular_tv_shows(self, page=1):
+        """Obtém séries populares"""
+        return self._make_request(
+            "/tv/popular",
+            {"page": page}
+        )
     
-    def search_anime(self, query: str, page: int = 1, per_page: int = 20) -> Dict[str, Any]:
-        """Busca animes por termo"""
-        search_query = """
-        query ($search: String, $page: Int, $perPage: Int) {
-            Page(page: $page, perPage: $perPage) {
-                pageInfo {
-                    total
-                    currentPage
-                    lastPage
-                    hasNextPage
-                }
-                media(search: $search, type: ANIME) {
-                    id
-                    title {
-                        romaji
-                        english
-                        native
-                    }
-                    description
-                    coverImage {
-                        large
-                        medium
-                    }
-                    bannerImage
-                    startDate {
-                        year
-                        month
-                        day
-                    }
-                    season
-                    seasonYear
-                    episodes
-                    duration
-                    status
-                    genres
-                    averageScore
-                    popularity
-                    studios {
-                        nodes {
-                            name
-                        }
-                    }
-                    source
-                }
-            }
-        }
-        """
-        variables = {"search": query, "page": page, "perPage": per_page}
-        return self.execute_query(search_query, variables)
+    def get_movie_details(self, movie_id):
+        """Obtém detalhes de um filme específico"""
+        return self._make_request(f"/movie/{movie_id}")
+    
+    def get_tv_show_details(self, tv_id):
+        """Obtém detalhes de uma série específica"""
+        return self._make_request(f"/tv/{tv_id}")
 
-class TwitchClient:
+class IGDBClient:
+    """Cliente para a API do Internet Game Database (IGDB)"""
+    
     def __init__(self):
-        self.client_id = os.getenv("TWITCH_CLIENT_ID")
-        self.client_secret = os.getenv("TWITCH_CLIENT_SECRET")
+        self.client_id = os.getenv("IGDB_CLIENT_ID")
+        self.client_secret = os.getenv("IGDB_CLIENT_SECRET")
         self.base_url = "https://api.igdb.com/v4"
+        self.auth_url = "https://id.twitch.tv/oauth2/token"
         self.access_token = None
+        self.token_expires = 0
         
-    def get_access_token(self) -> str:
-        """Obtém token de acesso OAuth2"""
-        if self.access_token:
-            return self.access_token
-            
-        url = "https://id.twitch.tv/oauth2/token"
-        data = {
-            "client_id": self.client_id,
-            "client_secret": self.client_secret,
-            "grant_type": "client_credentials"
-        }
-        
-        response = requests.post(url, data=data)
-        if response.status_code == 200:
-            token_data = response.json()
-            self.access_token = token_data["access_token"]
-            return self.access_token
+        if not self.client_id or not self.client_secret:
+            logger.warning("IGDB_CLIENT_ID ou IGDB_CLIENT_SECRET não encontrados nas variáveis de ambiente")
         else:
-            raise Exception(f"Erro ao obter token: {response.status_code}")
+            self._authenticate()
     
-    def make_request(self, endpoint: str, query: str) -> List[Dict[str, Any]]:
-        """Faz requisição para a API IGDB"""
-        token = self.get_access_token()
+    def _authenticate(self):
+        """Autentica com a API do IGDB via Twitch"""
+        if time.time() < self.token_expires:
+            return
+            
+        try:
+            response = requests.post(self.auth_url, params={
+                "client_id": self.client_id,
+                "client_secret": self.client_secret,
+                "grant_type": "client_credentials"
+            })
+            response.raise_for_status()
+            data = response.json()
+            
+            self.access_token = data.get("access_token")
+            expires_in = data.get("expires_in", 0)
+            self.token_expires = time.time() + expires_in - 100  # Renovar 100 segundos antes de expirar
+            
+            logger.info("Autenticação com IGDB realizada com sucesso")
+        except requests.exceptions.RequestException as e:
+            logger.error(f"Erro na autenticação com IGDB: {e}")
+    
+    def _make_request(self, endpoint, body):
+        """Realiza uma requisição para a API do IGDB"""
+        if not self.access_token:
+            self._authenticate()
+            if not self.access_token:
+                logger.error("Falha na autenticação com IGDB")
+                return None
+        
+        url = f"{self.base_url}{endpoint}"
         headers = {
             "Client-ID": self.client_id,
-            "Authorization": f"Bearer {token}",
-            "Content-Type": "text/plain"
+            "Authorization": f"Bearer {self.access_token}",
+            "Accept": "application/json"
         }
         
-        url = f"{self.base_url}/{endpoint}"
-        response = requests.post(url, headers=headers, data=query)
-        
-        if response.status_code == 200:
+        try:
+            response = requests.post(url, headers=headers, data=body)
+            response.raise_for_status()
             return response.json()
-        else:
-            raise Exception(f"Erro na requisição: {response.status_code} - {response.text}")
+        except requests.exceptions.RequestException as e:
+            logger.error(f"Erro na requisição para IGDB: {e}")
+            if response.status_code == 401:
+                # Token expirado, forçar renovação
+                self.token_expires = 0
+                self._authenticate()
+            return None
     
-    def get_popular_games(self, limit: int = 20) -> List[Dict[str, Any]]:
-        """Busca jogos populares"""
-        query = f"""
-        fields name, summary, cover.url, first_release_date, rating, genres.name, 
-               platforms.name, involved_companies.company.name, screenshots.url;
-        where rating > 80 & first_release_date != null;
-        sort rating desc;
-        limit {limit};
-        """
-        return self.make_request("games", query)
+    def get_popular_games(self, limit=50):
+        """Obtém jogos populares"""
+        body = f"fields name,summary,cover.image_id,first_release_date,rating,aggregated_rating,genres.name,platforms.name,involved_companies.company.name; sort rating desc; limit {limit};"
+        return self._make_request("/games", body)
     
-    def get_upcoming_games(self, limit: int = 20) -> List[Dict[str, Any]]:
-        """Busca jogos em breve"""
-        current_timestamp = int(datetime.now().timestamp())
-        query = f"""
-        fields name, summary, cover.url, first_release_date, rating, genres.name, 
-               platforms.name, involved_companies.company.name, screenshots.url;
-        where first_release_date > {current_timestamp};
-        sort first_release_date asc;
-        limit {limit};
-        """
-        return self.make_request("games", query)
-    
-    def get_game_details(self, game_id: int) -> List[Dict[str, Any]]:
-        """Busca detalhes de um jogo específico"""
-        query = f"""
-        fields name, summary, storyline, cover.url, first_release_date, rating, 
-               genres.name, platforms.name, involved_companies.company.name, 
-               screenshots.url, videos.video_id, websites.url;
-        where id = {game_id};
-        """
-        return self.make_request("games", query)
-    
-    def search_games(self, search_term: str, limit: int = 20) -> List[Dict[str, Any]]:
-        """Busca jogos por termo"""
-        query = f"""
-        search "{search_term}";
-        fields name, summary, cover.url, first_release_date, rating, genres.name, 
-               platforms.name, involved_companies.company.name;
-        limit {limit};
-        """
-        return self.make_request("games", query)
+    def get_game_details(self, game_id):
+        """Obtém detalhes de um jogo específico"""
+        body = f"fields name,summary,storyline,cover.image_id,first_release_date,rating,aggregated_rating,genres.name,platforms.name,involved_companies.company.name,screenshots.image_id,videos.*; where id = {game_id};"
+        result = self._make_request("/games", body)
+        return result[0] if result else None
 
-# Instâncias globais dos clientes
-tmdb_client = TMDBClient()
-anilist_client = AnilistClient()
-twitch_client = TwitchClient()
+class JikanClient:
+    """Cliente para a API do Jikan (MyAnimeList)"""
+    
+    def __init__(self):
+        self.base_url = "https://api.jikan.moe/v4/"
+        self.last_request = 0
+        self.rate_limit = 1  # Segundos entre requisições para evitar rate limiting
+    
+    def _make_request(self, endpoint, params=None):
+        """Realiza uma requisição para a API do Jikan"""
+        # Respeitar rate limiting
+        time_since_last = time.time() - self.last_request
+        if time_since_last < self.rate_limit:
+            time.sleep(self.rate_limit - time_since_last)
+        
+        url = f"{self.base_url}{endpoint}"
+        
+        try:
+            response = requests.get(url, params=params)
+            self.last_request = time.time()
+            response.raise_for_status()
+            return response.json()
+        except requests.exceptions.RequestException as e:
+            logger.error(f"Erro na requisição para Jikan: {e}")
+            return None
+    
+    def get_top_animes(self, page=1, limit=25):
+        """Obtém animes populares"""
+        return self._make_request(
+            "top/anime",
+            {"page": page, "limit": limit}
+        )
+    
+    def get_anime_details(self, anime_id):
+        """Obtém detalhes de um anime específico"""
+        return self._make_request(f"anime/{anime_id}/full")
+    
+    def search_animes(self, query, page=1, limit=25):
+        """Pesquisa animes por termo"""
+        return self._make_request(
+            "/anime",
+            {"q": query, "page": page, "limit": limit}
+        )
+    
+    def get_anime_characters(self, mal_id):
+        """Obtém personagens de um anime específico"""
+        return self._make_request(f"anime/{mal_id}/characters")
 
+    def get_anime_staff(self, mal_id):
+        """Obtém staff de um anime específico"""
+        return self._make_request(f"anime/{mal_id}/staff")

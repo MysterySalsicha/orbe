@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { mockApi } from '@/data/mockData';
+import { realApi } from '@/data/realApi';
 import MidiaCard from '@/components/media/MidiaCard';
 import type { Serie } from '@/types';
 
@@ -13,8 +13,8 @@ export default function SeriesPage() {
     const loadSeries = async () => {
       setIsLoading(true);
       try {
-        const data = await mockApi.getSeries();
-        setSeries(data);
+        const response = await realApi.getSeries();
+        setSeries(response.results);
       } catch (error) {
         console.error('Erro ao carregar séries:', error);
       } finally {

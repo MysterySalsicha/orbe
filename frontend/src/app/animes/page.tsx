@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { mockApi } from '@/data/mockData';
+import { realApi } from '@/data/realApi';
 import MidiaCard from '@/components/media/MidiaCard';
 import type { Anime } from '@/types';
 
@@ -13,8 +13,8 @@ export default function AnimesPage() {
     const loadAnimes = async () => {
       setIsLoading(true);
       try {
-        const data = await mockApi.getAnimes();
-        setAnimes(data);
+        const response = await realApi.getAnimes();
+        setAnimes(response.results);
       } catch (error) {
         console.error('Erro ao carregar animes:', error);
       } finally {

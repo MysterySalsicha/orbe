@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { mockApi } from '@/data/mockData';
+import { realApi } from '@/data/realApi';
 import MidiaCard from '@/components/media/MidiaCard';
 import type { Jogo } from '@/types';
 
@@ -13,8 +13,8 @@ export default function JogosPage() {
     const loadJogos = async () => {
       setIsLoading(true);
       try {
-        const data = await mockApi.getJogos();
-        setJogos(data);
+        const response = await realApi.getJogos();
+        setJogos(response.results);
       } catch (error) {
         console.error('Erro ao carregar jogos:', error);
       } finally {

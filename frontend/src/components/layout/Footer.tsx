@@ -13,7 +13,8 @@ const Footer: React.FC = () => {
       { label: 'Animes', href: '/animes' },
       { label: 'Jogos', href: '/jogos' },
       { label: 'Premiações', href: '/premios' },
-      { label: 'Hoje', href: '/hoje' }
+      { label: 'Hoje', href: '/hoje' },
+      { label: 'Apoie-nos', href: '/apoie' }
     ],
     suporte: [
       { label: 'Central de Ajuda', href: '/ajuda' },
@@ -134,6 +135,10 @@ const Footer: React.FC = () => {
               <span>Feito com</span>
               <Heart className="h-4 w-4 text-red-500 fill-current" />
               <span>para a comunidade nerd</span>
+              <span className="mx-1">•</span>
+              <Link href="/apoie" className="text-rose-500 hover:text-rose-600 transition-colors">
+                Apoie este projeto
+              </Link>
             </div>
           </div>
 

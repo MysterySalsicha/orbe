@@ -1,11 +1,11 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { X, Search } from 'lucide-react';
 import { useAppStore } from '@/stores/appStore';
 import { mockApi } from '@/data/mockData';
 import MidiaCard from '@/components/media/MidiaCard';
-import type { Filme, Serie, Anime, Jogo, SearchResult } from '@/types';
+import type { SearchResult } from '@/types';
 
 const SearchOverlay: React.FC = () => {
   const { isSearchOpen, closeSearch } = useAppStore();
@@ -23,59 +23,9 @@ const SearchOverlay: React.FC = () => {
     { id: 'jogos' as const, label: 'Jogos' },
   ];
 
-  const popularSearches = [
-    'Duna',
-    'Attack on Titan',
-    'The Last of Us',
-    'Baldur\'s Gate 3',
-    'House of the Dragon',
-    'Demon Slayer',
-    'Oppenheimer',
-    'Zelda'
-  ];
+  const popularSearches = ['Duna', 'Attack on Titan', 'The Last of Us', "Baldur's Gate 3", 'House of the Dragon', 'Demon Slayer', 'Oppenheimer', 'Zelda'];
 
-  // Carrega conteúdo em alta ao abrir a pesquisa
-  useEffect(() => {
-    if (isSearchOpen && trendingContent.length === 0) {
-      loadTrendingContent();
-    }
-  }, [isSearchOpen]);
-
-  // Busca em tempo real
-  useEffect(() => {
-    if (searchQuery.trim()) {
-      performSearch(searchQuery);
-    } else {
-      setSearchResults([]);
-    }
-  }, [searchQuery, selectedCategory]);
-
-  const loadTrendingContent = async () => {
-    setIsLoading(true);
-    try {
-      const [filmes, series, animes, jogos] = await Promise.all([
-        mockApi.getFilmes(),
-        mockApi.getSeries(),
-        mockApi.getAnimes(),
-        mockApi.getJogos()
-      ]);
-
-      const trending: SearchResult[] = [
-        ...filmes.slice(0, 3).map(item => ({ ...item, type: 'filme' as const })),
-        ...series.slice(0, 3).map(item => ({ ...item, type: 'serie' as const })),
-        ...animes.slice(0, 3).map(item => ({ ...item, type: 'anime' as const })),
-        ...jogos.slice(0, 3).map(item => ({ ...item, type: 'jogo' as const })),
-      ];
-
-      setTrendingContent(trending);
-    } catch (error) {
-      console.error('Erro ao carregar conteúdo em alta:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const performSearch = async (query: string) => {
+  const performSearch = useCallback(async (query: string) => {
     setIsLoading(true);
     try {
       const results = await mockApi.search(query, selectedCategory === 'todos' ? undefined : selectedCategory);
@@ -86,7 +36,50 @@ const SearchOverlay: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [selectedCategory]);
+
+  useEffect(() => {
+    const loadTrendingContent = async () => {
+      setIsLoading(true);
+      try {
+        const [filmes, series, animes, jogos] = await Promise.all([
+          mockApi.getFilmes(),
+          mockApi.getSeries(),
+          mockApi.getAnimes(),
+          mockApi.getJogos()
+        ]);
+        const trending: SearchResult[] = [
+          ...filmes.slice(0, 3).map(item => ({ ...item, type: 'filme' as const })),
+          ...series.slice(0, 3).map(item => ({ ...item, type: 'serie' as const })),
+          ...animes.slice(0, 3).map(item => ({ ...item, type: 'anime' as const })),
+          ...jogos.slice(0, 3).map(item => ({ ...item, type: 'jogo' as const })),
+        ];
+        setTrendingContent(trending);
+      } catch (error) {
+        console.error('Erro ao carregar conteúdo em alta:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    if (isSearchOpen && trendingContent.length === 0) {
+      loadTrendingContent();
+    }
+  }, [isSearchOpen, trendingContent.length]);
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      if (searchQuery.trim()) {
+        performSearch(searchQuery);
+      } else {
+        setSearchResults([]);
+      }
+    }, 300); // Debounce de 300ms
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [searchQuery, performSearch]);
 
   const handlePopularSearchClick = (searchTerm: string) => {
     setSearchQuery(searchTerm);
@@ -100,17 +93,14 @@ const SearchOverlay: React.FC = () => {
   };
 
   const displayContent = useMemo(() => {
-    if (searchQuery.trim()) {
-      return searchResults;
-    }
+    if (searchQuery.trim()) return searchResults;
     return trendingContent;
   }, [searchQuery, searchResults, trendingContent]);
 
   const filteredContent = useMemo(() => {
-    if (selectedCategory === 'todos') {
-      return displayContent;
-    }
-    return displayContent.filter(item => item.type === selectedCategory.slice(0, -1));
+    if (selectedCategory === 'todos') return displayContent;
+    const type = selectedCategory.slice(0, -1);
+    return displayContent.filter(item => item.type === type);
   }, [displayContent, selectedCategory]);
 
   if (!isSearchOpen) return null;
@@ -120,116 +110,57 @@ const SearchOverlay: React.FC = () => {
       <div className="container mx-auto px-4 py-8 h-full">
         <div className="flex justify-between items-center mb-8">
           <h2 className="text-2xl font-bold orbe-text-primary">Pesquisar</h2>
-          <button
-            onClick={handleClose}
-            className="p-2 orbe-text-primary hover:orbe-text-secondary transition-colors"
-          >
+          <button onClick={handleClose} className="p-2 orbe-text-primary hover:orbe-text-secondary transition-colors">
             <X className="h-6 w-6" />
           </button>
         </div>
-
         <div className="search-layout">
-          {/* Lado Esquerdo - Barra de Pesquisa e Filtros */}
           <div className="space-y-6">
-            {/* Barra de Pesquisa */}
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-              <input
-                type="text"
-                placeholder="Digite o nome do filme, série, anime ou jogo..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-3 bg-muted border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary orbe-text-primary placeholder:text-muted-foreground"
-                autoFocus
-              />
+              <input type="text" placeholder="Digite o nome do filme, série, anime ou jogo..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="w-full pl-10 pr-4 py-3 bg-muted border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary orbe-text-primary placeholder:text-muted-foreground" autoFocus />
             </div>
-
-            {/* Botões de Categoria */}
             <div className="space-y-3">
               <h3 className="text-sm font-medium orbe-text-secondary">Categorias</h3>
               <div className="flex flex-wrap gap-2">
                 {categories.map((category) => (
-                  <button
-                    key={category.id}
-                    onClick={() => setSelectedCategory(category.id)}
-                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                      selectedCategory === category.id
-                        ? 'bg-primary text-primary-foreground'
-                        : 'bg-muted orbe-text-primary hover:bg-muted/80'
-                    }`}
-                  >
+                  <button key={category.id} onClick={() => setSelectedCategory(category.id)} className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${selectedCategory === category.id ? 'bg-primary text-primary-foreground' : 'bg-muted orbe-text-primary hover:bg-muted/80'}`}>
                     {category.label}
                   </button>
                 ))}
               </div>
             </div>
-
-            {/* Filtros Rápidos */}
             <div className="space-y-3">
-              <h3 className="text-sm font-medium orbe-text-secondary">
-                {searchQuery.trim() ? 'Sugestões' : 'Buscas Populares da Semana'}
-              </h3>
+              <h3 className="text-sm font-medium orbe-text-secondary">{searchQuery.trim() ? 'Sugestões' : 'Buscas Populares da Semana'}</h3>
               <div className="flex flex-wrap gap-2">
                 {popularSearches.map((search) => (
-                  <button
-                    key={search}
-                    onClick={() => handlePopularSearchClick(search)}
-                    className="px-3 py-2 bg-muted orbe-text-primary hover:bg-muted/80 rounded-md text-sm transition-colors"
-                  >
+                  <button key={search} onClick={() => handlePopularSearchClick(search)} className="px-3 py-2 bg-muted orbe-text-primary hover:bg-muted/80 rounded-md text-sm transition-colors">
                     {search}
                   </button>
                 ))}
               </div>
             </div>
           </div>
-
-          {/* Lado Direito - MidiaCards */}
           <div className="space-y-4">
             <div className="flex justify-between items-center">
-              <h3 className="text-lg font-semibold orbe-text-primary">
-                {searchQuery.trim() ? 'Resultados da Pesquisa' : 'Em Alta'}
-              </h3>
-              {filteredContent.length > 0 && (
-                <span className="text-sm text-muted-foreground">
-                  {filteredContent.length} {filteredContent.length === 1 ? 'resultado' : 'resultados'}
-                </span>
-              )}
+              <h3 className="text-lg font-semibold orbe-text-primary">{searchQuery.trim() ? 'Resultados da Pesquisa' : 'Em Alta'}</h3>
+              {filteredContent.length > 0 && (<span className="text-sm text-muted-foreground">{filteredContent.length} {filteredContent.length === 1 ? 'resultado' : 'resultados'}</span>)}
             </div>
-
             {isLoading ? (
-              <div className="flex items-center justify-center py-12">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-              </div>
+              <div className="flex items-center justify-center py-12"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div></div>
             ) : filteredContent.length > 0 ? (
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 max-h-[60vh] overflow-y-auto scrollbar-hide">
                 {filteredContent.map((item) => (
-                  <MidiaCard
-                    key={`${item.type}-${item.id}`}
-                    midia={item}
-                    type={item.type}
-                    showCountdown={item.type === 'anime'}
-                    onClick={() => {
-                      // Aqui será implementado o Super Modal
-                      console.log('Abrir Super Modal para:', item);
-                    }}
-                  />
+                  <MidiaCard key={`${item.type}-${item.id}`} midia={item} type={item.type} showCountdown={item.type === 'anime'} onClick={() => console.log('Abrir Super Modal para:', item)} />
                 ))}
               </div>
             ) : searchQuery.trim() ? (
               <div className="text-center py-12">
-                <p className="text-muted-foreground">
-                  Nenhum resultado encontrado para '{searchQuery}'
-                </p>
-                <p className="text-sm text-muted-foreground mt-2">
-                  Tente pesquisar por outro termo ou categoria
-                </p>
+                <p className="text-muted-foreground">Nenhum resultado encontrado para <strong>{searchQuery}</strong></p>
+                <p className="text-sm text-muted-foreground mt-2">Tente pesquisar por outro termo ou categoria</p>
               </div>
             ) : (
-              <div className="text-center py-12">
-                <p className="text-muted-foreground">
-                  Carregando conteúdo em alta...
-                </p>
-              </div>
+              <div className="text-center py-12"><p className="text-muted-foreground">Carregando conteúdo em alta...</p></div>
             )}
           </div>
         </div>
@@ -239,4 +170,3 @@ const SearchOverlay: React.FC = () => {
 };
 
 export default SearchOverlay;
-

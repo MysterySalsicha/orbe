@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Filter, Grid, List, Calendar, Star, TrendingUp } from 'lucide-react';
-import { mockApi } from '@/data/mockData';
+import { realApi } from '@/data/realApi';
 import MidiaCard from '@/components/media/MidiaCard';
 import type { Filme } from '@/types';
 
@@ -30,22 +30,6 @@ export default function FilmesPage() {
     loadFilmes();
   }, []);
 
-  useEffect(() => {
-    applyFilters();
-  }, [applyFilters]);
-
-  const loadFilmes = async () => {
-    setIsLoading(true);
-    try {
-      const data = await mockApi.getFilmes();
-      setFilmes(data);
-    } catch (error) {
-      console.error('Erro ao carregar filmes:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   const applyFilters = useCallback(() => {
     let filtered = [...filmes];
 
@@ -64,15 +48,32 @@ export default function FilmesPage() {
 
     // Filtro por gênero
     if (selectedGenre !== 'todos') {
-      filtered = filtered.filter(filme => 
-        filme.generos?.some(genero => 
-          genero.toLowerCase().includes(selectedGenre.toLowerCase())
-        )
-      );
+      filtered = filtered.filter(filme => {
+        const generos = filme.generos_curados || filme.generos_api;
+        return generos?.some(genero => 
+          genero.name.toLowerCase().includes(selectedGenre.toLowerCase())
+        );
+      });
     }
 
     setFilteredFilmes(filtered);
   }, [filmes, selectedFilter, selectedGenre]);
+
+  useEffect(() => {
+    applyFilters();
+  }, [applyFilters]);
+
+  const loadFilmes = async () => {
+    setIsLoading(true);
+    try {
+      const response = await realApi.getFilmes();
+      setFilmes(response.results);
+    } catch (error) {
+      console.error('Erro ao carregar filmes:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <div className="container mx-auto px-4 py-8">

@@ -11,7 +11,8 @@ import {
   X, 
   Sun, 
   Moon,
-  LogOut
+  LogOut,
+  Heart
 } from 'lucide-react';
 import { useTheme } from '@/hooks/useTheme';
 import { useAppStore } from '@/stores/appStore';
@@ -40,6 +41,7 @@ const Header: React.FC<HeaderProps> = ({
     { href: '/jogos', label: 'Jogos' },
     { href: '/premios', label: 'Premiações' },
     { href: '/hoje', label: 'Hoje' },
+    { href: '/apoie', label: 'Apoie o Projeto', icon: Heart },
   ];
 
   const isActiveLink = (href: string) => {
@@ -90,13 +92,15 @@ const Header: React.FC<HeaderProps> = ({
                 <Link
                   key={link.href}
                   href={link.href}
-                  className={`text-sm font-medium transition-colors hover:text-primary ${
+                  className={`text-sm font-medium transition-colors hover:text-primary flex items-center ${
                     isActiveLink(link.href)
                       ? 'orbe-text-secondary border-b-2 border-primary'
                       : 'orbe-text-primary hover:orbe-text-secondary'
-                  }`}
+                  } ${link.href === '/apoie' ? 'text-rose-500 hover:text-rose-600' : ''}`}
                 >
+                  {link.icon && <link.icon className="mr-1 h-4 w-4" />}
                   {link.label}
+                  {link.href === '/apoie' && <Heart className="ml-1 h-4 w-4 text-rose-500" />}
                 </Link>
               ))}
             </nav>
@@ -218,14 +222,16 @@ const Header: React.FC<HeaderProps> = ({
                 <Link
                   key={link.href}
                   href={link.href}
-                  className={`text-sm font-medium transition-colors px-2 py-1 rounded-md ${
+                  className={`text-sm font-medium transition-colors px-2 py-1 rounded-md flex items-center ${
                     isActiveLink(link.href)
                       ? 'orbe-text-secondary bg-muted'
                       : 'orbe-text-primary hover:orbe-text-secondary hover:bg-muted'
-                  }`}
+                  } ${link.href === '/apoie' ? 'text-rose-500 hover:text-rose-600' : ''}`}
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
+                  {link.icon && <link.icon className="mr-1 h-4 w-4" />}
                   {link.label}
+                  {link.href === '/apoie' && <Heart className="ml-1 h-4 w-4 text-rose-500" />}
                 </Link>
               ))}
               

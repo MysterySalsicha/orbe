@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import Image from 'next/image';
 import { 
   MoreVertical, 
   Heart, 
@@ -144,6 +143,7 @@ const MidiaCard: React.FC<MidiaCardProps> = ({
   ];
 
   const handleCardClick = () => {
+    console.log(`MidiaCard clicked: ID=${midia.id}, Title="${midia.titulo_curado || midia.titulo_api}"`);
     // Remove ícone de "Novo" quando clica no card
     if (hasNewEpisode && userInteraction?.status === 'acompanhando') {
       setHasNewEpisode(false);
@@ -210,6 +210,7 @@ const MidiaCard: React.FC<MidiaCardProps> = ({
       {/* Card Principal */}
       <div 
         className="relative bg-card rounded-lg overflow-hidden shadow-md hover:shadow-lg transition-all duration-300 cursor-pointer hover:scale-105 w-[200px]"
+        data-clickable-card
         onClick={handleCardClick}
         onMouseDown={handleMouseDown}
         onMouseUp={handleMouseUp}
@@ -219,14 +220,13 @@ const MidiaCard: React.FC<MidiaCardProps> = ({
       >
         {/* Container da Imagem */}
         <div className="relative w-[200px] h-[300px] overflow-hidden">
-          <Image
+          <img
             src={midia.poster_curado || midia.poster_url_api}
             alt={midia.titulo_curado || midia.titulo_api}
             width={200}
             height={300}
-            quality={70}
             loading="lazy"
-            className="object-cover object-center transition-transform duration-300 group-hover:scale-105"
+            className="object-cover object-center transition-transform duration-300 group-hover:scale-105 w-full h-full"
             draggable={false}
             onDragStart={(e) => e.preventDefault()}
           />
@@ -400,4 +400,3 @@ const MidiaCard: React.FC<MidiaCardProps> = ({
 };
 
 export default MidiaCard;
-

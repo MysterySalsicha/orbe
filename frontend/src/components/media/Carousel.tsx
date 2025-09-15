@@ -26,8 +26,6 @@ const Carousel = forwardRef<HTMLDivElement, CarouselProps>(({
   onNavigate,
 }, ref) => {
 
-  console.log('onTitleClick prop value:', onTitleClick); // Log the prop value
-
   const localRef = useRef<HTMLDivElement | null>(null);
   const isDownRef = useRef(false);
   const startXRef = useRef(0);
@@ -70,7 +68,7 @@ const Carousel = forwardRef<HTMLDivElement, CarouselProps>(({
     const distance = Math.abs(currentX - startXRef.current);
 
     // If moved beyond a threshold, it's a drag
-    if (distance > 5) { // Threshold of 5 pixels
+    if (distance > 20) { // Increased threshold to 20 pixels
       hasDraggedRef.current = true;
     }
 
@@ -82,6 +80,8 @@ const Carousel = forwardRef<HTMLDivElement, CarouselProps>(({
   };
 
   const handlePointerUp = (e: React.PointerEvent) => {
+    const wasDragged = hasDraggedRef.current; // Capture drag status before resetting
+
     isDownRef.current = false;
     setDragging(false);
     hasDraggedRef.current = false; // Reset hasDragged on pointer up
@@ -90,6 +90,18 @@ const Carousel = forwardRef<HTMLDivElement, CarouselProps>(({
     try {
       el.releasePointerCapture(e.pointerId);
     } catch {}
+
+    // If it was not a drag, manually trigger the MidiaCard's click handler
+    if (!wasDragged) {
+      const elementUnderPointer = document.elementFromPoint(e.clientX, e.clientY) as HTMLElement;
+      const clickableCardElement = elementUnderPointer?.closest('[data-clickable-card]') as HTMLElement;
+      if (clickableCardElement) {
+        clickableCardElement.click(); // Trigger the native click event on the clickable div
+      }
+    } else {
+      // If it was a drag, prevent any lingering click events
+      e.preventDefault();
+    }
   };
 
   useEffect(() => {
@@ -103,6 +115,33 @@ const Carousel = forwardRef<HTMLDivElement, CarouselProps>(({
 
     return () => {
       el.removeEventListener("pointercancel", onCancel);
+    };
+  }, [localRef]);
+
+  useEffect(() => {
+    const el = localRef.current;
+    if (!el) return;
+
+    const handleWheel = (e: WheelEvent) => {
+      // If Shift key is pressed, or if it's a horizontal scroll (e.g., trackpad horizontal gesture)
+      if (e.shiftKey || Math.abs(e.deltaX) > Math.abs(e.deltaY)) {
+        e.preventDefault(); // Prevent default only if we are handling it
+        // Perform horizontal scroll on the carousel
+        el.scrollLeft += e.deltaX + e.deltaY;
+      } else {
+        // If it's a pure vertical scroll (e.deltaY is dominant) and Shift is NOT pressed,
+        // manually scroll the window/document vertically.
+        window.scrollBy({
+          top: e.deltaY,
+          behavior: 'auto' // Use 'auto' for immediate response
+        });
+      }
+    };
+
+    el.addEventListener('wheel', handleWheel, { passive: false });
+
+    return () => {
+      el.removeEventListener('wheel', handleWheel);
     };
   }, [localRef]);
 
@@ -122,10 +161,7 @@ const Carousel = forwardRef<HTMLDivElement, CarouselProps>(({
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <button
-          onClick={() => {
-            console.log('Title button clicked!');
-            onTitleClick?.();
-          }}
+          onClick={() => onTitleClick?.()}
           className="text-2xl font-bold hover:text-primary transition-colors cursor-pointer"
         >
           {title}
@@ -160,23 +196,7 @@ const Carousel = forwardRef<HTMLDivElement, CarouselProps>(({
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
-        onWheel={(e) => {
-          // Always prevent default behavior on the carousel itself
-          e.preventDefault();
-
-          // If Shift key is pressed, or if it's a horizontal scroll (e.g., trackpad horizontal gesture)
-          if (e.shiftKey || Math.abs(e.deltaX) > Math.abs(e.deltaY)) {
-            // Perform horizontal scroll on the carousel
-            e.currentTarget.scrollLeft += e.deltaX + e.deltaY;
-          } else {
-            // If it's a pure vertical scroll (e.deltaY is dominant) and Shift is NOT pressed,
-            // manually scroll the window/document vertically.
-            window.scrollBy({
-              top: e.deltaY,
-              behavior: 'auto' // Use 'auto' for immediate response
-            });
-          }
-        }}
+        
       >
         {items.map((item) => (
           <div
