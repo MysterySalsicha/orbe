@@ -116,6 +116,7 @@ export interface Preferencias {
   tema: 'light' | 'dark' | 'system';
   notificacoes_email: boolean;
   notificacoes_push: boolean;
+  idioma: string;
 }
 
 // Tipos de mídia
