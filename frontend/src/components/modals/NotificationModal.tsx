@@ -8,7 +8,7 @@ import type { Notification } from '@/types';
 
 const NotificationModal: React.FC = () => {
   const { isNotificationModalOpen, closeNotificationModal } = useAppStore();
-  const [notifications, setNotifications] = useState<Notificacao[]>([]);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [filter, setFilter] = useState<'todas' | 'nao_lidas' | 'importantes'>('todas');
 
