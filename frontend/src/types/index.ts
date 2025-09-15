@@ -112,6 +112,12 @@ export interface Jogo extends Midia {
   evento_anuncio_id?: number;
 }
 
+export interface Preferencias {
+  tema: 'light' | 'dark' | 'system';
+  notificacoes_email: boolean;
+  notificacoes_push: boolean;
+}
+
 // Tipos de mídia
 export type TipoMidia = 'filme' | 'serie' | 'anime' | 'jogo';
 
@@ -124,7 +130,7 @@ export interface User {
   role: 'user' | 'admin';
   quer_avaliar: boolean;
   data_criacao: string;
-  preferencias?: any; // Adicionando a propriedade que faltava
+  preferencias?: Preferencias;
 }
 
 // Interface para interações do usuário
