@@ -5,6 +5,7 @@ import { X, Search } from 'lucide-react';
 import { useAppStore } from '@/stores/appStore';
 import MidiaCard from '@/components/media/MidiaCard';
 import type { SearchResult } from '@/types';
+import { mockFilmes, mockSeries, mockAnimes, mockJogos } from '@/data/mockData';
 
 const SearchOverlay: React.FC = () => {
   const { isSearchOpen, closeSearch } = useAppStore();
@@ -44,10 +45,10 @@ const SearchOverlay: React.FC = () => {
       setIsLoading(true);
       try {
         const trending: SearchResult[] = [
-          ...filmes.slice(0, 3).map(item => ({ ...item, type: 'filme' as const })),
-          ...series.slice(0, 3).map(item => ({ ...item, type: 'serie' as const })),
-          ...animes.slice(0, 3).map(item => ({ ...item, type: 'anime' as const })),
-          ...jogos.slice(0, 3).map(item => ({ ...item, type: 'jogo' as const })),
+          ...mockFilmes.slice(0, 3).map(item => ({ ...item, type: 'filme' as const })),
+          ...mockSeries.slice(0, 3).map(item => ({ ...item, type: 'serie' as const })),
+          ...mockAnimes.slice(0, 3).map(item => ({ ...item, type: 'anime' as const })),
+          ...mockJogos.slice(0, 3).map(item => ({ ...item, type: 'jogo' as const })),
         ];
         setTrendingContent(trending);
       } catch (error) {
