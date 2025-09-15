@@ -2,10 +2,10 @@ import React, { useRef, useState, useEffect, forwardRef, useCallback } from "rea
 import MidiaCard from "./MidiaCard";
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
-type Item = { id: string | number };
+import { Filme, Serie, Anime, Jogo } from "@/types";
 
 interface CarouselProps {
-  items: Item[];
+  items: (Filme | Serie | Anime | Jogo)[];
   className?: string;
   type: string;
   title: string;
