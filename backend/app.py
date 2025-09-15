@@ -10,8 +10,8 @@ import hashlib
 import jwt
 
 # Importar a instância do db e os modelos
-from .extensions import db
-from .models import Filme, Serie, Anime, Jogo, Usuario, Notificacao
+from extensions import db
+from models import Filme, Serie, Anime, Jogo, Usuario, Notificacao
 
 app = Flask(__name__)
 
