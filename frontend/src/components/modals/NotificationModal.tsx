@@ -170,7 +170,7 @@ const NotificationModal: React.FC = () => {
                   >
                     <div className="flex items-start gap-3">
                       <div className="flex-shrink-0 mt-1">
-                        {getNotificationIcon(notification.tipo)}
+                        {getNotificationIcon(notification.tipo_notificacao)}
                       </div>
                       
                       <div className="flex-1 min-w-0">
@@ -200,10 +200,6 @@ const NotificationModal: React.FC = () => {
                             </button>
                           </div>
                         </div>
-                        
-                        <p className="text-sm text-muted-foreground mt-1">
-                          {notification.mensagem}
-                        </p>
                         
                         <div className="flex items-center justify-between mt-2">
                           <span className="text-xs text-muted-foreground">
