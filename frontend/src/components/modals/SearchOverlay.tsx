@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo, useCallback } from 'react';
 import { X, Search } from 'lucide-react';
 import { useAppStore } from '@/stores/appStore';
 import MidiaCard from '@/components/media/MidiaCard';
-import type { SearchResultItem } from '@/types';
+import type { SearchResultItem, Filme, Serie, Anime, Jogo } from '@/types';
 import { mockFilmes, mockSeries, mockAnimes, mockJogos } from '@/data/mockData';
 import { realApi } from '@/data/realApi';
 
@@ -31,10 +31,10 @@ const SearchOverlay: React.FC = () => {
     try {
       const results = await realApi.search(query, selectedCategory === 'todos' ? undefined : selectedCategory);
       const flatResults: SearchResultItem[] = [
-        ...results.filmes.map(item => ({ ...item, type: 'filme' as const })),
-        ...results.series.map(item => ({ ...item, type: 'serie' as const })),
-        ...results.animes.map(item => ({ ...item, type: 'anime' as const })),
-        ...results.jogos.map(item => ({ ...item, type: 'jogo' as const })),
+        ...results.filmes.map((item: Filme) => ({ ...item, type: 'filme' as const })),
+        ...results.series.map((item: Serie) => ({ ...item, type: 'serie' as const })),
+        ...results.animes.map((item: Anime) => ({ ...item, type: 'anime' as const })),
+        ...results.jogos.map((item: Jogo) => ({ ...item, type: 'jogo' as const })),
       ];
       setSearchResults(flatResults);
     } catch (error) {
