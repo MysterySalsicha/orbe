@@ -6,7 +6,7 @@ import type { Jogo } from '@/types';
 
 interface JogoModalContentProps {
   jogo: Jogo;
-  openCalendarModal: (data: object) => void;
+  openCalendarModal: (data: { midia: Jogo, type: 'jogo' }) => void;
 }
 
 const JogoModalContent: React.FC<JogoModalContentProps> = ({ jogo, openCalendarModal }) => {
@@ -22,22 +22,22 @@ const JogoModalContent: React.FC<JogoModalContentProps> = ({ jogo, openCalendarM
           </a>
         </Button>
         {jogo.trailer_url_api && (
-          <Button variant="muted" asChild>
+          <Button variant="secondary" asChild>
             <a href={jogo.trailer_url_api} target="_blank" rel="noopener noreferrer">
               <Play className="h-5 w-5 mr-2" />Assistir Trailer
             </a>
           </Button>
         )}
-        <Button variant="muted" onClick={() => openCalendarModal({ midia: jogo, type: 'jogo' })}>
+        <Button variant="secondary" onClick={() => openCalendarModal({ midia: jogo, type: 'jogo' })}>
           <Calendar className="h-5 w-5 mr-2" />Adicionar ao Calendário
         </Button>
       </div>
 
       {/* Sinopse */}
-      {jogo.sinopse && (
+      {(jogo.sinopse_curada || jogo.sinopse_api) && (
         <div>
           <h3 className="text-lg font-semibold orbe-text-secondary mb-2">Sinopse</h3>
-          <p className="text-muted-foreground leading-relaxed">{jogo.sinopse}</p>
+          <p className="text-muted-foreground leading-relaxed">{jogo.sinopse_curada || jogo.sinopse_api}</p>
         </div>
       )}
 

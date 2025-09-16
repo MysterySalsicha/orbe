@@ -4,14 +4,18 @@ import { useState, useEffect, useMemo, useCallback } from 'react';
 import { X, Search } from 'lucide-react';
 import { useAppStore } from '@/stores/appStore';
 import MidiaCard from '@/components/media/MidiaCard';
-import type { SearchResult } from '@/types';
+import type { Filme, Serie, Anime, Jogo } from '@/types';
+import { realApi } from '@/data/realApi';
+
+type DisplayableMedia = (Filme & { type: 'filme' }) | (Serie & { type: 'serie' }) | (Anime & { type: 'anime' }) | (Jogo & { type: 'jogo' });
+
 
 const SearchOverlay: React.FC = () => {
   const { isSearchOpen, closeSearch } = useAppStore();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<'todos' | 'filmes' | 'series' | 'animes' | 'jogos'>('todos');
-  const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
-  const [trendingContent, setTrendingContent] = useState<SearchResult[]>([]);
+  const [searchResults, setSearchResults] = useState<DisplayableMedia[]>([]);
+  const [trendingContent, setTrendingContent] = useState<DisplayableMedia[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
   const categories = [
@@ -26,23 +30,39 @@ const SearchOverlay: React.FC = () => {
 
   const performSearch = useCallback(async (query: string) => {
     setIsLoading(true);
-     catch (error) {
+    try {
+      const results = await realApi.search(query);
+      const flattenedResults: DisplayableMedia[] = [
+        ...results.filmes.map((item: Filme) => ({ ...item, type: 'filme' as const })),
+        ...results.series.map((item: Serie) => ({ ...item, type: 'serie' as const })),
+        ...results.animes.map((item: Anime) => ({ ...item, type: 'anime' as const })),
+        ...results.jogos.map((item: Jogo) => ({ ...item, type: 'jogo' as const })),
+      ];
+      setSearchResults(flattenedResults);
+    } catch (error) {
       console.error('Erro na pesquisa:', error);
       setSearchResults([]);
     } finally {
       setIsLoading(false);
     }
-  }, [selectedCategory]);
+  }, []);
 
   useEffect(() => {
     const loadTrendingContent = async () => {
       setIsLoading(true);
       try {
-        const trending: SearchResult[] = [
-          ...filmes.slice(0, 3).map(item => ({ ...item, type: 'filme' as const })),
-          ...series.slice(0, 3).map(item => ({ ...item, type: 'serie' as const })),
-          ...animes.slice(0, 3).map(item => ({ ...item, type: 'anime' as const })),
-          ...jogos.slice(0, 3).map(item => ({ ...item, type: 'jogo' as const })),
+        const [filmes, series, animes, jogos] = await Promise.all([
+          realApi.getFilmes(),
+          realApi.getSeries(),
+          realApi.getAnimes(),
+          realApi.getJogos(),
+        ]);
+
+        const trending: DisplayableMedia[] = [
+          ...filmes.results.slice(0, 3).map((item: Filme) => ({ ...item, type: 'filme' as const })),
+          ...series.results.slice(0, 3).map((item: Serie) => ({ ...item, type: 'serie' as const })),
+          ...animes.results.slice(0, 3).map((item: Anime) => ({ ...item, type: 'anime' as const })),
+          ...jogos.results.slice(0, 3).map((item: Jogo) => ({ ...item, type: 'jogo' as const })),
         ];
         setTrendingContent(trending);
       } catch (error) {
@@ -141,7 +161,7 @@ const SearchOverlay: React.FC = () => {
             ) : filteredContent.length > 0 ? (
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 max-h-[60vh] overflow-y-auto scrollbar-hide">
                 {filteredContent.map((item) => (
-                  <MidiaCard key={`${item.type}-${item.id}`} midia={item} type={item.type} showCountdown={item.type === 'anime'} onClick={() => console.log('Abrir Super Modal para:', item)} />
+                  <MidiaCard key={`${item.type}-${item.id}`} midia={item} type={item.type} showCountdown={item.type === 'anime'} />
                 ))}
               </div>
             ) : searchQuery.trim() ? (

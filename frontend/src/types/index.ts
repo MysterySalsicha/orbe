@@ -82,6 +82,7 @@ export interface Filme extends Midia {
   escritor: string;
   elenco: CastMember[];
   ingresso_link?: string;
+  link_assistir_agora?: string;
   em_prevenda: boolean;
   em_cartaz?: boolean; // Propriedade adicionada
   ultima_verificacao_ingresso?: string;
@@ -92,6 +93,7 @@ export interface Serie extends Midia {
   numero_episodios: number;
   criadores: string[];
   elenco: CastMember[];
+  link_assistir_agora?: string;
 }
 
 export interface Anime extends Midia {
@@ -103,6 +105,12 @@ export interface Anime extends Midia {
   proximo_episodio?: string;
   numero_episodio_atual?: number;
   eventos_recorrentes_calendario: boolean;
+  tags?: string[];
+  link_assistir_agora?: string;
+  ingresso_link?: string;
+  status?: 'RELEASING' | 'FINISHED' | 'NOT_YET_RELEASED';
+  mal_link?: string;
+  numero_episodios?: number;
 }
 
 export interface Jogo extends Midia {
@@ -152,6 +160,7 @@ export interface Notification {
   midia_id?: number;
   tipo_midia?: TipoMidia;
   titulo: string;
+  mensagem: string;
   tipo_notificacao: 
     | 'NOVO_ITEM' 
     | 'ATUALIZACAO_DATA' 
@@ -160,7 +169,8 @@ export interface Notification {
     | 'VENCEDOR_PREMIO' 
     | 'FALHA_LINK_INGRESSO' 
     | 'LANCAMENTO_FAVORITO';
-  foi_visualizada: boolean;
+  lida: boolean;
+  importante?: boolean;
   data_criacao: string;
 }
 
@@ -265,6 +275,15 @@ export interface CalendarEvent {
   description?: string;
   recurring?: boolean;
   recurrenceRule?: string;
+}
+
+export interface Comentario {
+  id: string;
+  userId: string;
+  username: string;
+  avatar?: string;
+  text: string;
+  timestamp: string;
 }
 
 // Tipos para avaliação

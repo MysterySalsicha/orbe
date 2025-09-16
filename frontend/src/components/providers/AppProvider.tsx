@@ -64,11 +64,7 @@ const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
       {children}
 
       {/* Modais Globais */}
-      <SearchOverlay
-        isOpen={isSearchOpen}
-        onClose={closeSearch}
-        onSearch={handleSearch}
-      />
+      <SearchOverlay />
     </>
   );
 };

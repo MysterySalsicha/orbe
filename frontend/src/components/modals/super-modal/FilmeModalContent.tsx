@@ -4,12 +4,12 @@ import Image from 'next/image';
 import { Play, Calendar, ShoppingCart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { parseISO } from 'date-fns';
-import type { Filme, Elenco } from '@/types';
+import type { Filme, CastMember } from '@/types';
 
 interface FilmeModalContentProps {
   filme: Filme;
-  elenco: Elenco[];
-  openCalendarModal: (data: object) => void;
+  elenco: CastMember[];
+  openCalendarModal: (data: { midia: Filme, type: 'filme' }) => void;
 }
 
 const FilmeModalContent: React.FC<FilmeModalContentProps> = ({ filme, elenco, openCalendarModal }) => {
@@ -31,16 +31,16 @@ const FilmeModalContent: React.FC<FilmeModalContentProps> = ({ filme, elenco, op
             <Play className="h-5 w-5 mr-2" />Assistir Agora
           </a>
         </Button>
-        <Button variant="muted" onClick={() => openCalendarModal({ midia: filme, type: 'filme' })}>
+        <Button variant="secondary" onClick={() => openCalendarModal({ midia: filme, type: 'filme' })}>
           <Calendar className="h-5 w-5 mr-2" />Adicionar ao Calendário
         </Button>
       </div>
 
       {/* Sinopse */}
-      {filme.sinopse && (
+      {(filme.sinopse_curada || filme.sinopse_api) && (
         <div>
           <h3 className="text-lg font-semibold orbe-text-secondary mb-2">Sinopse</h3>
-          <p className="text-muted-foreground leading-relaxed">{filme.sinopse}</p>
+          <p className="text-muted-foreground leading-relaxed">{filme.sinopse_curada || filme.sinopse_api}</p>
         </div>
       )}
 

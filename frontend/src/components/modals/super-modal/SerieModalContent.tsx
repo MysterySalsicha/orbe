@@ -3,12 +3,12 @@
 import Image from 'next/image';
 import { Play, Calendar } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import type { Serie, Elenco } from '@/types';
+import type { Serie, CastMember } from '@/types';
 
 interface SerieModalContentProps {
   serie: Serie;
-  elenco: Elenco[];
-  openCalendarModal: (data: object) => void;
+  elenco: CastMember[];
+  openCalendarModal: (data: { midia: Serie, type: 'serie' }) => void;
 }
 
 const SerieModalContent: React.FC<SerieModalContentProps> = ({ serie, elenco, openCalendarModal }) => {
@@ -23,16 +23,16 @@ const SerieModalContent: React.FC<SerieModalContentProps> = ({ serie, elenco, op
             <Play className="h-5 w-5 mr-2" />Assistir Agora
           </a>
         </Button>
-        <Button variant="muted" onClick={() => openCalendarModal({ midia: serie, type: 'serie' })}>
+        <Button variant="secondary" onClick={() => openCalendarModal({ midia: serie, type: 'serie' })}>
           <Calendar className="h-5 w-5 mr-2" />Adicionar ao Calendário
         </Button>
       </div>
 
       {/* Sinopse */}
-      {serie.sinopse && (
+      {(serie.sinopse_curada || serie.sinopse_api) && (
         <div>
           <h3 className="text-lg font-semibold orbe-text-secondary mb-2">Sinopse</h3>
-          <p className="text-muted-foreground leading-relaxed">{serie.sinopse}</p>
+          <p className="text-muted-foreground leading-relaxed">{serie.sinopse_curada || serie.sinopse_api}</p>
         </div>
       )}
 
