@@ -6,12 +6,12 @@ import { Play, Calendar } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
 import { parseISO } from 'date-fns';
-import type { Anime, StaffMember as Staff, Character as Personagem } from '@/types';
+import type { Anime, StaffMember, Character } from '@/types';
 
 interface AnimeModalContentProps {
   anime: Anime;
-  staff: Staff[];
-  personagens: Personagem[];
+  staff: StaffMember[];
+  personagens: Character[];
   openCalendarModal: (data: object) => void;
 }
 

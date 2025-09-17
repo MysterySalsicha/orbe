@@ -30,39 +30,14 @@ import AnimeModalContent from './super-modal/AnimeModalContent';
 import FilmeModalContent from './super-modal/FilmeModalContent';
 import SerieModalContent from './super-modal/SerieModalContent';
 import JogoModalContent from './super-modal/JogoModalContent';
-import type { Filme, Serie, Jogo, CastMember, StaffMember, Plataforma, Comentario } from '@/types';
-
-// Define Staff como um alias para StaffMember para corrigir o erro de tipo
-type Staff = StaffMember;
-
-// Tipos locais para o SuperModal
-interface Personagem {
-  id: string;
-  nome: string;
-  imagem?: string;
-  dubladores?: {
-    jp?: { nome: string; foto_url?: string; };
-    pt_br?: { nome: string; foto_url?: string; };
-  };
-}
-
-interface Anime extends Serie {
-  fonte?: string;
-  estudio?: string;
-  dublagem_info?: string;
-  mal_link?: string;
-  tags?: string[];
-  status?: 'RELEASING' | 'FINISHED' | 'NOT_YET_RELEASED';
-  staff?: Staff[];
-  personagens?: Personagem[];
-}
+import type { Filme, Serie, Jogo, Anime, Character, CastMember, StaffMember, Plataforma, Comentario } from '@/types';
 
 const SuperModal: React.FC = () => {
   const { isSuperModalOpen, superModalData, closeSuperModal, isAuthenticated, user, openCalendarModal, closeCalendarModal, isCalendarModalOpen } = useAppStore();
   
   const [elenco, setElenco] = useState<CastMember[]>([]);
   const [staff, setStaff] = useState<StaffMember[]>([]);
-  const [personagens, setPersonagens] = useState<Personagem[]>([]);
+  const [personagens, setPersonagens] = useState<Character[]>([]);
   const [comentarios, setComentarios] = useState<Comentario[]>([]);
   const [newComment, setNewComment] = useState('');
   const [isEditMode, setIsEditMode] = useState(false);
