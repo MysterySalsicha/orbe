@@ -12,7 +12,7 @@ interface AnimeModalContentProps {
   anime: Anime;
   staff: StaffMember[];
   personagens: Character[];
-  openCalendarModal: (data: object) => void;
+  openCalendarModal: (data: { midia: Anime; type: 'anime'; eventType: 'premiere' | 'recurring' }) => void;
 }
 
 const AnimeModalContent: React.FC<AnimeModalContentProps> = ({ anime, staff, personagens, openCalendarModal }) => {

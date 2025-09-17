@@ -32,6 +32,7 @@ interface AppState {
   calendarModalData: {
     midia: Filme | Serie | Anime | Jogo | null;
     type: 'filme' | 'serie' | 'anime' | 'jogo' | null;
+    eventType?: 'premiere' | 'recurring';
   };
   currentDetailModal: {
     isOpen: boolean;
@@ -65,7 +66,7 @@ interface AppState {
   closeSuperModal: () => void;
   openRatingModal: (midia: Filme | Serie | Anime | Jogo, type: 'filme' | 'serie' | 'anime' | 'jogo', action: 'ja_assisti' | 'ja_joguei') => void;
   closeRatingModal: () => void;
-  openCalendarModal: (data: { midia: Filme | Serie | Anime | Jogo | null; type: 'filme' | 'serie' | 'anime' | 'jogo' | null; }) => void;
+  openCalendarModal: (data: { midia: Filme | Serie | Anime | Jogo | null; type: 'filme' | 'serie' | 'anime' | 'jogo' | null; eventType?: 'premiere' | 'recurring' }) => void;
   closeCalendarModal: () => void;
   openDetailModal: (midia: Filme | Serie | Anime | Jogo, type: string) => void;
   closeDetailModal: () => void;
@@ -209,7 +210,7 @@ export const useAppStore = create<AppState>()(
       closeCalendarModal: () => {
         set({ 
           isCalendarModalOpen: false,
-          calendarModalData: { midia: null, type: null }
+          calendarModalData: { midia: null, type: null, eventType: undefined }
         });
       },
       
@@ -233,4 +234,3 @@ export const useAppStore = create<AppState>()(
     }
   )
 );
-
