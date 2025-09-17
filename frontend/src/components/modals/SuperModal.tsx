@@ -30,36 +30,14 @@ import AnimeModalContent from './super-modal/AnimeModalContent';
 import FilmeModalContent from './super-modal/FilmeModalContent';
 import SerieModalContent from './super-modal/SerieModalContent';
 import JogoModalContent from './super-modal/JogoModalContent';
-import type { Filme, Serie, Jogo, CastMember, StaffMember, Plataforma, Comentario } from '@/types';
-
-// Tipos locais para o SuperModal
-interface Personagem {
-  id: string;
-  nome: string;
-  imagem?: string;
-  dubladores?: {
-    jp?: { nome: string; foto_url?: string; };
-    pt_br?: { nome: string; foto_url?: string; };
-  };
-}
-
-interface Anime extends Serie {
-  fonte?: string;
-  estudio?: string;
-  dublagem_info?: string;
-  mal_link?: string;
-  tags?: string[];
-  status?: 'RELEASING' | 'FINISHED' | 'NOT_YET_RELEASED';
-  staff?: Staff[];
-  personagens?: Personagem[];
-}
+import type { Filme, Serie, Jogo, Anime, Character, CastMember, StaffMember, Plataforma, Comentario } from '@/types';
 
 const SuperModal: React.FC = () => {
   const { isSuperModalOpen, superModalData, closeSuperModal, isAuthenticated, user, openCalendarModal, closeCalendarModal, isCalendarModalOpen } = useAppStore();
   
   const [elenco, setElenco] = useState<CastMember[]>([]);
   const [staff, setStaff] = useState<StaffMember[]>([]);
-  const [personagens, setPersonagens] = useState<Personagem[]>([]);
+  const [personagens, setPersonagens] = useState<Character[]>([]);
   const [comentarios, setComentarios] = useState<Comentario[]>([]);
   const [newComment, setNewComment] = useState('');
   const [isEditMode, setIsEditMode] = useState(false);
@@ -107,8 +85,14 @@ const SuperModal: React.FC = () => {
   const loadComments = async () => {
     if (!midia) return;
     try {
+      // Mock data, to be replaced with API call
       setComentarios([
-        { id: '1', userId: 'user1', username: 'João Silva', avatar: '/placeholder-avatar.jpg', text: 'Ótimo!', timestamp: '2024-07-21T10:00:00Z' },
+        {
+          id: 1,
+          usuario: { id: 1, nome: 'João Silva', avatar_url: '/placeholder-avatar.jpg' },
+          texto: 'Ótimo!',
+          data_criacao: '2024-07-21T10:00:00Z'
+        },
       ]);
     } catch (error) {
       console.error('Erro ao carregar comentários:', error);
@@ -118,10 +102,14 @@ const SuperModal: React.FC = () => {
   const handlePostComment = async () => {
     if (!newComment.trim() || !midia) return;
     const commentToAdd: Comentario = {
-      id: String(comentarios.length + 1),
-      userId: 'currentUser', username: 'Você', avatar: '/placeholder-avatar.jpg',
-      text: newComment.trim(),
-      timestamp: new Date().toISOString(),
+      id: Date.now(), // Usando timestamp como ID para mock
+      usuario: {
+        id: user?.id || 0,
+        nome: user?.nome || 'Você',
+        avatar_url: user?.avatar || '/placeholder-avatar.jpg'
+      },
+      texto: newComment.trim(),
+      data_criacao: new Date().toISOString(),
     };
     setComentarios((prev) => [commentToAdd, ...prev]);
     setNewComment('');
