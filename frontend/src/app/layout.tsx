@@ -4,7 +4,7 @@ import "./globals.css";
 import AppProvider from "@/components/providers/AppProvider";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
-import ModalManager from "@/components/modals/ModalManager"; // Using ModalManager
+import ModalManager from "@/components/modals/ModalManager.tsx"; // Explicitly add .tsx extension // Using ModalManager
 
 // Removed font configurations
 // const geistSans = Geist({
