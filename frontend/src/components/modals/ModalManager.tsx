@@ -34,20 +34,8 @@ const ModalManager: React.FC = () => {
     <>
       <SearchOverlay /> {/* Removed props */}
       <SuperModal />
-      <NotificationModal 
-        isOpen={isNotificationModalOpen}
-        onClose={closeNotificationModal}
-        notifications={notifications}
-        onMarkAsRead={markNotificationAsRead}
-        onNotificationClick={handleNotificationClick}
-      />
-      <RatingModal 
-        isOpen={isRatingModalOpen}
-        midia={ratingModalData.midia}
-        type={ratingModalData.type}
-        onClose={closeRatingModal}
-        onSubmit={() => {}} // Placeholder, actual logic might be in RatingModalWrapper
-      />
+      <NotificationModal /> {/* Removed props */}
+      <RatingModal />
     </>
   );
 };
