@@ -6,7 +6,7 @@ import { Play, Calendar } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
 import { parseISO } from 'date-fns';
-import type { Anime, Staff, Personagem } from '@/types';
+import type { Anime, StaffMember as Staff, Character as Personagem } from '@/types';
 
 interface AnimeModalContentProps {
   anime: Anime;
