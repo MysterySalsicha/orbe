@@ -103,6 +103,7 @@ export interface Anime extends Midia {
   proximo_episodio?: string;
   numero_episodio_atual?: number;
   eventos_recorrentes_calendario?: boolean;
+  tags?: string[];
 }
 
 export interface Jogo extends Midia {
