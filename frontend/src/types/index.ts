@@ -36,7 +36,7 @@ export interface Character {
       nome: string;
       foto_url?: string;
     };
-    pt_br?: {
+    ptBR?: {
       nome: string;
       foto_url?: string;
     };

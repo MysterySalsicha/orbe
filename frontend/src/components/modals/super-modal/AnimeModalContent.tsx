@@ -17,12 +17,12 @@ interface AnimeModalContentProps {
 
 const AnimeModalContent: React.FC<AnimeModalContentProps> = ({ anime, staff, personagens, openCalendarModal }) => {
   const [isSynopsisExpanded, setIsSynopsisExpanded] = useState(false);
-  const [selectedDubbing, setSelectedDubbing] = useState<'jp' | 'pt-br'>('jp');
+  const [selectedDubbing, setSelectedDubbing] = useState<'jp' | 'ptBR'>('jp');
 
   const isAvailableToWatchNow = anime.trailer_url_api; // Assuming this is the logic
   const hasLaunched = anime.data_lancamento_curada ? parseISO(anime.data_lancamento_curada) <= new Date() : false;
   const isAiring = hasLaunched && anime.status !== 'FINISHED';
-  const hasPtBrDub = personagens.some(p => p.dubladores?.pt_br?.nome);
+  const hasPtBrDub = personagens.some(p => p.dubladores?.ptBR?.nome);
 
   return (
     <div className="space-y-6">
@@ -107,7 +107,7 @@ const AnimeModalContent: React.FC<AnimeModalContentProps> = ({ anime, staff, per
                 JP
               </button>
               {hasPtBrDub && (
-                <button onClick={() => setSelectedDubbing('pt-br')} className={`px-3 py-1 rounded text-sm transition-colors ${selectedDubbing === 'pt-br' ? 'bg-primary text-primary-foreground' : 'text-foreground hover:bg-muted/80'}`}>
+                <button onClick={() => setSelectedDubbing('ptBR')} className={`px-3 py-1 rounded text-sm transition-colors ${selectedDubbing === 'ptBR' ? 'bg-primary text-primary-foreground' : 'text-foreground hover:bg-muted/80'}`}>
                   PT-BR
                 </button>
               )}
