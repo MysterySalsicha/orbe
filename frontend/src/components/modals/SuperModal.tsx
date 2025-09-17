@@ -50,7 +50,7 @@ interface Anime extends Serie {
   mal_link?: string;
   tags?: string[];
   status?: 'RELEASING' | 'FINISHED' | 'NOT_YET_RELEASED';
-  staff?: Staff[];
+  staff?: StaffMember[];
   personagens?: Personagem[];
 }
 
@@ -84,13 +84,7 @@ const SuperModal: React.FC = () => {
 
   const { midia, type } = superModalData;
 
-  useEffect(() => {
-    if (isSuperModalOpen && midia) {
-      loadAdditionalData();
-    }
-  }, [isSuperModalOpen, midia]);
-
-  const loadAdditionalData = async () => {
+  const loadAdditionalData = useCallback(async () => {
     if (!midia || !type) return;
     try {
       if (type === 'filme') setElenco((midia as Filme).elenco || []);
@@ -102,7 +96,13 @@ const SuperModal: React.FC = () => {
     } catch (error) {
       console.error('Erro ao carregar dados adicionais:', error);
     }
-  };
+  }, [midia, type]);
+
+  useEffect(() => {
+    if (isSuperModalOpen && midia) {
+      loadAdditionalData();
+    }
+  }, [isSuperModalOpen, midia, loadAdditionalData]);
 
   const loadComments = async () => {
     if (!midia) return;
