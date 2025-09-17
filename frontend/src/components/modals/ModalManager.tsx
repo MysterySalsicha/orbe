@@ -5,19 +5,16 @@ import SearchOverlay from './SearchOverlay';
 import SuperModal from './SuperModal';
 import NotificationModal from './NotificationModal';
 import RatingModal from './RatingModalWrapper';
+import type { Notification } from '@/types'; // Import Notification type
 
 const ModalManager: React.FC = () => {
   const { 
     isSearchOpen, 
     closeSearch, 
-    openSearch, 
     isNotificationModalOpen, 
     closeNotificationModal, 
     notifications, 
     markNotificationAsRead, 
-    isSuperModalOpen, 
-    superModalData, 
-    closeSuperModal, 
     isRatingModalOpen, 
     ratingModalData, 
     closeRatingModal 
@@ -28,26 +25,16 @@ const ModalManager: React.FC = () => {
     console.log('Search query:', query);
   };
 
-  const handleNotificationClick = (notification: any) => {
+  const handleNotificationClick = (notification: Notification) => { // Fixed 'any' type
     // Implement notification click logic here
     console.log('Notification clicked:', notification);
   };
 
   return (
     <>
-      <SearchOverlay
-        isOpen={isSearchOpen}
-        onClose={closeSearch}
-        onSearch={handleSearch}
-      />
+      <SearchOverlay /> {/* Removed props */}
       <SuperModal />
-      <NotificationModal 
-        isOpen={isNotificationModalOpen}
-        onClose={closeNotificationModal}
-        notifications={notifications}
-        onMarkAsRead={markNotificationAsRead}
-        onNotificationClick={handleNotificationClick}
-      />
+      <NotificationModal /> {/* Removed props */}
       <RatingModal 
         isOpen={isRatingModalOpen}
         midia={ratingModalData.midia}

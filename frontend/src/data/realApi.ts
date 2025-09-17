@@ -285,7 +285,7 @@ export const realApi = {
   },
 
   // Pesquisa
-  search: async (query: string, type?: string, page: number = 1) => {
+  search: async (query: string, type?: string, page: number = 1): Promise<{ filmes: Filme[]; series: Serie[]; animes: Anime[]; jogos: Jogo[]; total: number; }> => {
     try {
       const response = await orbeNerdApi.search(query, type, page);
       
