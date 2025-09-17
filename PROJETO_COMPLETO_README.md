@@ -125,38 +125,44 @@ orbe-nerd/
 
 ## 🔧 Como Executar
 
+**Importante**: Todos os comandos devem ser executados a partir do diretório raiz do projeto (`orbe-nerd/`).
+
 ### 1. Backend (Flask)
 
 ```bash
-# Navegar para o diretório backend
+# Navegar para o diretório do backend para instalar dependências
 cd backend
 
-# Criar ambiente virtual
+# Criar e ativar ambiente virtual
 python3.11 -m venv venv
 source venv/bin/activate
 
 # Instalar dependências
 pip install -r requirements.txt
 
-# Configurar banco de dados PostgreSQL
-sudo service postgresql start
-sudo -u postgres psql -c "ALTER USER postgres WITH PASSWORD 'admin2011';"
-sudo -u postgres psql -c "CREATE DATABASE orbe_nerd_db;"
+# Voltar para o diretório raiz
+cd ..
 
-# Executar aplicação
-python app.py
+# Configurar banco de dados PostgreSQL (exemplo para Linux)
+# sudo service postgresql start
+# sudo -u postgres psql -c "ALTER USER postgres WITH PASSWORD 'admin2011';"
+# sudo -u postgres psql -c "CREATE DATABASE orbe_nerd_db;"
+# NOTA: Certifique-se que sua DATABASE_URL no arquivo .env corresponde à sua configuração.
+
+# Executar o servidor de desenvolvimento do backend
+python -m backend.app
 ```
 
 ### 2. Frontend (Next.js)
 
 ```bash
-# Navegar para o diretório frontend
-cd orbe-nerd-frontend
+# Navegar para o diretório do frontend
+cd frontend
 
 # Instalar dependências
 npm install
 
-# Executar em desenvolvimento
+# Executar o servidor de desenvolvimento do frontend
 npm run dev
 ```
 
