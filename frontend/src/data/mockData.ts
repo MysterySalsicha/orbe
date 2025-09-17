@@ -140,7 +140,14 @@ export const mockAnimes: Anime[] = [
     ],
     proximo_episodio: "2024-09-10T15:00:00Z",
     numero_episodio_atual: 12,
-    eventos_recorrentes_calendario: true
+    eventos_recorrentes_calendario: true,
+    numero_temporadas: 4,
+    numero_episodios: 55,
+    criadores: ["Koyoharu Gotouge"],
+    elenco: [
+      { id: 101, nome: "Natsuki Hanae", personagem: "Tanjiro Kamado", foto_url: "https://example.com/tanjiro.jpg" },
+      { id: 102, nome: "Akari Kito", personagem: "Nezuko Kamado", foto_url: "https://example.com/nezuko.jpg" }
+    ]
   },
   {
     id: 2,
@@ -172,7 +179,14 @@ export const mockAnimes: Anime[] = [
         }
       }
     ],
-    eventos_recorrentes_calendario: false
+    eventos_recorrentes_calendario: false,
+    numero_temporadas: 4,
+    numero_episodios: 88,
+    criadores: ["Hajime Isayama"],
+    elenco: [
+      { id: 103, nome: "Yuki Kaji", personagem: "Eren Yeager", foto_url: "https://example.com/eren.jpg" },
+      { id: 104, nome: "Yui Ishikawa", personagem: "Mikasa Ackerman", foto_url: "https://example.com/mikasa.jpg" }
+    ]
   }
 ];
 
