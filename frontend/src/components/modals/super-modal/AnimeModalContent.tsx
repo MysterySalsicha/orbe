@@ -19,7 +19,7 @@ const AnimeModalContent: React.FC<AnimeModalContentProps> = ({ anime, staff, per
   const [isSynopsisExpanded, setIsSynopsisExpanded] = useState(false);
   const [selectedDubbing, setSelectedDubbing] = useState<'jp' | 'ptBR'>('jp');
 
-  const isAvailableToWatchNow = anime.trailer_url_api; // Assuming this is the logic
+  const isAvailableToWatchNow = anime.link_assistir_agora;
   const hasLaunched = anime.data_lancamento_curada ? parseISO(anime.data_lancamento_curada) <= new Date() : false;
   const isAiring = hasLaunched && anime.status !== 'FINISHED';
   const hasPtBrDub = personagens.some(p => p.dubladores?.ptBR?.nome);

@@ -73,6 +73,7 @@ export interface Midia {
   trailer_url_curado?: string;
   trailer_url_api?: string;
   avaliacao?: number; // Propriedade adicionada
+  link_assistir_agora?: string;
 }
 
 // Interfaces específicas por tipo de mídia
