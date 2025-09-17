@@ -2,11 +2,11 @@
 
 import { Play, Calendar, ShoppingCart, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import type { Jogo } from '@/types';
+import type { Jogo, CalendarModalData } from '@/types';
 
 interface JogoModalContentProps {
   jogo: Jogo;
-  openCalendarModal: (data: object) => void;
+  openCalendarModal: (data: CalendarModalData) => void;
 }
 
 const JogoModalContent: React.FC<JogoModalContentProps> = ({ jogo, openCalendarModal }) => {

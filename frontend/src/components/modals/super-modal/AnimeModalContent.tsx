@@ -6,13 +6,7 @@ import { Play, Calendar } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
 import { parseISO } from 'date-fns';
-import type { Anime, StaffMember, Character, Midia, TipoMidia } from '@/types';
-
-interface CalendarModalData {
-  midia: Midia;
-  type: TipoMidia;
-  eventType: 'premiere' | 'recurring';
-}
+import type { Anime, StaffMember, Character, CalendarModalData } from '@/types';
 
 interface AnimeModalContentProps {
   anime: Anime;

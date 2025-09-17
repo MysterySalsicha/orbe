@@ -275,6 +275,12 @@ export type SearchResultItem = (Filme & { type: 'filme' }) | (Serie & { type: 's
 export type Theme = 'light' | 'dark' | 'system';
 
 // Tipos para calendário
+export interface CalendarModalData {
+  midia: Midia | null;
+  type: TipoMidia | null;
+  eventType?: 'premiere' | 'recurring' | 'ticket';
+}
+
 export interface CalendarEvent {
   title: string;
   start: Date;
