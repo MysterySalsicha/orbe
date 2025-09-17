@@ -104,6 +104,8 @@ export interface Anime extends Midia {
   numero_episodio_atual?: number;
   eventos_recorrentes_calendario: boolean;
   mal_link?: string;
+  tags?: string[];
+  status?: 'RELEASING' | 'FINISHED' | 'NOT_YET_RELEASED';
 }
 
 export interface Jogo extends Midia {
