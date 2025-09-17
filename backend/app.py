@@ -22,16 +22,8 @@ app.config["SECRET_KEY"] = "orbe_nerd_secret_key_2025"
 
 # Inicializar extensões
 db.init_app(app)
-# Configuração de CORS para permitir múltiplas origens
-origins = [
-    "http://localhost:3000",
-    "http://localhost:3001",
-    "https://orbe-nerd.vercel.app",
-    "https://orbe-seven.vercel.app"
-    # Adicione aqui a URL do seu deploy de preview da Vercel se necessário
-    # Ex: r"https://orbe-nerd-.*-igor-santos-projects.vercel.app"
-]
-CORS(app, origins=origins, supports_credentials=True)
+# Configuração de CORS para permitir múltiplas origens (temporariamente aberto para depuração)
+CORS(app, origins="*", supports_credentials=True)
 
 # Funções auxiliares de autenticação
 def hash_password(password):
