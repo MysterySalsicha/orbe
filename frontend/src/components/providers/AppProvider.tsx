@@ -5,7 +5,7 @@ import Header from '@/components/layout/Header';
 import SearchOverlay from '@/components/modals/SearchOverlay';
 import { useAppStore } from '@/stores/appStore';
 import { useTheme } from '@/hooks/useTheme';
-import { mockApi, mockUser, mockNotifications } from '@/data/mockData';
+import { realApi } from '@/data/realApi'; // Use realApi
 
 interface AppProviderProps {
   children: React.ReactNode;
@@ -13,8 +13,6 @@ interface AppProviderProps {
 
 const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
   const { 
-    isSearchOpen, 
-    closeSearch, 
     unreadCount,
     setNotifications,
     setUser,
@@ -32,10 +30,20 @@ const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
         const isLoggedIn = localStorage.getItem('orbe-nerd-auth') === 'true';
         
         if (isLoggedIn) {
-          setUser(mockUser);
+          // setUser(mockUser); // Removed mockUser
+          // For now, set a dummy user if authenticated, or fetch from real API
+          setUser({
+            id: 1,
+            nome: "Usuário Teste",
+            email: "teste@example.com",
+            avatar: null,
+            role: "user",
+            quer_avaliar: true,
+            data_criacao: new Date().toISOString(),
+          });
           
           // Carrega notificações do usuário
-          const notifications = await mockApi.getNotifications();
+          const notifications = await realApi.getNotifications(); // Use realApi
           setNotifications(notifications);
         }
       } catch (error) {
@@ -54,7 +62,15 @@ const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     <>
       {/* Header Global */}
       <Header
-        user={isAuthenticated ? mockUser : null}
+        user={isAuthenticated ? {
+          id: 1,
+          nome: "Usuário Teste",
+          email: "teste@example.com",
+          avatar: null,
+          role: "user",
+          quer_avaliar: true,
+          data_criacao: new Date().toISOString(),
+        } : null} // Removed mockUser
         notificationCount={unreadCount}
         onSearch={handleSearch}
         onThemeToggle={toggleTheme}
@@ -64,7 +80,7 @@ const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
       {children}
 
       {/* Modais Globais */}
-      <SearchOverlay /> {/* Removed props */}
+      <SearchOverlay />
     </>
   );
 };

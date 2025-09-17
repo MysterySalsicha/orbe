@@ -4,16 +4,16 @@ import { useState, useEffect, useMemo, useCallback } from 'react';
 import { X, Search } from 'lucide-react';
 import { useAppStore } from '@/stores/appStore';
 import MidiaCard from '@/components/media/MidiaCard';
-import type { SearchResultItem, Filme, Serie, Anime, Jogo } from '@/types'; // Removed SearchOverlayProps
-import { mockFilmes, mockSeries, mockAnimes, mockJogos } from '@/data/mockData';
+import type { SearchResultItem, Filme, Serie, Anime, Jogo } from '@/types';
+// Removed mockFilmes, mockSeries, mockAnimes, mockJogos
 import { realApi } from '@/data/realApi';
 
-const SearchOverlay: React.FC = () => { // Removed props
+const SearchOverlay: React.FC = () => {
   const { isSearchOpen, closeSearch } = useAppStore();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<'todos' | 'filmes' | 'series' | 'animes' | 'jogos'>('todos');
   const [searchResults, setSearchResults] = useState<SearchResultItem[]>([]);
-  const [trendingContent, setTrendingContent] = useState<SearchResultItem[]>([]);
+  // Removed trendingContent state
   const [isLoading, setIsLoading] = useState(false);
 
   const categories = [
@@ -45,28 +45,7 @@ const SearchOverlay: React.FC = () => { // Removed props
     }
   }, [selectedCategory]);
 
-  useEffect(() => {
-    const loadTrendingContent = async () => {
-      setIsLoading(true);
-      try {
-        const trending: SearchResultItem[] = [
-          ...mockFilmes.slice(0, 3).map(item => ({ ...item, type: 'filme' as const })),
-          ...mockSeries.slice(0, 3).map(item => ({ ...item, type: 'serie' as const })),
-          ...mockAnimes.slice(0, 3).map(item => ({ ...item, type: 'anime' as const })),
-          ...mockJogos.slice(0, 3).map(item => ({ ...item, type: 'jogo' as const })),
-        ];
-        setTrendingContent(trending);
-      } catch (error) {
-        console.error('Erro ao carregar conteúdo em alta:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    if (isSearchOpen && trendingContent.length === 0) {
-      loadTrendingContent();
-    }
-  }, [isSearchOpen, trendingContent.length]);
+  // Removed useEffect for loadTrendingContent
 
   useEffect(() => {
     const handler = setTimeout(() => {
@@ -84,6 +63,7 @@ const SearchOverlay: React.FC = () => { // Removed props
 
   const handlePopularSearchClick = (searchTerm: string) => {
     setSearchQuery(searchTerm);
+    performSearch(searchTerm); // Added this to trigger search on popular search click
   };
 
   const handleClose = () => {
@@ -94,9 +74,9 @@ const SearchOverlay: React.FC = () => { // Removed props
   };
 
   const displayContent = useMemo(() => {
-    if (searchQuery.trim()) return searchResults;
-    return trendingContent;
-  }, [searchQuery, searchResults, trendingContent]);
+    // Removed trendingContent from here
+    return searchResults;
+  }, [searchResults]);
 
   const filteredContent = useMemo(() => {
     if (selectedCategory === 'todos') return displayContent;
