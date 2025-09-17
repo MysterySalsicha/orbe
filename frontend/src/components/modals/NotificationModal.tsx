@@ -33,14 +33,14 @@ const NotificationModal: React.FC = () => {
   const markAsRead = async (id: number) => {
     setNotifications(prev =>
       prev.map(notif =>
-        notif.id === id ? { ...notif, lida: true } : notif
+        notif.id === id ? { ...notif, foi_visualizada: true } : notif
       )
     );
   };
 
   const markAllAsRead = async () => {
     setNotifications(prev =>
-      prev.map(notif => ({ ...notif, lida: true }))
+      prev.map(notif => ({ ...notif, foi_visualizada: true }))
     );
   };
 
@@ -64,7 +64,7 @@ const NotificationModal: React.FC = () => {
   const filteredNotifications = notifications.filter(notif => {
     switch (filter) {
       case 'nao_lidas':
-        return !notif.lida;
+        return !notif.foi_visualizada;
       case 'importantes':
         return notif.importante;
       default:
@@ -72,7 +72,7 @@ const NotificationModal: React.FC = () => {
     }
   });
 
-  const unreadCount = notifications.filter(n => !n.lida).length;
+  const unreadCount = notifications.filter(n => !n.foi_visualizada).length;
 
   if (!isNotificationModalOpen) return null;
 
@@ -165,24 +165,24 @@ const NotificationModal: React.FC = () => {
                   <div
                     key={notification.id}
                     className={`p-4 hover:bg-muted/50 transition-colors ${
-                      !notification.lida ? 'bg-muted/30' : ''
+                      !notification.foi_visualizada ? 'bg-muted/30' : ''
                     }`}
                   >
                     <div className="flex items-start gap-3">
                       <div className="flex-shrink-0 mt-1">
-                        {getNotificationIcon(notification.tipo)}
+                        {getNotificationIcon(notification.tipo_notificacao)}
                       </div>
                       
                       <div className="flex-1 min-w-0">
                         <div className="flex items-start justify-between gap-2">
                           <h3 className={`text-sm font-medium ${
-                            !notification.lida ? 'orbe-text-primary' : 'text-muted-foreground'
+                            !notification.foi_visualizada ? 'orbe-text-primary' : 'text-muted-foreground'
                           }`}>
                             {notification.titulo}
                           </h3>
                           
                           <div className="flex items-center gap-1">
-                            {!notification.lida && (
+                            {!notification.foi_visualizada && (
                               <button
                                 onClick={() => markAsRead(notification.id)}
                                 className="p-1 hover:bg-muted rounded transition-colors"
@@ -200,10 +200,6 @@ const NotificationModal: React.FC = () => {
                             </button>
                           </div>
                         </div>
-                        
-                        <p className="text-sm text-muted-foreground mt-1">
-                          {notification.mensagem}
-                        </p>
                         
                         <div className="flex items-center justify-between mt-2">
                           <span className="text-xs text-muted-foreground">

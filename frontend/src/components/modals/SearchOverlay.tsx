@@ -4,14 +4,16 @@ import { useState, useEffect, useMemo, useCallback } from 'react';
 import { X, Search } from 'lucide-react';
 import { useAppStore } from '@/stores/appStore';
 import MidiaCard from '@/components/media/MidiaCard';
-import type { SearchResult } from '@/types';
+import type { SearchResultItem, Filme, Serie, Anime, Jogo } from '@/types';
+import { mockFilmes, mockSeries, mockAnimes, mockJogos } from '@/data/mockData';
+import { realApi } from '@/data/realApi';
 
 const SearchOverlay: React.FC = () => {
   const { isSearchOpen, closeSearch } = useAppStore();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<'todos' | 'filmes' | 'series' | 'animes' | 'jogos'>('todos');
-  const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
-  const [trendingContent, setTrendingContent] = useState<SearchResult[]>([]);
+  const [searchResults, setSearchResults] = useState<SearchResultItem[]>([]);
+  const [trendingContent, setTrendingContent] = useState<SearchResultItem[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
   const categories = [
@@ -26,7 +28,16 @@ const SearchOverlay: React.FC = () => {
 
   const performSearch = useCallback(async (query: string) => {
     setIsLoading(true);
-     catch (error) {
+    try {
+      const results = await realApi.search(query, selectedCategory === 'todos' ? undefined : selectedCategory);
+      const flatResults: SearchResultItem[] = [
+        ...results.filmes.map((item: Filme) => ({ ...item, type: 'filme' as const })),
+        ...results.series.map((item: Serie) => ({ ...item, type: 'serie' as const })),
+        ...results.animes.map((item: Anime) => ({ ...item, type: 'anime' as const })),
+        ...results.jogos.map((item: Jogo) => ({ ...item, type: 'jogo' as const })),
+      ];
+      setSearchResults(flatResults);
+    } catch (error) {
       console.error('Erro na pesquisa:', error);
       setSearchResults([]);
     } finally {
@@ -38,11 +49,11 @@ const SearchOverlay: React.FC = () => {
     const loadTrendingContent = async () => {
       setIsLoading(true);
       try {
-        const trending: SearchResult[] = [
-          ...filmes.slice(0, 3).map(item => ({ ...item, type: 'filme' as const })),
-          ...series.slice(0, 3).map(item => ({ ...item, type: 'serie' as const })),
-          ...animes.slice(0, 3).map(item => ({ ...item, type: 'anime' as const })),
-          ...jogos.slice(0, 3).map(item => ({ ...item, type: 'jogo' as const })),
+        const trending: SearchResultItem[] = [
+          ...mockFilmes.slice(0, 3).map(item => ({ ...item, type: 'filme' as const })),
+          ...mockSeries.slice(0, 3).map(item => ({ ...item, type: 'serie' as const })),
+          ...mockAnimes.slice(0, 3).map(item => ({ ...item, type: 'anime' as const })),
+          ...mockJogos.slice(0, 3).map(item => ({ ...item, type: 'jogo' as const })),
         ];
         setTrendingContent(trending);
       } catch (error) {

@@ -145,6 +145,19 @@ export interface UserInteraction {
   data_interacao: string;
 }
 
+// Interface para comentários
+export interface Comentario {
+  id: number;
+  usuario: {
+    id: number;
+    nome: string;
+    avatar_url?: string;
+  };
+  texto: string;
+  data_criacao: string;
+  respostas?: Comentario[];
+}
+
 // Interface para notificações
 export interface Notification {
   id: number;
@@ -162,6 +175,7 @@ export interface Notification {
     | 'LANCAMENTO_FAVORITO';
   foi_visualizada: boolean;
   data_criacao: string;
+  importante?: boolean;
 }
 
 // Interface para eventos de anúncio
@@ -178,6 +192,7 @@ export interface MidiaCardProps {
   showCountdown?: boolean;
   userInteractions?: UserInteraction[];
   onInteraction?: (action: string, midia: Filme | Serie | Anime | Jogo) => void;
+  onClick?: () => void;
 }
 
 export interface HeaderProps {
@@ -253,6 +268,8 @@ export interface SearchResult {
   jogos: Jogo[];
   total: number;
 }
+
+export type SearchResultItem = (Filme & { type: 'filme' }) | (Serie & { type: 'serie' }) | (Anime & { type: 'anime' }) | (Jogo & { type: 'jogo' });
 
 // Tipos para tema
 export type Theme = 'light' | 'dark' | 'system';
