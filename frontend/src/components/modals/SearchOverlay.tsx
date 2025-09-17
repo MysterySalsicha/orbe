@@ -30,10 +30,10 @@ const SearchOverlay: React.FC = () => {
     try {
       const results = await realApi.search(query, selectedCategory === 'todos' ? undefined : selectedCategory);
       const flatResults: SearchResultItem[] = [
-        ...results.filmes.map((item: Filme) => ({ ...item, type: 'filme' as const }) as SearchResultItem),
-        ...results.series.map((item: Serie) => ({ ...item, type: 'serie' as const }) as SearchResultItem),
-        ...results.animes.map((item: Anime) => ({ ...item, type: 'anime' as const }) as SearchResultItem),
-        ...results.jogos.map((item: Jogo) => ({ ...item, type: 'jogo' as const }) as SearchResultItem),
+        ...results.filmes.map((item: Filme) => ({ ...item, type: 'filme' as const })),
+        ...results.series.map((item: Serie) => ({ ...item, type: 'serie' as const })),
+        ...results.animes.map((item: Anime) => ({ ...item, type: 'anime' as const })),
+        ...results.jogos.map((item: Jogo) => ({ ...item, type: 'jogo' as const })),
       ];
       setSearchResults(flatResults);
     } catch (error) {
@@ -49,20 +49,8 @@ const SearchOverlay: React.FC = () => {
       setIsLoading(true);
       try {
         const trending = await realApi.getTrending();
-        // Map the trending content to SearchResultItem[]
-        const mappedTrending: SearchResultItem[] = trending.map(item => {
-          if ('duracao' in item) { // Assuming Filme has 'duracao'
-            return { ...item, type: 'filme' } as SearchResultItem;
-          } else if ('numero_temporadas' in item) { // Assuming Serie has 'numero_temporadas'
-            return { ...item, type: 'serie' } as SearchResultItem;
-          } else if ('fonte' in item) { // Assuming Anime has 'fonte'
-            return { ...item, type: 'anime' } as SearchResultItem;
-          } else if ('desenvolvedores' in item) { // Assuming Jogo has 'desenvolvedores'
-            return { ...item, type: 'jogo' } as SearchResultItem;
-          }
-          return item as SearchResultItem; // Fallback, though ideally all items should match a type
-        });
-        setTrendingContent(mappedTrending);
+        const flatResults: SearchResultItem[] = trending.map((item: any) => ({ ...item, type: item.tipo as const }));
+        setTrendingContent(flatResults);
       } catch (error) {
         console.error('Erro ao carregar conteúdo em alta:', error);
       } finally {
@@ -91,7 +79,6 @@ const SearchOverlay: React.FC = () => {
 
   const handlePopularSearchClick = (searchTerm: string) => {
     setSearchQuery(searchTerm);
-    performSearch(searchTerm); // Added this to trigger search on popular search click
   };
 
   const handleClose = () => {

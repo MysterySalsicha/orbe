@@ -62,13 +62,7 @@ const SuperModal: React.FC = () => {
 
   const { midia, type } = superModalData;
 
-  useEffect(() => {
-    if (isSuperModalOpen && midia) {
-      loadAdditionalData();
-    }
-  }, [isSuperModalOpen, midia]);
-
-  const loadAdditionalData = async () => {
+  const loadAdditionalData = useCallback(async () => {
     if (!midia || !type) return;
     try {
       if (type === 'filme') setElenco((midia as Filme).elenco || []);
@@ -80,24 +74,13 @@ const SuperModal: React.FC = () => {
     } catch (error) {
       console.error('Erro ao carregar dados adicionais:', error);
     }
-  };
+  }, [midia, type]);
 
-  const loadComments = async () => {
-    if (!midia) return;
-    try {
-      // Mock data, to be replaced with API call
-      setComentarios([
-        {
-          id: 1,
-          usuario: { id: 1, nome: 'João Silva', avatar_url: '/placeholder-avatar.jpg' },
-          texto: 'Ótimo!',
-          data_criacao: '2024-07-21T10:00:00Z'
-        },
-      ]);
-    } catch (error) {
-      console.error('Erro ao carregar comentários:', error);
+  useEffect(() => {
+    if (isSuperModalOpen && midia) {
+      loadAdditionalData();
     }
-  };
+  }, [isSuperModalOpen, midia, loadAdditionalData]);
 
   const handlePostComment = async () => {
     if (!newComment.trim() || !midia) return;

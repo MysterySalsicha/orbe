@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import Image from 'next/image';
 import { Heart, Coffee, Star, Trophy, Gift, CreditCard, Copy, Check } from 'lucide-react';
 
 export default function ApoiePage() {

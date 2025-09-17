@@ -285,7 +285,7 @@ export const realApi = {
   },
 
   // Pesquisa
-  search: async (query: string, type?: string, page: number = 1): Promise<{ filmes: Filme[]; series: Serie[]; animes: Anime[]; jogos: Jogo[]; total: number; }> => {
+  search: async (query: string, type?: string, page: number = 1) => {
     try {
       const response = await orbeNerdApi.search(query, type, page);
       
@@ -306,6 +306,7 @@ export const realApi = {
         if (item.tipo === 'filme') {
           return {
             ...baseItem,
+            tipo: item.tipo,
             duracao: item.duracao ? parseInt(item.duracao.replace(' min', '')) : 0,
             diretor: item.direcao,
             escritor: item.roteiro,
@@ -316,6 +317,7 @@ export const realApi = {
         } else if (item.tipo === 'serie') {
           return {
             ...baseItem,
+            tipo: item.tipo,
             numero_temporadas: item.numero_temporadas || 0,
             numero_episodios: item.numero_episodios || 0,
             criadores: item.criadores || [],
@@ -324,6 +326,7 @@ export const realApi = {
         } else if (item.tipo === 'anime') {
           return {
             ...baseItem,
+            tipo: item.tipo,
             fonte: item.fonte || 'Manga',
             estudio: item.estudio || '',
             dublagem_info: item.status_dublagem === 'Dublado/Legendado',
@@ -336,6 +339,7 @@ export const realApi = {
         } else if (item.tipo === 'jogo') {
           return {
             ...baseItem,
+            tipo: item.tipo,
             desenvolvedores: item.desenvolvedores || [],
             publicadoras: item.publicadoras || [],
             plataformas_jogo: item.plataformas?.map((p: string, index: number) => ({
@@ -365,7 +369,7 @@ export const realApi = {
   },
 
   // Conteúdo em alta
-  getTrending: async (type?: string, limit: number = 10): Promise<(Filme | Serie | Anime | Jogo)[]> => {
+  getTrending: async (type?: string, limit: number = 10) => {
     try {
       const response = await orbeNerdApi.getTrending(type, limit);
       
