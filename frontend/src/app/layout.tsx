@@ -4,7 +4,7 @@ import "./globals.css";
 import AppProvider from "@/components/providers/AppProvider";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
-import ModalManager from "../../components/modals/ModalManager"; // Using relative path
+import ModalManager from "../components/modals/ModalManager"; // Corrected relative path
 
 // Removed font configurations
 // const geistSans = Geist({
