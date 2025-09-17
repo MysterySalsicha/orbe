@@ -276,7 +276,7 @@ export type Theme = 'light' | 'dark' | 'system';
 
 // Tipos para calendário
 export interface CalendarModalData {
-  midia: Midia | null;
+  midia: Filme | Serie | Anime | Jogo | null;
   type: TipoMidia | null;
   eventType?: 'premiere' | 'recurring' | 'ticket';
 }
