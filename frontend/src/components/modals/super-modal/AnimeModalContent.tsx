@@ -35,7 +35,7 @@ const AnimeModalContent: React.FC<AnimeModalContentProps> = ({ anime, staff, per
         </Button>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="muted"><Calendar className="h-5 w-5 mr-2" />Adicionar ao Calendário</Button>
+            <Button variant="secondary"><Calendar className="h-5 w-5 mr-2" />Adicionar ao Calendário</Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent>
             <DropdownMenuItem disabled={hasLaunched} onClick={() => openCalendarModal({ midia: anime, type: 'anime', eventType: 'premiere' })}>
