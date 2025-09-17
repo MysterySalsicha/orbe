@@ -30,7 +30,7 @@ import AnimeModalContent from './super-modal/AnimeModalContent';
 import FilmeModalContent from './super-modal/FilmeModalContent';
 import SerieModalContent from './super-modal/SerieModalContent';
 import JogoModalContent from './super-modal/JogoModalContent';
-import type { Filme, Serie, Jogo, CastMember, StaffMember, Plataforma, Comentario } from '@/types';
+import type { Filme, Serie, Jogo, CastMember, StaffMember, Plataforma, Comentario, User } from '@/types';
 
 // Tipos locais para o SuperModal
 interface Personagem {
@@ -104,24 +104,17 @@ const SuperModal: React.FC = () => {
     }
   }, [isSuperModalOpen, midia, loadAdditionalData]);
 
-  const loadComments = async () => {
-    if (!midia) return;
-    try {
-      setComentarios([
-        { id: '1', userId: 'user1', username: 'João Silva', avatar: '/placeholder-avatar.jpg', text: 'Ótimo!', timestamp: '2024-07-21T10:00:00Z' },
-      ]);
-    } catch (error) {
-      console.error('Erro ao carregar comentários:', error);
-    }
-  };
-
   const handlePostComment = async () => {
-    if (!newComment.trim() || !midia) return;
+    if (!newComment.trim() || !midia || !user) return;
     const commentToAdd: Comentario = {
-      id: String(comentarios.length + 1),
-      userId: 'currentUser', username: 'Você', avatar: '/placeholder-avatar.jpg',
-      text: newComment.trim(),
-      timestamp: new Date().toISOString(),
+      id: comentarios.length + 1,
+      usuario: {
+        id: user.id,
+        nome: user.nome,
+        avatar_url: user.avatar || '/placeholder-avatar.jpg',
+      },
+      texto: newComment.trim(),
+      data_criacao: new Date().toISOString(),
     };
     setComentarios((prev) => [commentToAdd, ...prev]);
     setNewComment('');
@@ -274,7 +267,7 @@ const SuperModal: React.FC = () => {
                   <Button onClick={handlePostComment} disabled={!newComment.trim()}><Send className="h-4 w-4 mr-2" /> Enviar Comentário</Button>
                 </div>
               ) : (<p className="text-muted-foreground mb-4">Faça login para deixar um comentário.</p>)}
-              {comentarios.length > 0 ? (<div className="space-y-4">{comentarios.map((comment) => (<div key={comment.id} className="flex gap-3 p-4 bg-muted rounded-lg"><Image src={comment.avatar || '/placeholder-avatar.jpg'} alt={comment.username} width={40} height={40} className="rounded-full object-cover" /><div><p className="font-semibold text-foreground">{comment.username}</p><p className="text-sm text-muted-foreground">{format(parseISO(comment.timestamp), 'dd/MM/yyyy HH:mm', { locale: ptBR })}</p><p className="mt-2 text-foreground leading-relaxed">{comment.text}</p></div></div>))}</div>) : (<p className="text-muted-foreground">Nenhum comentário ainda. Seja o primeiro a comentar!</p>)}
+              {comentarios.length > 0 ? (<div className="space-y-4">{comentarios.map((comment) => (<div key={comment.id} className="flex gap-3 p-4 bg-muted rounded-lg"><Image src={comment.usuario.avatar_url || '/placeholder-avatar.jpg'} alt={comment.usuario.nome} width={40} height={40} className="rounded-full object-cover" /><div><p className="font-semibold text-foreground">{comment.usuario.nome}</p><p className="text-sm text-muted-foreground">{format(parseISO(comment.data_criacao), 'dd/MM/yyyy HH:mm', { locale: ptBR })}</p><p className="mt-2 text-foreground leading-relaxed">{comment.texto}</p></div></div>))}</div>) : (<p className="text-muted-foreground">Nenhum comentário ainda. Seja o primeiro a comentar!</p>)}
             </div>
           </div>
         </div>
