@@ -365,7 +365,7 @@ export const realApi = {
   },
 
   // Conteúdo em alta
-  getTrending: async (type?: string, limit: number = 10) => {
+  getTrending: async (type?: string, limit: number = 10): Promise<(Filme | Serie | Anime | Jogo)[]> => {
     try {
       const response = await orbeNerdApi.getTrending(type, limit);
       
