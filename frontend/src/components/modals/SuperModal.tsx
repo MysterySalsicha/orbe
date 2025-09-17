@@ -110,8 +110,14 @@ const SuperModal: React.FC = () => {
   const loadComments = async () => {
     if (!midia) return;
     try {
+      // Mock data, to be replaced with API call
       setComentarios([
-        { id: '1', userId: 'user1', username: 'João Silva', avatar: '/placeholder-avatar.jpg', text: 'Ótimo!', timestamp: '2024-07-21T10:00:00Z' },
+        {
+          id: 1,
+          usuario: { id: 1, nome: 'João Silva', avatar_url: '/placeholder-avatar.jpg' },
+          texto: 'Ótimo!',
+          data_criacao: '2024-07-21T10:00:00Z'
+        },
       ]);
     } catch (error) {
       console.error('Erro ao carregar comentários:', error);
@@ -121,10 +127,14 @@ const SuperModal: React.FC = () => {
   const handlePostComment = async () => {
     if (!newComment.trim() || !midia) return;
     const commentToAdd: Comentario = {
-      id: String(comentarios.length + 1),
-      userId: 'currentUser', username: 'Você', avatar: '/placeholder-avatar.jpg',
-      text: newComment.trim(),
-      timestamp: new Date().toISOString(),
+      id: Date.now(), // Usando timestamp como ID para mock
+      usuario: {
+        id: user?.id || 0,
+        nome: user?.nome || 'Você',
+        avatar_url: user?.avatar || '/placeholder-avatar.jpg'
+      },
+      texto: newComment.trim(),
+      data_criacao: new Date().toISOString(),
     };
     setComentarios((prev) => [commentToAdd, ...prev]);
     setNewComment('');
