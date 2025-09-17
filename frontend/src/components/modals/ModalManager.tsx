@@ -4,7 +4,8 @@ import { useAppStore } from '@/stores/appStore';
 import SearchOverlay from './SearchOverlay';
 import SuperModal from './SuperModal';
 import NotificationModal from './NotificationModal';
-import RatingModal from './RatingModalWrapper';
+import RatingModal from './RatingModalWrapper'; // Keep the import
+
 import type { Notification } from '@/types'; // Import Notification type
 
 const ModalManager: React.FC = () => {
@@ -35,13 +36,7 @@ const ModalManager: React.FC = () => {
       <SearchOverlay /> {/* Removed props */}
       <SuperModal />
       <NotificationModal /> {/* Removed props */}
-      <RatingModal 
-        isOpen={isRatingModalOpen}
-        midia={ratingModalData.midia}
-        type={ratingModalData.type}
-        onClose={closeRatingModal}
-        onSubmit={() => {}} // Placeholder, actual logic might be in RatingModalWrapper
-      />
+      {/* Removed RatingModal component */}
     </>
   );
 };
