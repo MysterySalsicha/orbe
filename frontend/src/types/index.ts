@@ -94,7 +94,7 @@ export interface Serie extends Midia {
   elenco: CastMember[];
 }
 
-export interface Anime extends Midia {
+export interface Anime extends Serie {
   fonte: string;
   estudio: string;
   dublagem_info: boolean;
