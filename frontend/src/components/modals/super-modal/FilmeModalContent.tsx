@@ -4,12 +4,12 @@ import Image from 'next/image';
 import { Play, Calendar, ShoppingCart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { parseISO } from 'date-fns';
-import type { Filme, Elenco } from '@/types';
+import type { Filme, CastMember, CalendarModalData } from '@/types';
 
 interface FilmeModalContentProps {
   filme: Filme;
-  elenco: Elenco[];
-  openCalendarModal: (data: object) => void;
+  elenco: CastMember[];
+  openCalendarModal: (data: CalendarModalData) => void;
 }
 
 const FilmeModalContent: React.FC<FilmeModalContentProps> = ({ filme, elenco, openCalendarModal }) => {
@@ -37,10 +37,10 @@ const FilmeModalContent: React.FC<FilmeModalContentProps> = ({ filme, elenco, op
       </div>
 
       {/* Sinopse */}
-      {filme.sinopse && (
+      {(filme.sinopse_curada || filme.sinopse_api) && (
         <div>
           <h3 className="text-lg font-semibold orbe-text-secondary mb-2">Sinopse</h3>
-          <p className="text-muted-foreground leading-relaxed">{filme.sinopse}</p>
+          <p className="text-muted-foreground leading-relaxed">{(filme.sinopse_curada || filme.sinopse_api)}</p>
         </div>
       )}
 

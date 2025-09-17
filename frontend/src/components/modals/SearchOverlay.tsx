@@ -7,8 +7,14 @@ import MidiaCard from '@/components/media/MidiaCard';
 import type { SearchResultItem, Filme, Serie, Anime, Jogo, TipoMidia } from '@/types';
 import { realApi, ApiResponseItem } from '@/data/realApi';
 
-const SearchOverlay: React.FC = () => {
-  const { isSearchOpen, closeSearch } = useAppStore();
+interface SearchOverlayProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onSearch: (query: string) => void;
+}
+
+const SearchOverlay: React.FC<SearchOverlayProps> = ({ isOpen, onClose, onSearch }) => {
+  const { closeSearch } = useAppStore();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<'todos' | 'filmes' | 'series' | 'animes' | 'jogos'>('todos');
   const [searchResults, setSearchResults] = useState<SearchResultItem[]>([]);
@@ -58,15 +64,15 @@ const SearchOverlay: React.FC = () => {
       }
     };
 
-    if (isSearchOpen && trendingContent.length === 0) {
+    if (isOpen && trendingContent.length === 0) {
       loadTrendingContent();
     }
-  }, [isSearchOpen, trendingContent.length]);
+  }, [isOpen, trendingContent.length]);
 
   useEffect(() => {
     const handler = setTimeout(() => {
       if (searchQuery.trim()) {
-        performSearch(searchQuery);
+        onSearch(searchQuery);
       } else {
         setSearchResults([]);
       }
@@ -75,17 +81,18 @@ const SearchOverlay: React.FC = () => {
     return () => {
       clearTimeout(handler);
     };
-  }, [searchQuery, performSearch]);
+  }, [searchQuery, onSearch]);
 
   const handlePopularSearchClick = (searchTerm: string) => {
     setSearchQuery(searchTerm);
+    onSearch(searchTerm);
   };
 
   const handleClose = () => {
     setSearchQuery('');
     setSelectedCategory('todos');
     setSearchResults([]);
-    closeSearch();
+    onClose();
   };
 
   const displayContent = useMemo(() => {
@@ -99,7 +106,7 @@ const SearchOverlay: React.FC = () => {
     return displayContent.filter(item => item.type === type);
   }, [displayContent, selectedCategory]);
 
-  if (!isSearchOpen) return null;
+  if (!isOpen) return null;
 
   return (
     <div className="search-overlay">

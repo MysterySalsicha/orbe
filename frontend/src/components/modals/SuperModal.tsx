@@ -245,12 +245,12 @@ const SuperModal: React.FC = () => {
                   <Button onClick={handlePostComment} disabled={!newComment.trim()}><Send className="h-4 w-4 mr-2" /> Enviar Comentário</Button>
                 </div>
               ) : (<p className="text-muted-foreground mb-4">Faça login para deixar um comentário.</p>)}
-              {comentarios.length > 0 ? (<div className="space-y-4">{comentarios.map((comment) => (<div key={comment.id} className="flex gap-3 p-4 bg-muted rounded-lg"><Image src={comment.usuario.avatar_url || '/placeholder-avatar.jpg'} alt={comment.usuario.nome} width={40} height={40} className="rounded-full object-cover" /><div><p className="font-semibold text-foreground">{comment.usuario.nome}</p><p className="text-sm text-muted-foreground">{format(parseISO(comment.data_criacao), 'dd/MM/yyyy HH:mm', { locale: ptBR })}</p><p className="mt-2 text-foreground leading-relaxed">{comment.text}</p></div></div>))}</div>) : (<p className="text-muted-foreground">Nenhum comentário ainda. Seja o primeiro a comentar!</p>)}
+              {comentarios.length > 0 ? (<div className="space-y-4">{comentarios.map((comment) => (<div key={comment.id} className="flex gap-3 p-4 bg-muted rounded-lg"><Image src={comment.usuario.avatar_url || '/placeholder-avatar.jpg'} alt={comment.usuario.nome} width={40} height={40} className="rounded-full object-cover" /><div><p className="font-semibold text-foreground">{comment.usuario.nome}</p><p className="text-sm text-muted-foreground">{format(parseISO(comment.data_criacao), 'dd/MM/yyyy HH:mm', { locale: ptBR })}</p>                    <p className="mt-2 text-foreground leading-relaxed">{comment.texto}</p></div></div>))}</div>) : (<p className="text-muted-foreground">Nenhum comentário ainda. Seja o primeiro a comentar!</p>)}
             </div>
           </div>
         </div>
       </div>
-      <CalendarModal isOpen={isCalendarModalOpen} midia={superModalData.midia} type={superModalData.type} onClose={closeCalendarModal} onAddEvent={handleCalendarAction} />
+      <CalendarModal isOpen={isCalendarModalOpen} midia={superModalData.midia} type={superModalData.type!} onClose={closeCalendarModal} onAddEvent={handleCalendarAction} />
     </div>
   );
 };

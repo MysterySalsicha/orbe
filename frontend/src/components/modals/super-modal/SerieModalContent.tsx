@@ -3,12 +3,12 @@
 import Image from 'next/image';
 import { Play, Calendar } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import type { Serie, Elenco } from '@/types';
+import type { Serie, CastMember, CalendarModalData } from '@/types';
 
 interface SerieModalContentProps {
   serie: Serie;
-  elenco: Elenco[];
-  openCalendarModal: (data: object) => void;
+  elenco: CastMember[];
+  openCalendarModal: (data: CalendarModalData) => void;
 }
 
 const SerieModalContent: React.FC<SerieModalContentProps> = ({ serie, elenco, openCalendarModal }) => {
@@ -29,10 +29,10 @@ const SerieModalContent: React.FC<SerieModalContentProps> = ({ serie, elenco, op
       </div>
 
       {/* Sinopse */}
-      {serie.sinopse && (
+      {(serie.sinopse_curada || serie.sinopse_api) && (
         <div>
           <h3 className="text-lg font-semibold orbe-text-secondary mb-2">Sinopse</h3>
-          <p className="text-muted-foreground leading-relaxed">{serie.sinopse}</p>
+          <p className="text-muted-foreground leading-relaxed">{(serie.sinopse_curada || serie.sinopse_api)}</p>
         </div>
       )}
 

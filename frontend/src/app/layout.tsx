@@ -4,7 +4,7 @@ import "./globals.css";
 import AppProvider from "@/components/providers/AppProvider";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
-import SearchOverlay from "@/components/modals/SearchOverlay";
+
 import SuperModal from "@/components/modals/SuperModal";
 import NotificationModal from "@/components/modals/NotificationModal";
 import RatingModal from "@/components/modals/RatingModalWrapper";
@@ -75,7 +75,6 @@ export default function RootLayout({
               {children}
             </main>
             <Footer />
-            <SearchOverlay />
             <SuperModal />
             <NotificationModal />
             <RatingModal />

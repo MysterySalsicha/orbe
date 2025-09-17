@@ -6,23 +6,23 @@ import { Play, Calendar } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
 import { parseISO } from 'date-fns';
-import type { Anime, StaffMember, Character } from '@/types';
+import type { Anime, StaffMember, Character, CalendarModalData } from '@/types';
 
 interface AnimeModalContentProps {
   anime: Anime;
   staff: StaffMember[];
   personagens: Character[];
-  openCalendarModal: (data: object) => void;
+  openCalendarModal: (data: CalendarModalData) => void;
 }
 
 const AnimeModalContent: React.FC<AnimeModalContentProps> = ({ anime, staff, personagens, openCalendarModal }) => {
   const [isSynopsisExpanded, setIsSynopsisExpanded] = useState(false);
-  const [selectedDubbing, setSelectedDubbing] = useState<'jp' | 'pt-br'>('jp');
+  const [selectedDubbing, setSelectedDubbing] = useState<'jp' | 'ptBR'>('jp');
 
   const isAvailableToWatchNow = anime.link_assistir_agora;
   const hasLaunched = anime.data_lancamento_curada ? parseISO(anime.data_lancamento_curada) <= new Date() : false;
   const isAiring = hasLaunched && anime.status !== 'FINISHED';
-  const hasPtBrDub = personagens.some(p => p.dubladores?.pt_br?.nome);
+  const hasPtBrDub = personagens.some(p => p.dubladores?.ptBR?.nome);
 
   return (
     <div className="space-y-6">
@@ -49,7 +49,7 @@ const AnimeModalContent: React.FC<AnimeModalContentProps> = ({ anime, staff, per
       </div>
 
       {/* Sinopse */}
-      {anime.sinopse && (
+      {(anime.sinopse_curada || anime.sinopse_api) && (
         <div>
           <h3 className="text-lg font-semibold orbe-text-secondary mb-2">Sinopse</h3>
           <p className={`text-muted-foreground leading-relaxed transition-all duration-300 ${!isSynopsisExpanded ? 'line-clamp-3' : ''}`}>
@@ -107,7 +107,7 @@ const AnimeModalContent: React.FC<AnimeModalContentProps> = ({ anime, staff, per
                 JP
               </button>
               {hasPtBrDub && (
-                <button onClick={() => setSelectedDubbing('pt-br')} className={`px-3 py-1 rounded text-sm transition-colors ${selectedDubbing === 'pt-br' ? 'bg-primary text-primary-foreground' : 'text-foreground hover:bg-muted/80'}`}>
+                <button onClick={() => setSelectedDubbing('ptBR')} className={`px-3 py-1 rounded text-sm transition-colors ${selectedDubbing === 'ptBR' ? 'bg-primary text-primary-foreground' : 'text-foreground hover:bg-muted/80'}`}>
                   PT-BR
                 </button>
               )}

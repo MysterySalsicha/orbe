@@ -103,7 +103,7 @@ export interface Anime extends Midia {
   personagens: Character[];
   proximo_episodio?: string;
   numero_episodio_atual?: number;
-  eventos_recorrentes_calendario: boolean;
+  eventos_recorrentes_calendario?: boolean;
   tags?: string[];
   numero_episodios?: number;
   mal_link?: string;
@@ -281,6 +281,12 @@ export type SearchResultItem = (Filme & { type: 'filme' }) | (Serie & { type: 's
 export type Theme = 'light' | 'dark' | 'system';
 
 // Tipos para calendário
+export interface CalendarModalData {
+  midia: Filme | Serie | Anime | Jogo | null;
+  type: TipoMidia | null;
+  eventType?: 'premiere' | 'recurring' | 'ticket';
+}
+
 export interface CalendarEvent {
   title: string;
   start: Date;
