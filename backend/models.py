@@ -1,7 +1,18 @@
 from extensions import db
-from datetime import datetime
+from datetime import datetime, timezone
+import os
 
 # Modelos do Banco de Dados
+
+# Solução para compatibilidade entre ARRAY do PostgreSQL e testes com SQLite
+# O SQLite não suporta o tipo ARRAY. Em ambiente de teste, usamos uma função
+# que retorna db.String para simular o comportamento de ARRAY(db.String).
+if os.getenv('FLASK_ENV') == 'testing':
+    def ARRAY(type):
+        return db.String
+else:
+    from sqlalchemy.dialects.postgresql import ARRAY
+
 class Filme(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     tmdb_id = db.Column(db.Integer, unique=True)
@@ -13,8 +24,8 @@ class Filme(db.Model):
     data_lancamento_curada = db.Column(db.String(10))
     data_lancamento_api = db.Column(db.String(10))
     avaliacao = db.Column(db.Float)
-    generos = db.Column(db.ARRAY(db.String))
-    plataformas_curadas = db.Column(db.ARRAY(db.String))
+    generos = db.Column(ARRAY(db.String))
+    plataformas_curadas = db.Column(ARRAY(db.String))
     em_cartaz = db.Column(db.Boolean, default=False)
     em_prevenda = db.Column(db.Boolean, default=False)
     duracao = db.Column(db.String(50))
@@ -50,11 +61,11 @@ class Serie(db.Model):
     data_lancamento_curada = db.Column(db.String(10))
     data_lancamento_api = db.Column(db.String(10))
     avaliacao = db.Column(db.Float)
-    generos = db.Column(db.ARRAY(db.String))
-    plataformas_curadas = db.Column(db.ARRAY(db.String))
+    generos = db.Column(ARRAY(db.String))
+    plataformas_curadas = db.Column(ARRAY(db.String))
     numero_temporadas = db.Column(db.Integer)
     numero_episodios = db.Column(db.Integer)
-    criadores = db.Column(db.ARRAY(db.String))
+    criadores = db.Column(ARRAY(db.String))
     status = db.Column(db.String(50))
 
     def to_dict(self):
@@ -85,8 +96,8 @@ class Anime(db.Model):
     data_lancamento_curada = db.Column(db.String(10))
     data_lancamento_api = db.Column(db.String(10))
     avaliacao = db.Column(db.Float)
-    generos = db.Column(db.ARRAY(db.String))
-    plataformas_curadas = db.Column(db.ARRAY(db.String))
+    generos = db.Column(ARRAY(db.String))
+    plataformas_curadas = db.Column(ARRAY(db.String))
     fonte = db.Column(db.String(100))
     estudio = db.Column(db.String(255))
     status_dublagem = db.Column(db.String(50))
@@ -95,7 +106,7 @@ class Anime(db.Model):
     # Novos campos para o Super Modal
     mal_link = db.Column(db.String(255))
     trailer_url = db.Column(db.String(255))
-    tags = db.Column(db.ARRAY(db.String))
+    tags = db.Column(ARRAY(db.String))
     staff = db.Column(db.JSON)
     personagens = db.Column(db.JSON)
 
@@ -134,10 +145,10 @@ class Jogo(db.Model):
     data_lancamento_curada = db.Column(db.String(10))
     data_lancamento_api = db.Column(db.String(10))
     avaliacao = db.Column(db.Float)
-    generos = db.Column(db.ARRAY(db.String))
-    plataformas_curadas = db.Column(db.ARRAY(db.String))
-    desenvolvedores = db.Column(db.ARRAY(db.String))
-    publicadoras = db.Column(db.ARRAY(db.String))
+    generos = db.Column(ARRAY(db.String))
+    plataformas_curadas = db.Column(ARRAY(db.String))
+    desenvolvedores = db.Column(ARRAY(db.String))
+    publicadoras = db.Column(ARRAY(db.String))
     lojas_digitais = db.Column(db.JSON)
 
     def to_dict(self):
@@ -162,7 +173,7 @@ class Usuario(db.Model):
     email = db.Column(db.String(120), unique=True, nullable=False)
     senha_hash = db.Column(db.String(255), nullable=False)
     avatar = db.Column(db.String(255))
-    data_criacao = db.Column(db.DateTime, default=datetime.utcnow)
+    data_criacao = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
     preferencias = db.Column(db.JSON)
 
     def to_dict(self):
