@@ -29,10 +29,10 @@ const SerieModalContent: React.FC<SerieModalContentProps> = ({ serie, elenco, op
       </div>
 
       {/* Sinopse */}
-      {serie.sinopse && (
+      {serie.sinopse_curada && (
         <div>
           <h3 className="text-lg font-semibold orbe-text-secondary mb-2">Sinopse</h3>
-          <p className="text-muted-foreground leading-relaxed">{serie.sinopse}</p>
+          <p className="text-muted-foreground leading-relaxed">{serie.sinopse_curada}</p>
         </div>
       )}
 

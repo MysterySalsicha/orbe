@@ -34,10 +34,10 @@ const JogoModalContent: React.FC<JogoModalContentProps> = ({ jogo, openCalendarM
       </div>
 
       {/* Sinopse */}
-      {jogo.sinopse && (
+      {jogo.sinopse_curada && (
         <div>
           <h3 className="text-lg font-semibold orbe-text-secondary mb-2">Sinopse</h3>
-          <p className="text-muted-foreground leading-relaxed">{jogo.sinopse}</p>
+          <p className="text-muted-foreground leading-relaxed">{jogo.sinopse_curada}</p>
         </div>
       )}
 
