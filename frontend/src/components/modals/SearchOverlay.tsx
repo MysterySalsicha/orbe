@@ -4,11 +4,11 @@ import { useState, useEffect, useMemo, useCallback } from 'react';
 import { X, Search } from 'lucide-react';
 import { useAppStore } from '@/stores/appStore';
 import MidiaCard from '@/components/media/MidiaCard';
-import type { SearchResultItem, Filme, Serie, Anime, Jogo, SearchOverlayProps } from '@/types';
+import type { SearchResultItem, Filme, Serie, Anime, Jogo } from '@/types'; // Removed SearchOverlayProps
 import { mockFilmes, mockSeries, mockAnimes, mockJogos } from '@/data/mockData';
 import { realApi } from '@/data/realApi';
 
-const SearchOverlay: React.FC<SearchOverlayProps> = ({ isOpen, onClose, onSearch }) => {
+const SearchOverlay: React.FC = () => { // Removed props
   const { isSearchOpen, closeSearch } = useAppStore();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<'todos' | 'filmes' | 'series' | 'animes' | 'jogos'>('todos');
