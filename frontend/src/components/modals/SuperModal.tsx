@@ -32,6 +32,9 @@ import SerieModalContent from './super-modal/SerieModalContent';
 import JogoModalContent from './super-modal/JogoModalContent';
 import type { Filme, Serie, Jogo, CastMember, StaffMember, Plataforma, Comentario } from '@/types';
 
+// Define Staff como um alias para StaffMember para corrigir o erro de tipo
+type Staff = StaffMember;
+
 // Tipos locais para o SuperModal
 interface Personagem {
   id: string;
