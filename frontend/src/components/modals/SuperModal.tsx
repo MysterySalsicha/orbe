@@ -30,36 +30,14 @@ import AnimeModalContent from './super-modal/AnimeModalContent';
 import FilmeModalContent from './super-modal/FilmeModalContent';
 import SerieModalContent from './super-modal/SerieModalContent';
 import JogoModalContent from './super-modal/JogoModalContent';
-import type { Filme, Serie, Jogo, CastMember, StaffMember, Plataforma, Comentario, User } from '@/types';
-
-// Tipos locais para o SuperModal
-interface Personagem {
-  id: string;
-  nome: string;
-  imagem?: string;
-  dubladores?: {
-    jp?: { nome: string; foto_url?: string; };
-    pt_br?: { nome: string; foto_url?: string; };
-  };
-}
-
-interface Anime extends Serie {
-  fonte?: string;
-  estudio?: string;
-  dublagem_info?: string;
-  mal_link?: string;
-  tags?: string[];
-  status?: 'RELEASING' | 'FINISHED' | 'NOT_YET_RELEASED';
-  staff?: StaffMember[];
-  personagens?: Personagem[];
-}
+import type { Filme, Serie, Jogo, CastMember, StaffMember, Plataforma, Comentario, Anime, Character } from '@/types';
 
 const SuperModal: React.FC = () => {
   const { isSuperModalOpen, superModalData, closeSuperModal, isAuthenticated, user, openCalendarModal, closeCalendarModal, isCalendarModalOpen } = useAppStore();
   
   const [elenco, setElenco] = useState<CastMember[]>([]);
   const [staff, setStaff] = useState<StaffMember[]>([]);
-  const [personagens, setPersonagens] = useState<Personagem[]>([]);
+  const [personagens, setPersonagens] = useState<Character[]>([]);
   const [comentarios, setComentarios] = useState<Comentario[]>([]);
   const [newComment, setNewComment] = useState('');
   const [isEditMode, setIsEditMode] = useState(false);
@@ -238,7 +216,7 @@ const SuperModal: React.FC = () => {
                   <div className="space-y-3 pt-4 border-t border-border text-sm">
                     <div className="flex items-center gap-2"><span className="font-semibold w-24 flex-shrink-0">Fonte:</span><span className="text-muted-foreground">{(midia as Anime).fonte || 'N/A'}</span></div>
                     <div className="flex items-center gap-2"><span className="font-semibold w-24 flex-shrink-0">Estúdio(s):</span><span className="text-muted-foreground">{(midia as Anime).estudio || 'N/A'}</span></div>
-                    <div className="flex items-center gap-2"><span className="font-semibold w-24 flex-shrink-0">Dublagem:</span><span className="text-muted-foreground">{(midia as Anime).dublagem_info || 'Legendado'}</span></div>
+                    <div className="flex items-center gap-2"><span className="font-semibold w-24 flex-shrink-0">Dublagem:</span><span className="text-muted-foreground">{(midia as Anime).dublagem_info ? 'Sim' : 'Não'}</span></div>
                     {(midia as Anime).mal_link && (<div className="flex items-center gap-2"><span className="font-semibold w-24 flex-shrink-0">Link Externo:</span><a href={(midia as Anime).mal_link} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-blue-400 hover:text-blue-300">MyAnimeList <ExternalLink className="h-4 w-4" /></a></div>)}
                     {(midia as Serie).plataformas_curadas && (midia as Serie).plataformas_curadas!.length > 0 && (<div className="flex items-start gap-2"><span className="font-semibold w-24 flex-shrink-0 pt-1">Streaming:</span>{renderPlatformIcons((midia as Serie).plataformas_curadas as Plataforma[])}</div>)}
                   </div>

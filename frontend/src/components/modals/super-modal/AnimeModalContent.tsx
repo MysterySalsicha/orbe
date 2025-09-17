@@ -6,12 +6,12 @@ import { Play, Calendar } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
 import { parseISO } from 'date-fns';
-import type { Anime, Staff, Personagem } from '@/types';
+import type { Anime, StaffMember, Character } from '@/types';
 
 interface AnimeModalContentProps {
   anime: Anime;
-  staff: Staff[];
-  personagens: Personagem[];
+  staff: StaffMember[];
+  personagens: Character[];
   openCalendarModal: (data: object) => void;
 }
 
@@ -19,19 +19,17 @@ const AnimeModalContent: React.FC<AnimeModalContentProps> = ({ anime, staff, per
   const [isSynopsisExpanded, setIsSynopsisExpanded] = useState(false);
   const [selectedDubbing, setSelectedDubbing] = useState<'jp' | 'pt-br'>('jp');
 
-  const isAvailableToWatchNow = anime.link_assistir_agora;
+  const isAvailableToWatchNow = anime.trailer_url_api; // Assuming this is the logic
   const hasLaunched = anime.data_lancamento_curada ? parseISO(anime.data_lancamento_curada) <= new Date() : false;
   const isAiring = hasLaunched && anime.status !== 'FINISHED';
   const hasPtBrDub = personagens.some(p => p.dubladores?.pt_br?.nome);
-  const dublador = selectedDubbing === 'jp' ? 'dublador_jp' : 'dublador_pt_br';
-  const dubladorFoto = selectedDubbing === 'jp' ? 'dublador_jp_foto' : 'dublador_pt_br_foto';
 
   return (
     <div className="space-y-6">
       {/* Botões de Ação */}
       <div className="flex flex-wrap gap-3 mb-6">
         <Button disabled={!isAvailableToWatchNow} asChild>
-          <a href={isAvailableToWatchNow ? anime.link_assistir_agora : undefined} target="_blank" rel="noopener noreferrer">
+          <a href={isAvailableToWatchNow ? `https://www.youtube.com/watch?v=${anime.trailer_url_api}` : undefined} target="_blank" rel="noopener noreferrer">
             <Play className="h-5 w-5 mr-2" />Assistir Agora
           </a>
         </Button>
@@ -51,11 +49,11 @@ const AnimeModalContent: React.FC<AnimeModalContentProps> = ({ anime, staff, per
       </div>
 
       {/* Sinopse */}
-      {anime.sinopse && (
+      {anime.sinopse_curada && (
         <div>
           <h3 className="text-lg font-semibold orbe-text-secondary mb-2">Sinopse</h3>
           <p className={`text-muted-foreground leading-relaxed transition-all duration-300 ${!isSynopsisExpanded ? 'line-clamp-3' : ''}`}>
-            {anime.sinopse}
+            {anime.sinopse_curada}
           </p>
           <button onClick={() => setIsSynopsisExpanded(!isSynopsisExpanded)} className="text-sm font-semibold text-primary hover:underline mt-1">
             {isSynopsisExpanded ? 'Ler menos' : 'Ler mais'}
@@ -131,7 +129,7 @@ const AnimeModalContent: React.FC<AnimeModalContentProps> = ({ anime, staff, per
                   </>
                 )}
               </div>
-            ))}
+            ))} 
           </div>
         </div>
       )}
