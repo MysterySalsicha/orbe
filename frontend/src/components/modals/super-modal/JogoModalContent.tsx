@@ -22,7 +22,7 @@ const JogoModalContent: React.FC<JogoModalContentProps> = ({ jogo, openCalendarM
           </a>
         </Button>
         {jogo.trailer_url_api && (
-          <Button variant="muted" asChild>
+          <Button variant="secondary" asChild>
             <a href={jogo.trailer_url_api} target="_blank" rel="noopener noreferrer">
               <Play className="h-5 w-5 mr-2" />Assistir Trailer
             </a>
