@@ -250,7 +250,7 @@ const SuperModal: React.FC = () => {
           </div>
         </div>
       </div>
-      <CalendarModal isOpen={isCalendarModalOpen} midia={superModalData.midia} type={superModalData.type} onClose={closeCalendarModal} onAddEvent={handleCalendarAction} />
+      <CalendarModal isOpen={isCalendarModalOpen} midia={midia} type={type} onClose={closeCalendarModal} onAddEvent={handleCalendarAction} />
     </div>
   );
 };
