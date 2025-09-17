@@ -3,12 +3,12 @@
 import Image from 'next/image';
 import { Play, Calendar } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import type { Serie, Elenco } from '@/types';
+import type { Serie, CastMember, CalendarModalData } from '@/types';
 
 interface SerieModalContentProps {
   serie: Serie;
-  elenco: Elenco[];
-  openCalendarModal: (data: object) => void;
+  elenco: CastMember[];
+  openCalendarModal: (data: CalendarModalData) => void;
 }
 
 const SerieModalContent: React.FC<SerieModalContentProps> = ({ serie, elenco, openCalendarModal }) => {

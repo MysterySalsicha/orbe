@@ -94,7 +94,7 @@ export interface Serie extends Midia {
   elenco: CastMember[];
 }
 
-export interface Anime extends Midia {
+export interface Anime extends Serie {
   fonte: string;
   estudio: string;
   dublagem_info: boolean;
@@ -102,7 +102,8 @@ export interface Anime extends Midia {
   personagens: Character[];
   proximo_episodio?: string;
   numero_episodio_atual?: number;
-  eventos_recorrentes_calendario: boolean;
+  eventos_recorrentes_calendario?: boolean;
+  tags?: string[];
 }
 
 export interface Jogo extends Midia {
@@ -275,6 +276,12 @@ export type SearchResultItem = (Filme & { type: 'filme' }) | (Serie & { type: 's
 export type Theme = 'light' | 'dark' | 'system';
 
 // Tipos para calendário
+export interface CalendarModalData {
+  midia: Filme | Serie | Anime | Jogo | null;
+  type: TipoMidia | null;
+  eventType?: 'premiere' | 'recurring' | 'ticket';
+}
+
 export interface CalendarEvent {
   title: string;
   start: Date;
