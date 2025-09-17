@@ -1,23 +1,21 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+// Removed: import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import AppProvider from "@/components/providers/AppProvider";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
-import SearchOverlay from "@/components/modals/SearchOverlay";
-import SuperModal from "@/components/modals/SuperModal";
-import NotificationModal from "@/components/modals/NotificationModal";
-import RatingModal from "@/components/modals/RatingModalWrapper";
+import ModalManager from "@/components/modals/ModalManager"; // Using ModalManager
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
+// Removed font configurations
+// const geistSans = Geist({
+//   variable: "--font-geist-sans",
+//   subsets: ["latin"],
+// });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
+// const geistMono = Geist_Mono({
+//   variable: "--font-geist-mono",
+//   subsets: ["latin"],
+// });
 
 export const metadata: Metadata = {
   title: "Orbe Nerd - Hub de Entretenimento",
@@ -66,7 +64,7 @@ export default function RootLayout({
   return (
     <html lang="pt-BR" suppressHydrationWarning>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`antialiased`} // Removed font variables
       >
         <AppProvider>
           <div className="min-h-screen bg-background text-foreground">
@@ -75,10 +73,7 @@ export default function RootLayout({
               {children}
             </main>
             <Footer />
-            <SearchOverlay />
-            <SuperModal />
-            <NotificationModal />
-            <RatingModal />
+            <ModalManager /> {/* Using ModalManager */}
           </div>
         </AppProvider>
       </body>
