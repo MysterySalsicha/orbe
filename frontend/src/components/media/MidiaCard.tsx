@@ -9,14 +9,12 @@ import {
   Check, 
   EyeOff,
   Trophy,
-  Calendar,
-  Play,
   ShoppingCart,
   Award
 } from 'lucide-react';
 import PlatformIcon from '@/components/ui/PlatformIcons';
-import AwardIcon from '@/components/ui/AwardIcons';
-import { format, formatDistanceToNow, parseISO, differenceInDays, differenceInHours, differenceInMinutes } from 'date-fns';
+import { format, parseISO, differenceInDays, differenceInHours, differenceInMinutes } from 'date-fns';
+import Image from 'next/image';
 import { ptBR } from 'date-fns/locale';
 import { useAppStore } from '@/stores/appStore';
 import type { MidiaCardProps, UserAction } from '@/types';
@@ -24,7 +22,6 @@ import type { MidiaCardProps, UserAction } from '@/types';
 const MidiaCard: React.FC<MidiaCardProps> = ({
   midia,
   type,
-  showCountdown = false,
   userInteractions = [],
   onInteraction
 }) => {
@@ -32,13 +29,10 @@ const MidiaCard: React.FC<MidiaCardProps> = ({
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [countdown, setCountdown] = useState<string>('');
   const [hasNewEpisode, setHasNewEpisode] = useState(false);
-  const [currentEpisode, setCurrentEpisode] = useState<number>(1);
 
   // Verifica se é um anime com próximo episódio
   const isAnime = type === 'anime' && 'proximo_episodio' in midia;
   const isFilme = type === 'filme' && 'em_prevenda' in midia;
-  const isSerie = type === 'serie';
-  const isJogo = type === 'jogo';
 
   const proximoEpisodio = isAnime ? midia.proximo_episodio : undefined;
 
@@ -104,11 +98,6 @@ const MidiaCard: React.FC<MidiaCardProps> = ({
     }
   };
 
-  // Verifica se tem prêmios
-  const hasAwards = midia.premiacoes && midia.premiacoes.length > 0;
-  const hasWonAward = midia.premiacoes?.some(award => award.status === 'vencedor');
-  const hasNomination = midia.premiacoes?.some(award => award.status === 'indicado');
-
   // Ações do menu
   const menuActions = [
     {
@@ -155,8 +144,8 @@ const MidiaCard: React.FC<MidiaCardProps> = ({
     setIsMenuOpen(false);
   };
 
-  const handleMenuAction = (action: UserAction, e: React.MouseEvent) => {
-    e.stopPropagation();
+  const handleMenuAction = (action: UserAction, event: React.MouseEvent) => {
+    event.stopPropagation();
     
     // Validação especial para "Já Assisti/Joguei"
     if ((action === 'ja_assisti' || action === 'ja_joguei') && !hasReleased()) {
@@ -201,7 +190,7 @@ const MidiaCard: React.FC<MidiaCardProps> = ({
     
     // Se a data de lançamento já passou, mostra episódio atual
     if (hasReleased()) {
-      return midia.numero_episodio_atual || currentEpisode;
+      return midia.numero_episodio_atual;
     }
     
     return null;
@@ -222,7 +211,7 @@ const MidiaCard: React.FC<MidiaCardProps> = ({
       >
         {/* Container da Imagem */}
         <div className="relative w-[200px] h-[300px] overflow-hidden">
-          <img
+          <Image
             src={midia.poster_curado || midia.poster_url_api}
             alt={midia.titulo_curado || midia.titulo_api}
             width={200}

@@ -5,7 +5,8 @@ import Header from '@/components/layout/Header';
 import SearchOverlay from '@/components/modals/SearchOverlay';
 import { useAppStore } from '@/stores/appStore';
 import { useTheme } from '@/hooks/useTheme';
-import { mockApi, mockUser, mockNotifications } from '@/data/mockData';
+import { realApi } from '@/data/realApi';
+import orbeNerdApi from '@/lib/api';
 
 interface AppProviderProps {
   children: React.ReactNode;
@@ -18,24 +19,23 @@ const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     unreadCount,
     setNotifications,
     setUser,
-    isAuthenticated 
+    isAuthenticated,
+    user
   } = useAppStore();
   
   const { toggleTheme } = useTheme();
 
-  // Simula carregamento inicial de dados do usuário
+  // Carregamento inicial de dados do usuário
   useEffect(() => {
     const initializeApp = async () => {
       try {
-        // Simula verificação de autenticação
-        // Em produção, isso seria uma chamada para verificar o token JWT
-        const isLoggedIn = localStorage.getItem('orbe-nerd-auth') === 'true';
+        const token = localStorage.getItem('token');
         
-        if (isLoggedIn) {
-          setUser(mockUser);
+        if (token) {
+          const userData = await orbeNerdApi.getCurrentUser();
+          setUser(userData);
           
-          // Carrega notificações do usuário
-          const notifications = await mockApi.getNotifications();
+          const notifications = await realApi.getNotifications();
           setNotifications(notifications);
         }
       } catch (error) {
@@ -54,7 +54,7 @@ const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     <>
       {/* Header Global */}
       <Header
-        user={isAuthenticated ? mockUser : null}
+        user={isAuthenticated ? user : null}
         notificationCount={unreadCount}
         onSearch={handleSearch}
         onThemeToggle={toggleTheme}

@@ -5,7 +5,6 @@ import { X, Search } from 'lucide-react';
 import { useAppStore } from '@/stores/appStore';
 import MidiaCard from '@/components/media/MidiaCard';
 import type { SearchResultItem, Filme, Serie, Anime, Jogo } from '@/types';
-import { mockFilmes, mockSeries, mockAnimes, mockJogos } from '@/data/mockData';
 import { realApi } from '@/data/realApi';
 
 const SearchOverlay: React.FC = () => {
@@ -49,13 +48,9 @@ const SearchOverlay: React.FC = () => {
     const loadTrendingContent = async () => {
       setIsLoading(true);
       try {
-        const trending: SearchResultItem[] = [
-          ...mockFilmes.slice(0, 3).map(item => ({ ...item, type: 'filme' as const })),
-          ...mockSeries.slice(0, 3).map(item => ({ ...item, type: 'serie' as const })),
-          ...mockAnimes.slice(0, 3).map(item => ({ ...item, type: 'anime' as const })),
-          ...mockJogos.slice(0, 3).map(item => ({ ...item, type: 'jogo' as const })),
-        ];
-        setTrendingContent(trending);
+        const trending = await realApi.getTrending();
+        const flatResults: SearchResultItem[] = trending.map((item: any) => ({ ...item, type: item.tipo as const }));
+        setTrendingContent(flatResults);
       } catch (error) {
         console.error('Erro ao carregar conteúdo em alta:', error);
       } finally {

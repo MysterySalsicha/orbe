@@ -1,8 +1,8 @@
 'use client';
 
 import { useState } from 'react';
+import Image from 'next/image';
 import { X, Heart, Star, ThumbsDown } from 'lucide-react';
-import { useAppStore } from '@/stores/appStore';
 import type { Filme, Serie, Anime, Jogo } from '@/types';
 
 interface RatingModalProps {
@@ -22,7 +22,6 @@ const RatingModal: React.FC<RatingModalProps> = ({
   onClose,
   onRating
 }) => {
-  const [currentStep, setCurrentStep] = useState<'rating' | 'review'>('rating');
   const [selectedRating, setSelectedRating] = useState<'gostei' | 'amei' | 'nao_gostei' | null>(null);
   const [review, setReview] = useState('');
   const [showReviewModal, setShowReviewModal] = useState(false);
@@ -85,9 +84,11 @@ const RatingModal: React.FC<RatingModalProps> = ({
           <div className="p-6">
             {/* Informações da Mídia */}
             <div className="flex items-center space-x-4 mb-6">
-              <img
+              <Image
                 src={midia.poster_curado || midia.poster_url_api}
                 alt={midia.titulo_curado || midia.titulo_api}
+                width={64}
+                height={96}
                 className="w-16 h-24 object-cover rounded"
               />
               <div>
@@ -155,9 +156,11 @@ const RatingModal: React.FC<RatingModalProps> = ({
             <div className="p-6">
               {/* Informações da Mídia */}
               <div className="flex items-center space-x-4 mb-6">
-                <img
+                <Image
                   src={midia.poster_curado || midia.poster_url_api}
                   alt={midia.titulo_curado || midia.titulo_api}
+                  width={64}
+                  height={96}
                   className="w-16 h-24 object-cover rounded"
                 />
                 <div>

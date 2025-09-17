@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import Image from 'next/image';
 import { Play, Calendar } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
@@ -23,8 +23,6 @@ const AnimeModalContent: React.FC<AnimeModalContentProps> = ({ anime, staff, per
   const hasLaunched = anime.data_lancamento_curada ? parseISO(anime.data_lancamento_curada) <= new Date() : false;
   const isAiring = hasLaunched && anime.status !== 'FINISHED';
   const hasPtBrDub = personagens.some(p => p.dubladores?.pt_br?.nome);
-  const dublador = selectedDubbing === 'jp' ? 'dublador_jp' : 'dublador_pt_br';
-  const dubladorFoto = selectedDubbing === 'jp' ? 'dublador_jp_foto' : 'dublador_pt_br_foto';
 
   return (
     <div className="space-y-6">
