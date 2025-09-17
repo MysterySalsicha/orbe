@@ -1,7 +1,7 @@
 import orbeNerdApi from '@/lib/api';
 import type { Filme, Serie, Anime, Jogo, Notification } from '@/types';
 
-type ApiResponseItem = {
+export type ApiResponseItem = {
   id: number;
   titulo: string;
   poster: string;
@@ -356,10 +356,10 @@ export const realApi = {
       });
 
       return {
-        filmes: mappedResults.filter((item: Filme) => item.duracao !== undefined),
-        series: mappedResults.filter((item: Serie) => item.numero_temporadas !== undefined),
-        animes: mappedResults.filter((item: Anime) => item.fonte !== undefined),
-        jogos: mappedResults.filter((item: Jogo) => item.desenvolvedores !== undefined),
+        filmes: mappedResults.filter(item => item.tipo === 'filme') as Filme[],
+        series: mappedResults.filter(item => item.tipo === 'serie') as Serie[],
+        animes: mappedResults.filter(item => item.tipo === 'anime') as Anime[],
+        jogos: mappedResults.filter(item => item.tipo === 'jogo') as Jogo[],
         total: response.total_results || mappedResults.length
       };
     } catch (error) {

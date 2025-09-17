@@ -18,63 +18,62 @@ const PlatformIcon: React.FC<PlatformIconProps> = ({
     width: size,
     height: size,
     className,
-    alt: `${platform} icon`
   };
 
   switch (platform.toLowerCase()) {
     case 'netflix':
-      return <Image src="/icons/netflix.svg" {...iconProps} />;
+      return <Image src="/icons/netflix.svg" alt={`${platform} icon`} {...iconProps} />;
     
     case 'disney+':
     case 'disney plus':
     case 'disneyplus':
-      return <Image src="/icons/disney_plus.svg" {...iconProps} />;
+      return <Image src="/icons/disney_plus.svg" alt={`${platform} icon`} {...iconProps} />;
     
     case 'hbo max':
     case 'max':
     case 'hbomax':
-      return <Image src="/icons/HBO_Max.svg" {...iconProps} />;
+      return <Image src="/icons/HBO_Max.svg" alt={`${platform} icon`} {...iconProps} />;
     
     case 'prime video':
     case 'amazon prime':
     case 'amazon':
-      return <Image src="/icons/prime_video.svg" {...iconProps} />;
+      return <Image src="/icons/prime_video.svg" alt={`${platform} icon`} {...iconProps} />;
     
     case 'apple tv+':
     case 'apple tv':
     case 'appletv':
-      return <Image src="/icons/apple-tv-plus.svg" {...iconProps} />;
+      return <Image src="/icons/apple-tv-plus.svg" alt={`${platform} icon`} {...iconProps} />;
     
     case 'crunchyroll':
-      return <Image src="/icons/crunchyroll.svg" {...iconProps} />;
+      return <Image src="/icons/crunchyroll.svg" alt={`${platform} icon`} {...iconProps} />;
     
     case 'star+':
     case 'star plus':
     case 'starplus':
-      return <Image src="/icons/star-plus.svg" {...iconProps} />;
+      return <Image src="/icons/star-plus.svg" alt={`${platform} icon`} {...iconProps} />;
     
     // Ícones de Jogos
     case 'playstation':
     case 'ps4':
     case 'ps5':
-      return <Image src="/icons/playstation.svg" {...iconProps} />;
+      return <Image src="/icons/playstation.svg" alt={`${platform} icon`} {...iconProps} />;
     
     case 'xbox':
     case 'xbox one':
     case 'xbox series':
-      return <Image src="/icons/xbox.svg" {...iconProps} />;
+      return <Image src="/icons/xbox.svg" alt={`${platform} icon`} {...iconProps} />;
     
     case 'nintendo switch':
     case 'nintendo':
     case 'switch':
-      return <Image src="/icons/nintendo_switch.svg" {...iconProps} />;
+      return <Image src="/icons/nintendo_switch.svg" alt={`${platform} icon`} {...iconProps} />;
     
     case 'steam':
-      return <Image src="/icons/steam.svg" {...iconProps} />;
+      return <Image src="/icons/steam.svg" alt={`${platform} icon`} {...iconProps} />;
     
     case 'pc':
     case 'windows':
-      return <Image src="/icons/pc.svg" {...iconProps} />;
+      return <Image src="/icons/pc.svg" alt={`${platform} icon`} {...iconProps} />;
     
     default:
       return (

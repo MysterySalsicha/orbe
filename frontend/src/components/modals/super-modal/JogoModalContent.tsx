@@ -28,7 +28,7 @@ const JogoModalContent: React.FC<JogoModalContentProps> = ({ jogo, openCalendarM
             </a>
           </Button>
         )}
-        <Button variant="muted" onClick={() => openCalendarModal({ midia: jogo, type: 'jogo' })}>
+        <Button variant="secondary" onClick={() => openCalendarModal({ midia: jogo, type: 'jogo' })}>
           <Calendar className="h-5 w-5 mr-2" />Adicionar ao Calendário
         </Button>
       </div>

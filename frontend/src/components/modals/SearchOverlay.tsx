@@ -4,8 +4,8 @@ import { useState, useEffect, useMemo, useCallback } from 'react';
 import { X, Search } from 'lucide-react';
 import { useAppStore } from '@/stores/appStore';
 import MidiaCard from '@/components/media/MidiaCard';
-import type { SearchResultItem, Filme, Serie, Anime, Jogo } from '@/types';
-import { realApi } from '@/data/realApi';
+import type { SearchResultItem, Filme, Serie, Anime, Jogo, TipoMidia } from '@/types';
+import { realApi, ApiResponseItem } from '@/data/realApi';
 
 const SearchOverlay: React.FC = () => {
   const { isSearchOpen, closeSearch } = useAppStore();
@@ -49,7 +49,7 @@ const SearchOverlay: React.FC = () => {
       setIsLoading(true);
       try {
         const trending = await realApi.getTrending();
-        const flatResults: SearchResultItem[] = trending.map((item: any) => ({ ...item, type: item.tipo as const }));
+        const flatResults: SearchResultItem[] = trending.map((item: ApiResponseItem) => ({ ...item, type: item.tipo as TipoMidia }));
         setTrendingContent(flatResults);
       } catch (error) {
         console.error('Erro ao carregar conteúdo em alta:', error);

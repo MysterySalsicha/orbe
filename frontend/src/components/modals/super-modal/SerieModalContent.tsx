@@ -23,7 +23,7 @@ const SerieModalContent: React.FC<SerieModalContentProps> = ({ serie, elenco, op
             <Play className="h-5 w-5 mr-2" />Assistir Agora
           </a>
         </Button>
-        <Button variant="muted" onClick={() => openCalendarModal({ midia: serie, type: 'serie' })}>
+        <Button variant="secondary" onClick={() => openCalendarModal({ midia: serie, type: 'serie' })}>
           <Calendar className="h-5 w-5 mr-2" />Adicionar ao Calendário
         </Button>
       </div>

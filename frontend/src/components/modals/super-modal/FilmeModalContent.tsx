@@ -31,7 +31,7 @@ const FilmeModalContent: React.FC<FilmeModalContentProps> = ({ filme, elenco, op
             <Play className="h-5 w-5 mr-2" />Assistir Agora
           </a>
         </Button>
-        <Button variant="muted" onClick={() => openCalendarModal({ midia: filme, type: 'filme' })}>
+        <Button variant="secondary" onClick={() => openCalendarModal({ midia: filme, type: 'filme' })}>
           <Calendar className="h-5 w-5 mr-2" />Adicionar ao Calendário
         </Button>
       </div>

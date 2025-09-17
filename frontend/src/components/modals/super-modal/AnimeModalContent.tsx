@@ -35,7 +35,7 @@ const AnimeModalContent: React.FC<AnimeModalContentProps> = ({ anime, staff, per
         </Button>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="muted"><Calendar className="h-5 w-5 mr-2" />Adicionar ao Calendário</Button>
+            <Button variant="secondary"><Calendar className="h-5 w-5 mr-2" />Adicionar ao Calendário</Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent>
             <DropdownMenuItem disabled={hasLaunched} onClick={() => openCalendarModal({ midia: anime, type: 'anime', eventType: 'premiere' })}>
@@ -53,7 +53,7 @@ const AnimeModalContent: React.FC<AnimeModalContentProps> = ({ anime, staff, per
         <div>
           <h3 className="text-lg font-semibold orbe-text-secondary mb-2">Sinopse</h3>
           <p className={`text-muted-foreground leading-relaxed transition-all duration-300 ${!isSynopsisExpanded ? 'line-clamp-3' : ''}`}>
-            {anime.sinopse}
+            {(anime.sinopse_curada || anime.sinopse_api)}
           </p>
           <button onClick={() => setIsSynopsisExpanded(!isSynopsisExpanded)} className="text-sm font-semibold text-primary hover:underline mt-1">
             {isSynopsisExpanded ? 'Ler menos' : 'Ler mais'}

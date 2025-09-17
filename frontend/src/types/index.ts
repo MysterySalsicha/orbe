@@ -36,7 +36,7 @@ export interface Character {
       nome: string;
       foto_url?: string;
     };
-    pt_br?: {
+    ptBR?: {
       nome: string;
       foto_url?: string;
     };
@@ -73,6 +73,7 @@ export interface Midia {
   trailer_url_curado?: string;
   trailer_url_api?: string;
   avaliacao?: number; // Propriedade adicionada
+  link_assistir_agora?: string;
 }
 
 // Interfaces específicas por tipo de mídia
@@ -103,6 +104,11 @@ export interface Anime extends Midia {
   proximo_episodio?: string;
   numero_episodio_atual?: number;
   eventos_recorrentes_calendario: boolean;
+  tags?: string[];
+  numero_episodios?: number;
+  mal_link?: string;
+  link_assistir_agora?: string;
+  status?: string;
 }
 
 export interface Jogo extends Midia {
@@ -326,4 +332,3 @@ export interface CarouselConfig {
     };
   };
 }
-
