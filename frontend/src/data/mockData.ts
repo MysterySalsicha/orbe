@@ -125,7 +125,7 @@ export const mockAnimes: Anime[] = [
         foto_url: "https://s4.anilist.co/file/anilistcdn/character/large/b146156-RhiBIhpN5sNB.jpg",
         dubladores: {
           jp: { nome: "Natsuki Hanae" },
-          pt_br: { nome: "Guilherme Briggs" }
+          ptBR: { nome: "Guilherme Briggs" }
         }
       },
       {
@@ -134,7 +134,7 @@ export const mockAnimes: Anime[] = [
         foto_url: "https://s4.anilist.co/file/anilistcdn/character/large/b146157-qwbWOVoNM1Tv.jpg",
         dubladores: {
           jp: { nome: "Satomi Sato" },
-          pt_br: { nome: "Fernanda Baronne" }
+          ptBR: { nome: "Fernanda Baronne" }
         }
       }
     ],
@@ -168,7 +168,7 @@ export const mockAnimes: Anime[] = [
         foto_url: "https://s4.anilist.co/file/anilistcdn/character/large/b40882-dsj7IP943WFF.jpg",
         dubladores: {
           jp: { nome: "Yuki Kaji" },
-          pt_br: { nome: "Manolo Rey" }
+          ptBR: { nome: "Manolo Rey" }
         }
       }
     ],
