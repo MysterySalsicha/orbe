@@ -3,7 +3,7 @@ services:
   - type: web
     name: orbe-nerd-api
     env: python
-    buildCommand: pip install -r requirements.txt
+    buildCommand: pip install -r requirements.txt && backend/venv/Scripts/flask db upgrade
     startCommand: gunicorn app:app
     envVars:
       - key: FLASK_ENV
