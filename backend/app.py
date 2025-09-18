@@ -186,6 +186,17 @@ def create_app(testing=False):
             return jsonify({"error": "Usuário não encontrado"}), 404
         return jsonify(user.to_dict())
 
+    @app.route("/api/debug_db_schema", methods=["GET"])
+    def debug_db_schema():
+        try:
+            from sqlalchemy import inspect
+            inspector = inspect(db.engine)
+            columns = inspector.get_columns('filme')
+            column_names = [col['name'] for col in columns]
+            return jsonify({"filme_columns": column_names})
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
+
     return app
 
 app = create_app() # Make the app instance available for Gunicorn
