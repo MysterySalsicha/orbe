@@ -186,3 +186,5 @@ def create_app(testing=False):
         return jsonify(user.to_dict())
 
     return app
+
+app = create_app() # Make the app instance available for Gunicorn
