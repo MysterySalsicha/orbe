@@ -7,8 +7,8 @@ import hashlib
 import jwt
 
 # Importar a instância do db e os modelos
-from backend.extensions import db
-from backend.models import Filme, Serie, Anime, Jogo, Usuario, Notificacao
+from extensions import db
+from models import Filme, Serie, Anime, Jogo, Usuario, Notificacao
 
 def hash_password(password):
     """Gera o hash de uma senha usando SHA256."""
