@@ -106,17 +106,17 @@ def run_migrations_online():
 
     # Ensure app context for run_migrations_online
     with create_app().app_context():
-        conf_args = current_app.extensions['migrate'].configure_args
-        if conf_args.get("process_revision_directives") is None:
-            conf_args["process_revision_directives"] = process_revision_directives
+        # Initialize Migrate here to ensure it's registered with current_app
+        from flask_migrate import Migrate
+        Migrate(current_app, db)
 
         connectable = get_engine()
 
         with connectable.connect() as connection:
             context.configure(
                 connection=connection,
-                target_metadata=get_metadata(),
-                **conf_args
+                target_metadata=db.metadata, # Use db.metadata directly
+                process_revision_directives=process_revision_directives
             )
 
             with context.begin_transaction():
