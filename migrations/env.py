@@ -10,7 +10,6 @@ from logging.config import fileConfig
 
 from flask import current_app
 from backend.app import create_app # Import create_app
-from backend.extensions import db # Import db
 
 from alembic import context
 
@@ -46,10 +45,10 @@ def get_engine_url():
 # from myapp import mymodel
 # target_metadata = mymodel.Base.metadata
 
-    # Ensure app context for config.set_main_option and target_db
+# Ensure app context for config.set_main_option and target_db
     app = create_app()
     from flask_migrate import Migrate
-    Migrate(app, db)
+    Migrate(app, current_app.extensions['sqlalchemy'])
     with app.app_context():
         config.set_main_option('sqlalchemy.url', get_engine_url())
         target_db = current_app.extensions['migrate'].db
@@ -109,14 +108,14 @@ def run_migrations_online():
     with create_app().app_context():
         # Initialize Migrate here to ensure it's registered with current_app
         from flask_migrate import Migrate
-        Migrate(current_app, db)
+        Migrate(current_app, current_app.extensions['sqlalchemy'])
 
         connectable = get_engine()
 
         with connectable.connect() as connection:
             context.configure(
                 connection=connection,
-                target_metadata=db.metadata, # Use db.metadata directly
+                target_metadata=current_app.extensions['sqlalchemy'].metadata, # Use db.metadata directly
                 process_revision_directives=process_revision_directives
             )
 
@@ -128,4 +127,3 @@ if context.is_offline_mode():
     run_migrations_offline()
 else:
     run_migrations_online()
-
