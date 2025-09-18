@@ -1,17 +1,10 @@
 import os
-from flask_migrate import Migrate
-from dotenv import load_dotenv
-from backend.app import create_app
-from backend.extensions import db # Import db from extensions.py
-
-# Load environment variables
-load_dotenv()
-
-# Create the Flask app instance using your factory function
+from flask_migrate import Migrate, MigrateCommand
+# ... (rest of your code)
 app = create_app()
-
-# Initialize Flask-Migrate with the app and db instance
+# ... (rest of your code)
 migrate = Migrate(app, db)
+app.cli.add_command('db', MigrateCommand) # Add this line
 
 # This file can also contain other Flask CLI commands if needed
 # For now, its primary purpose is to enable 'flask db' commands
