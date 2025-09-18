@@ -45,10 +45,13 @@ def get_engine_url():
 # from myapp import mymodel
 # target_metadata = mymodel.Base.metadata
 
-# Ensure app context for config.set_main_option and target_db
-with create_app().app_context():
-    config.set_main_option('sqlalchemy.url', get_engine_url())
-    target_db = current_app.extensions['migrate'].db
+    # Ensure app context for config.set_main_option and target_db
+    app = create_app()
+    from flask_migrate import Migrate
+    Migrate(app, db)
+    with app.app_context():
+        config.set_main_option('sqlalchemy.url', get_engine_url())
+        target_db = current_app.extensions['migrate'].db
 
 # other values from the config, defined by the needs of env.py,
 # can be acquired:
@@ -124,3 +127,4 @@ if context.is_offline_mode():
     run_migrations_offline()
 else:
     run_migrations_online()
+
