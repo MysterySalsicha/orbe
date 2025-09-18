@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Inter } from "next/font/google";
 import "./globals.css";
 import AppProvider from "@/components/providers/AppProvider";
 import Header from "@/components/layout/Header";
@@ -9,14 +9,8 @@ import SuperModal from "@/components/modals/SuperModal";
 import NotificationModal from "@/components/modals/NotificationModal";
 import RatingModal from "@/components/modals/RatingModalWrapper";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-  display: 'swap',
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const inter = Inter({
+  variable: "--font-inter",
   subsets: ["latin"],
   display: 'swap',
 });
@@ -68,7 +62,7 @@ export default function RootLayout({
   return (
     <html lang="pt-BR" suppressHydrationWarning>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${inter.variable} antialiased`}
       >
         <AppProvider>
           <div className="min-h-screen bg-background text-foreground">
