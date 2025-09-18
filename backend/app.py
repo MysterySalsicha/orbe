@@ -7,7 +7,7 @@ import hashlib
 import jwt
 
 # Importar a instância do db e os modelos
-from extensions import db
+from .extensions import db
 from models import Filme, Serie, Anime, Jogo, Usuario, Notificacao
 
 def hash_password(password):
