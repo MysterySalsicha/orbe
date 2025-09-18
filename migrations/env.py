@@ -2,6 +2,7 @@ import logging
 from logging.config import fileConfig
 
 from flask import current_app
+from backend.app import create_app # Import create_app
 
 from alembic import context
 
@@ -36,8 +37,11 @@ def get_engine_url():
 # for 'autogenerate' support
 # from myapp import mymodel
 # target_metadata = mymodel.Base.metadata
-config.set_main_option('sqlalchemy.url', get_engine_url())
-target_db = current_app.extensions['migrate'].db
+
+# Ensure app context for config.set_main_option and target_db
+with create_app().app_context():
+    config.set_main_option('sqlalchemy.url', get_engine_url())
+    target_db = current_app.extensions['migrate'].db
 
 # other values from the config, defined by the needs of env.py,
 # can be acquired:
@@ -90,21 +94,23 @@ def run_migrations_online():
                 directives[:] = []
                 logger.info('No changes in schema detected.')
 
-    conf_args = current_app.extensions['migrate'].configure_args
-    if conf_args.get("process_revision_directives") is None:
-        conf_args["process_revision_directives"] = process_revision_directives
+    # Ensure app context for run_migrations_online
+    with create_app().app_context():
+        conf_args = current_app.extensions['migrate'].configure_args
+        if conf_args.get("process_revision_directives") is None:
+            conf_args["process_revision_directives"] = process_revision_directives
 
-    connectable = get_engine()
+        connectable = get_engine()
 
-    with connectable.connect() as connection:
-        context.configure(
-            connection=connection,
-            target_metadata=get_metadata(),
-            **conf_args
-        )
+        with connectable.connect() as connection:
+            context.configure(
+                connection=connection,
+                target_metadata=get_metadata(),
+                **conf_args
+            )
 
-        with context.begin_transaction():
-            context.run_migrations()
+            with context.begin_transaction():
+                context.run_migrations()
 
 
 if context.is_offline_mode():
