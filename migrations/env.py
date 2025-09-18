@@ -10,6 +10,7 @@ from logging.config import fileConfig
 
 from flask import current_app
 from backend.app import create_app # Import create_app
+from backend.extensions import db # Import db
 
 from alembic import context
 
