@@ -38,8 +38,7 @@ def create_app(testing=False):
         "http://localhost:3001",
         "https://orbe-seven.vercel.app",
         "https://orbe-git-feat-remove-mock-data-igor-silvas-projects-70341dd7.vercel.app",
-
-    CORS(app, origins=allowed_origins, supports_credentials=True, methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"], allow_headers=["Content-Type", "Authorization"])
+    ]CORS(app, origins=allowed_origins, supports_credentials=True, methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"], allow_headers=["Content-Type", "Authorization"])
 
     # Funções auxiliares de autenticação
     def generate_token(user_id):
