@@ -40,23 +40,23 @@ const AwardIcon: React.FC<AwardIconProps> = ({
     switch (award.toLowerCase()) {
       case 'oscar':
       case 'academy awards':
-        return <Image src="/icons/oscar.svg" alt={`${award} icon`} {...iconProps} />;
+        return <Image src="/icons/oscar.svg" alt={`Icon for ${award}`} width={size} height={size} className={className} />;
       
       case 'globo de ouro':
       case 'golden globe':
       case 'golden globes':
-        return <Image src="/icons/globo-ouro.svg" alt={`${award} icon`} {...iconProps} />;
+        return <Image src="/icons/globo-ouro.svg" alt={`Icon for ${award}`} width={size} height={size} className={className} />;
       
       case 'the game awards':
       case 'tga':
-        return <Image src="/icons/the-game-awards.svg" alt={`${award} icon`} {...iconProps} />;
+        return <Image src="/icons/the-game-awards.svg" alt={`Icon for ${award}`} width={size} height={size} className={className} />;
       
       case 'the anime awards':
       case 'anime awards':
-        return <Image src="/icons/anime-awards.svg" alt={`${award} icon`} {...iconProps} />;
+        return <Image src="/icons/anime-awards.svg" alt={`Icon for ${award}`} width={size} height={size} className={className} />;
       
       default:
-        return <Image src="/icons/oscar.svg" alt={`${award} icon`} {...iconProps} />;
+        return <Image src="/icons/oscar.svg" alt={`Icon for ${award}`} width={size} height={size} className={className} />;
     }
   };
 

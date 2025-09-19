@@ -143,8 +143,6 @@ const MidiaCard: React.FC<MidiaCardProps> = ({
     // Se for "Já Assisti/Joguei", abre o modal de avaliação
     if (action === 'ja_assisti' || action === 'ja_joguei') {
       openRatingModal(midia, type, action);
-    } else {
-      onInteraction?.(action, midia);
     }
     
     setIsMenuOpen(false);
