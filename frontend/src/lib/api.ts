@@ -1,4 +1,4 @@
-const API_BASE_URL = 'https://orbe-g67t.onrender.com/api';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || '/api';
 
 // Função para obter o token do localStorage
 const getToken = (): string | null => {
