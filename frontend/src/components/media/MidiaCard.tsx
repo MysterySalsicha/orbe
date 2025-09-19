@@ -22,8 +22,7 @@ import type { MidiaCardProps, UserAction } from '@/types';
 const MidiaCard: React.FC<MidiaCardProps> = ({
   midia,
   type,
-  userInteractions = [],
-  onInteraction
+  userInteractions = []
 }) => {
   const { openSuperModal, openRatingModal } = useAppStore();
   const [isMenuOpen, setIsMenuOpen] = useState(false);

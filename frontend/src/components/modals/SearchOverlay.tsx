@@ -49,7 +49,7 @@ const SearchOverlay: React.FC = () => {
       setIsLoading(true);
       try {
         const trending = await realApi.getTrending();
-        const flatResults: SearchResultItem[] = trending.map((item: any) => ({ ...item, type: item.tipo as const }));
+        const flatResults: SearchResultItem[] = trending.map((item: SearchResultItem) => ({ ...item, type: item.tipo as const }));
         setTrendingContent(flatResults);
       } catch (error) {
         console.error('Erro ao carregar conteúdo em alta:', error);
