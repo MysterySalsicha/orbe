@@ -43,7 +43,6 @@ const RatingModal: React.FC<RatingModalProps> = ({
 
   const handleRatingSelect = (rating: 'gostei' | 'amei' | 'nao_gostei') => {
     setSelectedRating(rating);
-    setCurrentStep('review');
     setShowReviewModal(true);
   };
 
@@ -55,7 +54,6 @@ const RatingModal: React.FC<RatingModalProps> = ({
   };
 
   const handleClose = () => {
-    setCurrentStep('rating');
     setSelectedRating(null);
     setReview('');
     setShowReviewModal(false);

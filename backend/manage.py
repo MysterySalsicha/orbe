@@ -1,14 +1,10 @@
 import os
-from flask import Flask
-from flask_sqlalchemy import SQLAlchemy
-from flask_migrate import Migrate
-from dotenv import load_dotenv
-
-load_dotenv()
-
-app = Flask(__name__)
-app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv("DATABASE_URL")
-app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
-
-db = SQLAlchemy(app)
+from flask_migrate import Migrate, MigrateCommand
+# ... (rest of your code)
+app = create_app()
+# ... (rest of your code)
 migrate = Migrate(app, db)
+app.cli.add_command('db', MigrateCommand) # Add this line
+
+# This file can also contain other Flask CLI commands if needed
+# For now, its primary purpose is to enable 'flask db' commands

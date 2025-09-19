@@ -7,8 +7,8 @@ import hashlib
 import jwt
 
 # Importar a instância do db e os modelos
-from extensions import db
-from models import Filme, Serie, Anime, Jogo, Usuario, Notificacao
+from backend.extensions import db
+from backend.models import Filme, Serie, Anime, Jogo, Usuario, Notificacao
 
 def hash_password(password):
     """Gera o hash de uma senha usando SHA256."""
@@ -37,6 +37,7 @@ def create_app(testing=False):
         "http://localhost:3000",
         "http://localhost:3001",
         "https://orbe-seven.vercel.app",
+        "https://orbe-git-feat-remove-mock-data-igor-silvas-projects-70341dd7.vercel.app",
     ]
 
     CORS(app, origins=allowed_origins, supports_credentials=True, methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"], allow_headers=["Content-Type", "Authorization"])
@@ -185,4 +186,17 @@ def create_app(testing=False):
             return jsonify({"error": "Usuário não encontrado"}), 404
         return jsonify(user.to_dict())
 
+    @app.route("/api/debug_db_schema", methods=["GET"])
+    def debug_db_schema():
+        try:
+            from sqlalchemy import inspect
+            inspector = inspect(db.engine)
+            columns = inspector.get_columns('filme')
+            column_names = [col['name'] for col in columns]
+            return jsonify({"filme_columns": column_names})
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
+
     return app
+
+app = create_app() # Make the app instance available for Gunicorn

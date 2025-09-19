@@ -35,29 +35,28 @@ const AwardIcon: React.FC<AwardIconProps> = ({
       width: size,
       height: size,
       className: className,
-      alt: `${award} icon`
     };
 
     switch (award.toLowerCase()) {
       case 'oscar':
       case 'academy awards':
-        return <Image src="/icons/oscar.svg" {...iconProps} />;
+        return <Image src="/icons/oscar.svg" alt={`${award} icon`} {...iconProps} />;
       
       case 'globo de ouro':
       case 'golden globe':
       case 'golden globes':
-        return <Image src="/icons/globo-ouro.svg" {...iconProps} />;
+        return <Image src="/icons/globo-ouro.svg" alt={`${award} icon`} {...iconProps} />;
       
       case 'the game awards':
       case 'tga':
-        return <Image src="/icons/the-game-awards.svg" {...iconProps} />;
+        return <Image src="/icons/the-game-awards.svg" alt={`${award} icon`} {...iconProps} />;
       
       case 'the anime awards':
       case 'anime awards':
-        return <Image src="/icons/anime-awards.svg" {...iconProps} />;
+        return <Image src="/icons/anime-awards.svg" alt={`${award} icon`} {...iconProps} />;
       
       default:
-        return <Image src="/icons/oscar.svg" {...iconProps} />;
+        return <Image src="/icons/oscar.svg" alt={`${award} icon`} {...iconProps} />;
     }
   };
 

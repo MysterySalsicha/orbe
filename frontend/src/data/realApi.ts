@@ -1,7 +1,7 @@
 import orbeNerdApi from '@/lib/api';
-import type { Filme, Serie, Anime, Jogo, Notification } from '@/types';
+import type { Filme, Serie, Anime, Jogo, Notification, SearchResultItem, User } from '@/types';
 
-type ApiResponseItem = {
+export type ApiResponseItem = {
   id: number;
   titulo: string;
   poster: string;
@@ -211,7 +211,7 @@ export const realApi = {
         proximo_episodio: anime.proximo_episodio,
         numero_episodio_atual: anime.numero_episodios || 0,
         eventos_recorrentes_calendario: false
-      };
+      } as Anime;
     } catch (error) {
       console.error('Erro ao buscar detalhes do anime:', error);
       return null;
@@ -290,7 +290,7 @@ export const realApi = {
       const response = await orbeNerdApi.search(query, type, page);
       
       // Mapear resultados para o formato esperado
-      const mappedResults = response.results.map((item: ApiResponseItem) => {
+      const mappedResults: SearchResultItem[] = response.results.map((item: ApiResponseItem) => {
         const baseItem = {
           id: item.id,
           titulo_curado: item.titulo,
@@ -356,10 +356,10 @@ export const realApi = {
       });
 
       return {
-        filmes: mappedResults.filter((item: Filme) => item.duracao !== undefined),
-        series: mappedResults.filter((item: Serie) => item.numero_temporadas !== undefined),
-        animes: mappedResults.filter((item: Anime) => item.fonte !== undefined),
-        jogos: mappedResults.filter((item: Jogo) => item.desenvolvedores !== undefined),
+        filmes: mappedResults.filter(item => item.type === 'filme') as Filme[],
+        series: mappedResults.filter(item => item.type === 'serie') as Serie[],
+        animes: mappedResults.filter(item => item.type === 'anime') as Anime[],
+        jogos: mappedResults.filter(item => item.type === 'jogo') as Jogo[],
         total: response.total_results || mappedResults.length
       };
     } catch (error) {
@@ -473,7 +473,7 @@ export const realApi = {
   // Login
   login: async (email: string, password: string): Promise<{ token: string; user: User } | null> => {
     try {
-      const response = await orbeNerdApi.post('/auth/login', { email, password });
+      const response = await orbeNerdApi.login({ email, password });
       return response;
     } catch (error) {
       console.error('Erro ao fazer login:', error);

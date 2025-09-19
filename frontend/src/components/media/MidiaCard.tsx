@@ -1,23 +1,12 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { 
-  MoreVertical, 
-  Heart, 
-  Bookmark, 
-  Star, 
-  Check, 
-  EyeOff,
-  Trophy,
-  ShoppingCart,
-  Award
-} from 'lucide-react';
-import PlatformIcon from '@/components/ui/PlatformIcons';
+import { Star, Check, Heart, Bookmark, EyeOff, Trophy, Award, ShoppingCart, MoreVertical } from 'lucide-react';import PlatformIcon from '@/components/ui/PlatformIcons';
 import { format, parseISO, differenceInDays, differenceInHours, differenceInMinutes } from 'date-fns';
 import Image from 'next/image';
 import { ptBR } from 'date-fns/locale';
 import { useAppStore } from '@/stores/appStore';
-import type { MidiaCardProps, UserAction } from '@/types';
+import type { MidiaCardProps, UserAction, Anime } from '@/types';
 
 const MidiaCard: React.FC<MidiaCardProps> = ({
   midia,
@@ -34,7 +23,7 @@ const MidiaCard: React.FC<MidiaCardProps> = ({
   const isAnime = type === 'anime' && 'proximo_episodio' in midia;
   const isFilme = type === 'filme' && 'em_prevenda' in midia;
 
-  const proximoEpisodio = isAnime ? midia.proximo_episodio : undefined;
+  const proximoEpisodio = isAnime ? (midia as Anime).proximo_episodio : undefined;
 
   // Calcula countdown em tempo real para animes
   useEffect(() => {
@@ -170,7 +159,7 @@ const MidiaCard: React.FC<MidiaCardProps> = ({
   // Função para lidar com clique longo (mobile)
   const [pressTimer, setPressTimer] = useState<NodeJS.Timeout | null>(null);
   
-  const handlePressStart = (e: React.MouseEvent | React.TouchEvent) => {
+  const handlePressStart = () => {
     const timer = setTimeout(() => {
       setIsMenuOpen(true);
     }, 500); // 500ms para ativar o menu
