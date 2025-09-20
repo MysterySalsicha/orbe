@@ -193,14 +193,14 @@ app.get('/api/trending', (req, res) => {
 });
 
 app.post('/api/auth/register', async (req, res) => {
-  const { email, password, nome } = req.body;
+  const { email, password } = req.body;
 
-  if (!email || !password || !nome) {
-    return res.status(400).json({ error: 'Email, senha e nome são obrigatórios' });
+  if (!email || !password) {
+    return res.status(400).json({ error: 'Email e senha são obrigatórios' });
   }
 
   try {
-    const existingUser = await prisma.usuario.findUnique({
+    const existingUser = await prisma.user.findUnique({
       where: { email },
     });
 
@@ -210,11 +210,10 @@ app.post('/api/auth/register', async (req, res) => {
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    const newUser = await prisma.usuario.create({
+    const newUser = await prisma.user.create({
       data: {
         email,
-        senha_hash: hashedPassword,
-        nome,
+        hashed_password: hashedPassword,
       },
     });
 
@@ -236,7 +235,7 @@ app.post('/api/auth/login', async (req, res) => {
   }
 
   try {
-    const user = await prisma.usuario.findUnique({
+    const user = await prisma.user.findUnique({
       where: { email },
     });
 
@@ -244,7 +243,7 @@ app.post('/api/auth/login', async (req, res) => {
       return res.status(401).json({ error: 'Email ou senha inválidos' });
     }
 
-    const isPasswordValid = await bcrypt.compare(password, user.senha_hash);
+    const isPasswordValid = await bcrypt.compare(password, user.hashed_password);
 
     if (!isPasswordValid) {
       return res.status(401).json({ error: 'Email ou senha inválidos' });
@@ -271,7 +270,7 @@ app.get('/api/auth/me', async (req, res) => {
 
   try {
     const decoded = jwt.verify(token, process.env.SECRET_KEY || 'orbe_nerd_secret_key_2025') as { userId: number };
-    const user = await prisma.usuario.findUnique({
+    const user = await prisma.user.findUnique({
       where: { id: decoded.userId },
     });
 
