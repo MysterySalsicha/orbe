@@ -33,27 +33,32 @@ export const syncMovies = async (year: number) => {
         }
 
         for (const movie of movies) {
+          const releaseDate = movie.release_date ? new Date(movie.release_date) : null;
+
           await prisma.filme.upsert({
             where: { id: movie.id },
             update: {
-              titulo_curado: movie.title,
               titulo_api: movie.original_title,
-              sinopse: movie.overview,
+              titulo_curado: movie.title,
+              sinopse_api: movie.overview,
               poster_url_api: movie.poster_path ? `https://image.tmdb.org/t/p/w500${movie.poster_path}` : null,
-              data_lancamento_api: movie.release_date,
-              avaliacao: movie.vote_average,
-              generos: movie.genre_ids.map(String),
+              data_lancamento_api: releaseDate,
+              generos_api: movie.genre_ids,
+              avaliacao_api: movie.vote_average ? movie.vote_average * 10 : null,
             },
             create: {
               id: movie.id,
-              titulo_curado: movie.title,
               titulo_api: movie.original_title,
-              sinopse: movie.overview,
+              titulo_curado: movie.title,
+              sinopse_api: movie.overview,
+              sinopse_curada: movie.overview,
               poster_url_api: movie.poster_path ? `https://image.tmdb.org/t/p/w500${movie.poster_path}` : null,
-              data_lancamento_api: movie.release_date,
-              avaliacao: movie.vote_average,
-              generos: movie.genre_ids.map(String),
+              data_lancamento_api: releaseDate,
+              data_lancamento_curada: releaseDate,
+              generos_api: movie.genre_ids,
+              plataformas_api: [],
               plataformas_curadas: [],
+              avaliacao_api: movie.vote_average ? movie.vote_average * 10 : null,
             },
           });
         }

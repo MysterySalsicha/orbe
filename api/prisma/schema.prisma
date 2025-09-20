@@ -35,6 +35,7 @@ model Filme {
   ingresso_link               String?   @db.VarChar(255)
   em_prevenda                 Boolean   @default(false)
   ultima_verificacao_ingresso DateTime? @db.Timestamp()
+  avaliacao_api               Float?
 }
 
 model Serie {
@@ -58,6 +59,7 @@ model Serie {
   numero_episodios        Int?
   criadores               String[]
   elenco                  Json?     @db.JsonB
+  avaliacao_api           Float?
 }
 
 model Anime {
@@ -82,6 +84,7 @@ model Anime {
   dublagem_info           Boolean   @default(false)
   staff                   Json?     @db.JsonB
   personagens              Json?     @db.JsonB
+  avaliacao_api           Float?
 }
 
 model Jogo {
@@ -105,6 +108,7 @@ model Jogo {
   publicadoras            String[]
   evento_anuncio_id       Int?
   evento_anuncio          EventoAnuncio? @relation(fields: [evento_anuncio_id], references: [id])
+  avaliacao_api           Float?
 }
 
 model User {

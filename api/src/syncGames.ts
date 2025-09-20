@@ -27,29 +27,40 @@ export const syncGames = async (year: number) => {
       }
 
       for (const game of games) {
+        const releaseDate = game.first_release_date ? new Date(game.first_release_date * 1000) : null;
+        const developers = game.involved_companies ? game.involved_companies.filter((c: any) => c.developer).map((c: any) => c.company.name) : [];
+        const publishers = game.involved_companies ? game.involved_companies.filter((c: any) => c.publisher).map((c: any) => c.company.name) : [];
+        const genres = game.genres ? game.genres.map((g: any) => g.name) : [];
+
         await prisma.jogo.upsert({
           where: { id: game.id },
           update: {
+            titulo_api: game.name,
             titulo_curado: game.name,
-            sinopse: game.summary,
+            sinopse_api: game.summary,
             poster_url_api: game.cover ? `https:${game.cover.url.replace('t_thumb', 't_cover_big')}` : null,
-            data_lancamento_api: game.first_release_date ? new Date(game.first_release_date * 1000).toISOString().split('T')[0] : null,
-            avaliacao: game.rating,
-            generos: game.genres ? game.genres.map((g: any) => g.name) : [],
-            desenvolvedores: game.involved_companies ? game.involved_companies.filter((c: any) => c.developer).map((c: any) => c.company.name).join(', ') : null,
-            publicadoras: game.involved_companies ? game.involved_companies.filter((c: any) => c.publisher).map((c: any) => c.company.name).join(', ') : null,
+            data_lancamento_api: releaseDate,
+            generos_api: genres,
+            desenvolvedores: developers,
+            publicadoras: publishers,
+            avaliacao_api: game.rating,
           },
           create: {
             id: game.id,
+            titulo_api: game.name,
             titulo_curado: game.name,
-            sinopse: game.summary,
+            sinopse_api: game.summary,
+            sinopse_curada: game.summary,
             poster_url_api: game.cover ? `https:${game.cover.url.replace('t_thumb', 't_cover_big')}` : null,
-            data_lancamento_api: game.first_release_date ? new Date(game.first_release_date * 1000).toISOString().split('T')[0] : null,
-            avaliacao: game.rating,
-            generos: game.genres ? game.genres.map((g: any) => g.name) : [],
+            data_lancamento_api: releaseDate,
+            data_lancamento_curada: releaseDate,
+            generos_api: genres,
+            generos_curados: [],
+            plataformas_api: [],
             plataformas_curadas: [],
-            desenvolvedores: game.involved_companies ? game.involved_companies.filter((c: any) => c.developer).map((c: any) => c.company.name).join(', ') : null,
-            publicadoras: game.involved_companies ? game.involved_companies.filter((c: any) => c.publisher).map((c: any) => c.company.name).join(', ') : null,
+            desenvolvedores: developers,
+            publicadoras: publishers,
+            avaliacao_api: game.rating,
           },
         });
       }
