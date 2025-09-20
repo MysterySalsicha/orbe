@@ -1,6 +1,0 @@
-{
-  "version": 2,
-  "env": {
-    "NEXT_PUBLIC_API_URL": "https://orbe-g67t.onrender.com/api"
-  }
-}

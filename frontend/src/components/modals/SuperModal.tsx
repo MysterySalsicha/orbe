@@ -184,7 +184,7 @@ const SuperModal: React.FC = () => {
             <div className="flex flex-col md:flex-row gap-6">
               <div className="flex-shrink-0">
                 <div className="w-48 h-72 bg-muted rounded-lg overflow-hidden">
-                  <Image src={midia.poster_curado || midia.poster_url_api || '/placeholder-poster.jpg'} alt={midia.titulo_curado || midia.titulo_api} width={192} height={288} className="w-full h-full object-cover" />
+                  <Image src={midia.poster_curado || midia.poster_url_api || '/placeholder-poster.jpg'} alt={midia.titulo_curado || midia.titulo_api || 'Imagem da Mídia'} width={192} height={288} className="w-full h-full object-cover" />
                 </div>
                 {type === 'anime' && (midia as Anime).tags && ((midia as Anime).tags?.length ?? 0) > 0 && (
                   <div className="mt-4">

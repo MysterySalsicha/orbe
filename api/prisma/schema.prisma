@@ -1,0 +1,147 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model Filme {
+  id                          Int       @id
+  titulo_api                  String?   @db.VarChar(255)
+  titulo_curado               String    @db.VarChar(255)
+  poster_url_api              String?   @db.VarChar(255)
+  poster_curado               String?   @db.VarChar(255)
+  data_lancamento_api         DateTime? @db.Date
+  data_lancamento_curada      DateTime? @db.Date
+  sinopse_api                 String?   @db.Text
+  sinopse_curada              String?   @db.Text
+  plataformas_api             String[]
+  plataformas_curadas         String[]
+  trailer_url_api             String?   @db.VarChar(255)
+  trailer_url_curado          String?   @db.VarChar(255)
+  generos_api                 Json?     @db.JsonB
+  generos_curados             Json?     @db.JsonB
+  premiacoes                  Json?     @db.JsonB
+  duracao                     Int?
+  diretor                     String?   @db.VarChar(255)
+  escritor                    String?   @db.VarChar(255)
+  elenco                      Json?     @db.JsonB
+  ingresso_link               String?   @db.VarChar(255)
+  em_prevenda                 Boolean   @default(false)
+  ultima_verificacao_ingresso DateTime? @db.Timestamp()
+}
+
+model Serie {
+  id                      Int       @id
+  titulo_api              String?   @db.VarChar(255)
+  titulo_curado           String    @db.VarChar(255)
+  poster_url_api          String?   @db.VarChar(255)
+  poster_curado           String?   @db.VarChar(255)
+  data_lancamento_api     DateTime? @db.Date
+  data_lancamento_curada  DateTime? @db.Date
+  sinopse_api             String?   @db.Text
+  sinopse_curada          String?   @db.Text
+  plataformas_api         String[]
+  plataformas_curadas     String[]
+  trailer_url_api         String?   @db.VarChar(255)
+  trailer_url_curado      String?   @db.VarChar(255)
+  generos_api             Json?     @db.JsonB
+  generos_curados         Json?     @db.JsonB
+  premiacoes              Json?     @db.JsonB
+  numero_temporadas       Int?
+  numero_episodios        Int?
+  criadores               String[]
+  elenco                  Json?     @db.JsonB
+}
+
+model Anime {
+  id                      Int       @id
+  titulo_api              String?   @db.VarChar(255)
+  titulo_curado           String    @db.VarChar(255)
+  poster_url_api          String?   @db.VarChar(255)
+  poster_curado           String?   @db.VarChar(255)
+  data_lancamento_api     DateTime? @db.Date
+  data_lancamento_curada  DateTime? @db.Date
+  sinopse_api             String?   @db.Text
+  sinopse_curada          String?   @db.Text
+  plataformas_api         String[]
+  plataformas_curadas     String[]
+  trailer_url_api         String?   @db.VarChar(255)
+  trailer_url_curado      String?   @db.VarChar(255)
+  generos_api             Json?     @db.JsonB
+  generos_curados         Json?     @db.JsonB
+  premiacoes              Json?     @db.JsonB
+  fonte                   String?   @db.VarChar(255)
+  estudio                 String?   @db.VarChar(255)
+  dublagem_info           Boolean   @default(false)
+  staff                   Json?     @db.JsonB
+  personagens              Json?     @db.JsonB
+}
+
+model Jogo {
+  id                      Int       @id
+  titulo_api              String?   @db.VarChar(255)
+  titulo_curado           String    @db.VarChar(255)
+  poster_url_api          String?   @db.VarChar(255)
+  poster_curado           String?   @db.VarChar(255)
+  data_lancamento_api     DateTime? @db.Date
+  data_lancamento_curada  DateTime? @db.Date
+  sinopse_api             String?   @db.Text
+  sinopse_curada          String?   @db.Text
+  plataformas_api         String[]
+  plataformas_curadas     String[]
+  trailer_url_api         String?   @db.VarChar(255)
+  trailer_url_curado      String?   @db.VarChar(255)
+  generos_api             Json?     @db.JsonB
+  generos_curados         Json?     @db.JsonB
+  premiacoes              Json?     @db.JsonB
+  desenvolvedores         String[]
+  publicadoras            String[]
+  evento_anuncio_id       Int?
+  evento_anuncio          EventoAnuncio? @relation(fields: [evento_anuncio_id], references: [id])
+}
+
+model User {
+  id              Int       @id @default(autoincrement())
+  email           String    @unique @db.VarChar(255)
+  hashed_password String    @db.VarChar(255)
+  role            String    @default("user") @db.VarChar(50)
+  quer_avaliar    Boolean   @default(true)
+  data_criacao    DateTime  @default(now()) @db.Timestamp()
+  preferencias    preferencias_usuario_midia[]
+}
+
+model preferencias_usuario_midia {
+  id              Int       @id @default(autoincrement())
+  usuario_id      Int
+  midia_id        Int
+  tipo_midia      String    @db.VarChar(50)
+  status          String    @db.VarChar(50)
+  avaliacao       String?   @db.VarChar(50)
+  data_interacao  DateTime  @default(now()) @db.Timestamp()
+  usuario         User      @relation(fields: [usuario_id], references: [id])
+}
+
+model Notificacao {
+  id              Int       @id @default(autoincrement())
+  usuario_id      Int?
+  midia_id        Int?
+  tipo_midia      String?   @db.VarChar(50)
+  titulo          String    @db.VarChar(255)
+  tipo_notificacao String   @db.VarChar(50)
+  foi_visualizada Boolean   @default(false)
+  data_criacao    DateTime  @default(now()) @db.Timestamp()
+}
+
+model EventoAnuncio {
+  id          Int       @id @default(autoincrement())
+  nome        String    @db.VarChar(255)
+  data_evento DateTime  @db.Date
+  jogos       Jogo[]
+}

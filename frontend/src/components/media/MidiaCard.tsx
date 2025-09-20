@@ -212,8 +212,14 @@ const MidiaCard: React.FC<MidiaCardProps> = ({
         {/* Container da Imagem */}
         <div className="relative w-[200px] h-[300px] overflow-hidden">
           <Image
-            src={midia.poster_curado || midia.poster_url_api}
-            alt={midia.titulo_curado || midia.titulo_api}
+            src={
+              (midia.poster_curado && midia.poster_curado.trim() !== '')
+                ? midia.poster_curado
+                : (midia.poster_url_api && midia.poster_url_api.trim() !== '')
+                  ? midia.poster_url_api
+                  : '/placeholder.svg'
+            }
+            alt={midia.titulo_curado || midia.titulo_api || 'Imagem da Mídia'}
             width={200}
             height={300}
             loading="lazy"

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { format } from 'date-fns';
+import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import Carousel from '@/components/media/Carousel';
 import { realApi } from '@/data/realApi';
@@ -45,11 +45,12 @@ export default function Home() {
       setIsLoading(true);
       try {
         const [filmesData, seriesData, animesData, jogosData] = await Promise.all([
-          realApi.getFilmes('populares', undefined, 1),
-          realApi.getSeries(undefined, 1),
-          realApi.getAnimes(undefined, 1),
-          realApi.getJogos(undefined, 1)
+          realApi.getFilmes({ filtro: 'populares', page: 1 }),
+          realApi.getSeries({ page: 1 }),
+          realApi.getAnimes({ page: 1 }),
+          realApi.getJogos({ page: 1 })
         ]);
+        console.log('Dados recebidos da API:', { filmesData, seriesData, animesData, jogosData });
         setFilmes(filmesData.results);
         setSeries(seriesData.results);
         setAnimes(animesData.results);
@@ -64,9 +65,15 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    const currentYearFilmes = filmes.filter(f => new Date(f.data_lancamento_api).getFullYear() === currentYear);
-    const groupedF = currentYearFilmes.reduce((acc, filme) => {
-      const monthKey = format(new Date(filme.data_lancamento_api), 'yyyy-MM');
+    const groupedF = filmes.reduce((acc, filme) => {
+      let monthKey = 'A Ser Anunciado';
+      if (filme.data_lancamento_api) {
+        try {
+          monthKey = format(parseISO(filme.data_lancamento_api), 'yyyy-MM');
+        } catch (error) {
+          console.error(`Data inválida para o filme ${filme.id}: ${filme.data_lancamento_api}`, error);
+        }
+      }
       if (!acc[monthKey]) acc[monthKey] = [];
       acc[monthKey].push(filme);
       return acc;
@@ -74,9 +81,15 @@ export default function Home() {
     setGroupedFilmes(groupedF);
     setFilmesKeys(Object.keys(groupedF).sort());
 
-    const currentYearSeries = series.filter(s => new Date(s.data_lancamento_api).getFullYear() === currentYear);
-    const groupedS = currentYearSeries.reduce((acc, serie) => {
-      const monthKey = format(new Date(serie.data_lancamento_api), 'yyyy-MM');
+    const groupedS = series.reduce((acc, serie) => {
+      let monthKey = 'A Ser Anunciado';
+      if (serie.data_lancamento_api) {
+        try {
+          monthKey = format(parseISO(serie.data_lancamento_api), 'yyyy-MM');
+        } catch (error) {
+          console.error(`Data inválida para a série ${serie.id}: ${serie.data_lancamento_api}`, error);
+        }
+      }
       if (!acc[monthKey]) acc[monthKey] = [];
       acc[monthKey].push(serie);
       return acc;
@@ -85,16 +98,25 @@ export default function Home() {
     setSeriesKeys(Object.keys(groupedS).sort());
 
     const groupedA = animes.reduce((acc, anime) => {
-      const releaseDate = new Date(anime.data_lancamento_api);
-      const season = getSeasonFromMonth(releaseDate.getMonth());
-      const year = releaseDate.getFullYear();
-      const seasonKey = `${season} de ${year}`;
+      let seasonKey = 'A Ser Anunciado';
+      if (anime.data_lancamento_api) {
+        try {
+          const releaseDate = parseISO(anime.data_lancamento_api);
+          const season = getSeasonFromMonth(releaseDate.getMonth());
+          const year = releaseDate.getFullYear();
+          seasonKey = `${season} de ${year}`;
+        } catch (error) {
+          console.error(`Data inválida para o anime ${anime.id}: ${anime.data_lancamento_api}`, error);
+        }
+      }
       if (!acc[seasonKey]) acc[seasonKey] = [];
       acc[seasonKey].push(anime);
       return acc;
     }, {} as GroupedMedia<Anime>);
     setGroupedAnimes(groupedA);
     const sortedAnimeKeys = Object.keys(groupedA).sort((a, b) => {
+        if (a === 'A Ser Anunciado') return 1;
+        if (b === 'A Ser Anunciado') return -1;
         const [seasonA, , yearA] = a.split(' ');
         const [seasonB, , yearB] = b.split(' ');
         if (yearA !== yearB) return parseInt(yearA) - parseInt(yearB);
@@ -102,7 +124,7 @@ export default function Home() {
     });
     setAnimesKeys(sortedAnimeKeys);
 
-  }, [filmes, series, animes, currentYear]);
+  }, [filmes, series, animes]);
 
   useEffect(() => {
     const today = new Date();
@@ -153,7 +175,9 @@ export default function Home() {
     const key = keys[currentIndex];
     let title: string;
 
-    if (prefix.includes('Animes')) {
+    if (key === 'A Ser Anunciado') {
+      title = `${prefix} com data a ser anunciada`;
+    } else if (prefix.includes('Animes')) {
         title = `Animes da ${key}`;
     } else {
         const [year, month] = key.split('-');
@@ -185,7 +209,6 @@ export default function Home() {
   const getJogosTitle = () => `Estreias de jogos de ${currentYear}`;
   const getFilteredJogos = () => {
     return jogos
-      .filter(j => new Date(j.data_lancamento_api).getFullYear() === currentYear)
       .sort((a, b) => {
         const dateA = new Date(a.data_lancamento_api);
         const dateB = new Date(b.data_lancamento_api);

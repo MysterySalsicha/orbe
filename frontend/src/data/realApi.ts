@@ -38,27 +38,30 @@ type ApiNotification = {
 // API real substituindo os dados mockados
 export const realApi = {
   // Filmes
-  getFilmes: async (filtro?: string, genero?: string, page: number = 1): Promise<{ results: Filme[]; total_pages: number; total_results: number }> => {
+  getFilmes: async (params: { filtro?: string; genero?: string; page?: number }): Promise<{ results: Filme[]; total_pages: number; total_results: number }> => {
     try {
-      const response = await orbeNerdApi.getFilmes({ page, filtro, genero });
+      const response = await orbeNerdApi.getFilmes(params);
       
       // Mapear dados do backend para o formato esperado pelo frontend
-      const mappedResults = response.results.map((filme: ApiResponseItem) => ({
-        id: filme.id,
-        titulo_curado: filme.titulo,
-        titulo_api: filme.titulo,
-        poster_url_api: filme.poster,
-        data_lancamento_api: filme.data_lancamento,
-        sinopse_api: filme.sinopse,
-        plataformas_api: filme.plataformas || [],
-        generos_api: filme.generos?.map((g: string, index: number) => ({ id: index + 1, name: g })) || [],
-        duracao: filme.duracao ? parseInt(filme.duracao.replace(' min', '')) : 0,
-        diretor: filme.direcao,
-        escritor: filme.roteiro,
-        elenco: [],
-        em_prevenda: filme.em_prevenda || false,
-        premiacoes: []
-      }));
+      const mappedResults = response.results.map((item: any) => {
+        const filme = item.media_data || item;
+        return {
+          id: filme.id,
+          titulo_curado: filme.titulo || filme.name,
+          titulo_api: filme.titulo || filme.name,
+          poster_url_api: filme.poster || filme.image || filme.poster_url,
+          data_lancamento_api: filme.data_lancamento || filme.release_date,
+          sinopse_api: filme.sinopse || filme.overview || filme.description,
+          plataformas_api: filme.plataformas || [],
+          generos_api: filme.generos?.map((g: any, index: number) => ({ id: index + 1, name: g.name || g })) || [],
+          duracao: filme.duracao ? parseInt(filme.duracao.replace(' min', '')) : 0,
+          diretor: filme.direcao,
+          escritor: filme.roteiro,
+          elenco: [],
+          em_prevenda: filme.em_prevenda || false,
+          premiacoes: []
+        };
+      });
 
       return {
         results: mappedResults,
@@ -73,18 +76,18 @@ export const realApi = {
 
   getFilmeDetails: async (id: number): Promise<Filme | null> => {
     try {
-      const filme = await orbeNerdApi.getFilmeDetails(id);
+      const filme = (await orbeNerdApi.getFilmeDetails(id))?.media_data || await orbeNerdApi.getFilmeDetails(id);
       if (!filme) return null;
 
       return {
         id: filme.id,
-        titulo_curado: filme.titulo,
-        titulo_api: filme.titulo,
-        poster_url_api: filme.poster,
-        data_lancamento_api: filme.data_lancamento,
-        sinopse_api: filme.sinopse,
+        titulo_curado: filme.titulo || filme.name,
+        titulo_api: filme.titulo || filme.name,
+        poster_url_api: filme.poster || filme.image || filme.poster_url,
+        data_lancamento_api: filme.data_lancamento || filme.release_date,
+        sinopse_api: filme.sinopse || filme.overview || filme.description,
         plataformas_api: filme.plataformas || [],
-        generos_api: filme.generos?.map((g: string, index: number) => ({ id: index + 1, name: g })) || [],
+        generos_api: filme.generos?.map((g: any, index: number) => ({ id: index + 1, name: g.name || g })) || [],
         duracao: filme.duracao ? parseInt(filme.duracao.replace(' min', '')) : 0,
         diretor: filme.direcao,
         escritor: filme.roteiro,
@@ -99,24 +102,27 @@ export const realApi = {
   },
 
   // Séries
-  getSeries: async (genero?: string, page: number = 1): Promise<{ results: Serie[]; total_pages: number; total_results: number }> => {
+  getSeries: async (params: { genero?: string; page?: number }): Promise<{ results: Serie[]; total_pages: number; total_results: number }> => {
     try {
-      const response = await orbeNerdApi.getSeries({ page, genero });
+      const response = await orbeNerdApi.getSeries(params);
       
-      const mappedResults = response.results.map((serie: ApiResponseItem) => ({
-        id: serie.id,
-        titulo_curado: serie.titulo,
-        titulo_api: serie.titulo,
-        poster_url_api: serie.poster,
-        data_lancamento_api: serie.data_lancamento,
-        sinopse_api: serie.sinopse,
-        plataformas_api: serie.plataformas || [],
-        generos_api: serie.generos?.map((g: string, index: number) => ({ id: index + 1, name: g })) || [],
-        numero_temporadas: serie.numero_temporadas || 0,
-        numero_episodios: serie.numero_episodios || 0,
-        criadores: serie.criadores || [],
-        elenco: []
-      }));
+      const mappedResults = response.results.map((item: any) => {
+        const serie = item.media_data || item;
+        return {
+          id: serie.id,
+          titulo_curado: serie.titulo || serie.name,
+          titulo_api: serie.titulo || serie.name,
+          poster_url_api: serie.poster || serie.image || serie.poster_url,
+          data_lancamento_api: serie.data_lancamento || serie.release_date,
+          sinopse_api: serie.sinopse || serie.overview || serie.description,
+          plataformas_api: serie.plataformas || [],
+          generos_api: serie.generos?.map((g: any, index: number) => ({ id: index + 1, name: g.name || g })) || [],
+          numero_temporadas: serie.numero_temporadas || 0,
+          numero_episodios: serie.numero_episodios || 0,
+          criadores: serie.criadores || [],
+          elenco: []
+        };
+      });
 
       return {
         results: mappedResults,
@@ -131,18 +137,18 @@ export const realApi = {
 
   getSerieDetails: async (id: number): Promise<Serie | null> => {
     try {
-      const serie = await orbeNerdApi.getSerieDetails(id);
+      const serie = (await orbeNerdApi.getSerieDetails(id))?.media_data || await orbeNerdApi.getSerieDetails(id);
       if (!serie) return null;
 
       return {
         id: serie.id,
-        titulo_curado: serie.titulo,
-        titulo_api: serie.titulo,
-        poster_url_api: serie.poster,
-        data_lancamento_api: serie.data_lancamento,
-        sinopse_api: serie.sinopse,
+        titulo_curado: serie.titulo || serie.name,
+        titulo_api: serie.titulo || serie.name,
+        poster_url_api: serie.poster || serie.image || serie.poster_url,
+        data_lancamento_api: serie.data_lancamento || serie.release_date,
+        sinopse_api: serie.sinopse || serie.overview || serie.description,
         plataformas_api: serie.plataformas || [],
-        generos_api: serie.generos?.map((g: string, index: number) => ({ id: index + 1, name: g })) || [],
+        generos_api: serie.generos?.map((g: any, index: number) => ({ id: index + 1, name: g.name || g })) || [],
         numero_temporadas: serie.numero_temporadas || 0,
         numero_episodios: serie.numero_episodios || 0,
         criadores: serie.criadores || [],
@@ -155,28 +161,31 @@ export const realApi = {
   },
 
   // Animes
-  getAnimes: async (genero?: string, page: number = 1): Promise<{ results: Anime[]; total_pages: number; total_results: number }> => {
+  getAnimes: async (params: { genero?: string; page?: number }): Promise<{ results: Anime[]; total_pages: number; total_results: number }> => {
     try {
-      const response = await orbeNerdApi.getAnimes({ page, genero });
+      const response = await orbeNerdApi.getAnimes(params);
       
-      const mappedResults = response.results.map((anime: ApiResponseItem) => ({
-        id: anime.id,
-        titulo_curado: anime.titulo,
-        titulo_api: anime.titulo,
-        poster_url_api: anime.poster,
-        data_lancamento_api: anime.data_lancamento,
-        sinopse_api: anime.sinopse,
-        plataformas_api: anime.plataformas || [],
-        generos_api: anime.generos?.map((g: string, index: number) => ({ id: index + 1, name: g })) || [],
-        fonte: anime.fonte || 'Manga',
-        estudio: anime.estudio || '',
-        dublagem_info: anime.status_dublagem === 'Dublado/Legendado',
-        staff: [],
-        personagens: [],
-        proximo_episodio: anime.proximo_episodio,
-        numero_episodio_atual: anime.numero_episodios || 0,
-        eventos_recorrentes_calendario: false
-      }));
+      const mappedResults = response.results.map((item: any) => {
+        const anime = item.media_data || item;
+        return {
+          id: anime.id,
+          titulo_curado: anime.titulo || anime.name,
+          titulo_api: anime.titulo || anime.name,
+          poster_url_api: anime.poster || anime.image || anime.poster_url,
+          data_lancamento_api: anime.data_lancamento || anime.release_date,
+          sinopse_api: anime.sinopse || anime.overview || anime.description,
+          plataformas_api: anime.plataformas || [],
+          generos_api: anime.generos?.map((g: any, index: number) => ({ id: index + 1, name: g.name || g })) || [],
+          fonte: anime.fonte || 'Manga',
+          estudio: anime.estudio || '',
+          dublagem_info: anime.status_dublagem === 'Dublado/Legendado',
+          staff: [],
+          personagens: [],
+          proximo_episodio: anime.proximo_episodio,
+          numero_episodio_atual: anime.numero_episodios || 0,
+          eventos_recorrentes_calendario: false
+        };
+      });
 
       return {
         results: mappedResults,
@@ -191,18 +200,18 @@ export const realApi = {
 
   getAnimeDetails: async (id: number): Promise<Anime | null> => {
     try {
-      const anime = await orbeNerdApi.getAnimeDetails(id);
+      const anime = (await orbeNerdApi.getAnimeDetails(id))?.media_data || await orbeNerdApi.getAnimeDetails(id);
       if (!anime) return null;
 
       return {
         id: anime.id,
-        titulo_curado: anime.titulo,
-        titulo_api: anime.titulo,
-        poster_url_api: anime.poster,
-        data_lancamento_api: anime.data_lancamento,
-        sinopse_api: anime.sinopse,
+        titulo_curado: anime.titulo || anime.name,
+        titulo_api: anime.titulo || anime.name,
+        poster_url_api: anime.poster || anime.image || anime.poster_url,
+        data_lancamento_api: anime.data_lancamento || anime.release_date,
+        sinopse_api: anime.sinopse || anime.overview || anime.description,
         plataformas_api: anime.plataformas || [],
-        generos_api: anime.generos?.map((g: string, index: number) => ({ id: index + 1, name: g })) || [],
+        generos_api: anime.generos?.map((g: any, index: number) => ({ id: index + 1, name: g.name || g })) || [],
         fonte: anime.fonte || 'Manga',
         estudio: anime.estudio || '',
         dublagem_info: anime.status_dublagem === 'Dublado/Legendado',
@@ -219,29 +228,32 @@ export const realApi = {
   },
 
   // Jogos
-  getJogos: async (genero?: string, page: number = 1): Promise<{ results: Jogo[]; total_pages: number; total_results: number }> => {
+  getJogos: async (params: { genero?: string; page?: number }): Promise<{ results: Jogo[]; total_pages: number; total_results: number }> => {
     try {
-      const response = await orbeNerdApi.getJogos({ page, genero });
+      const response = await orbeNerdApi.getJogos(params);
       
-      const mappedResults = response.results.map((jogo: ApiResponseItem) => ({
-        id: jogo.id,
-        titulo_curado: jogo.titulo,
-        titulo_api: jogo.titulo,
-        poster_url_api: jogo.poster,
-        data_lancamento_api: jogo.data_lancamento,
-        sinopse_api: jogo.sinopse,
-        plataformas_api: jogo.plataformas || [],
-        generos_api: jogo.generos?.map((g: string, index: number) => ({ id: index + 1, name: g })) || [],
-        desenvolvedores: jogo.desenvolvedores || [],
-        publicadoras: jogo.publicadoras || [],
-        plataformas_jogo: jogo.plataformas?.map((p: string, index: number) => ({
-          id: index + 1,
-          nome: p,
-          logo_url: '',
-          store_url: ''
-        })) || [],
-        premiacoes: []
-      }));
+      const mappedResults = response.results.map((item: any) => {
+        const jogo = item.media_data || item;
+        return {
+          id: jogo.id,
+          titulo_curado: jogo.titulo || jogo.name,
+          titulo_api: jogo.titulo || jogo.name,
+          poster_url_api: jogo.poster || jogo.image || jogo.poster_url,
+          data_lancamento_api: jogo.data_lancamento || jogo.release_date,
+          sinopse_api: jogo.sinopse || jogo.overview || jogo.description,
+          plataformas_api: jogo.plataformas || [],
+          generos_api: jogo.generos?.map((g: any, index: number) => ({ id: index + 1, name: g.name || g })) || [],
+          desenvolvedores: jogo.desenvolvedores || [],
+          publicadoras: jogo.publicadoras || [],
+          plataformas_jogo: jogo.plataformas?.map((p: any, index: number) => ({
+            id: index + 1,
+            nome: p.name || p,
+            logo_url: '',
+            store_url: ''
+          })) || [],
+          premiacoes: []
+        };
+      });
 
       return {
         results: mappedResults,
@@ -256,23 +268,23 @@ export const realApi = {
 
   getJogoDetails: async (id: number): Promise<Jogo | null> => {
     try {
-      const jogo = await orbeNerdApi.getJogoDetails(id);
+      const jogo = (await orbeNerdApi.getJogoDetails(id))?.media_data || await orbeNerdApi.getJogoDetails(id);
       if (!jogo) return null;
 
       return {
         id: jogo.id,
-        titulo_curado: jogo.titulo,
-        titulo_api: jogo.titulo,
-        poster_url_api: jogo.poster,
-        data_lancamento_api: jogo.data_lancamento,
-        sinopse_api: jogo.sinopse,
+        titulo_curado: jogo.titulo || jogo.name,
+        titulo_api: jogo.titulo || jogo.name,
+        poster_url_api: jogo.poster || jogo.image || jogo.poster_url,
+        data_lancamento_api: jogo.data_lancamento || jogo.release_date,
+        sinopse_api: jogo.sinopse || jogo.overview || jogo.description,
         plataformas_api: jogo.plataformas || [],
-        generos_api: jogo.generos?.map((g: string, index: number) => ({ id: index + 1, name: g })) || [],
+        generos_api: jogo.generos?.map((g: any, index: number) => ({ id: index + 1, name: g.name || g })) || [],
         desenvolvedores: jogo.desenvolvedores || [],
         publicadoras: jogo.publicadoras || [],
-        plataformas_jogo: jogo.plataformas?.map((p: string, index: number) => ({
+        plataformas_jogo: jogo.plataformas?.map((p: any, index: number) => ({
           id: index + 1,
-          nome: p,
+          nome: p.name || p,
           logo_url: '',
           store_url: ''
         })) || [],
