@@ -33,27 +33,32 @@ export const syncSeries = async (year: number) => {
         }
 
         for (const serie of series) {
+          const firstAirDate = serie.first_air_date ? new Date(serie.first_air_date) : null;
+
           await prisma.serie.upsert({
             where: { id: serie.id },
             update: {
-              titulo_curado: serie.name,
               titulo_api: serie.original_name,
-              sinopse: serie.overview,
+              titulo_curado: serie.name,
+              sinopse_api: serie.overview,
               poster_url_api: serie.poster_path ? `https://image.tmdb.org/t/p/w500${serie.poster_path}` : null,
-              data_lancamento_api: serie.first_air_date,
-              avaliacao: serie.vote_average,
-              generos: serie.genre_ids.map(String),
+              data_lancamento_api: firstAirDate,
+              generos_api: serie.genre_ids,
+              avaliacao_api: serie.vote_average ? serie.vote_average * 10 : null,
             },
             create: {
               id: serie.id,
-              titulo_curado: serie.name,
               titulo_api: serie.original_name,
-              sinopse: serie.overview,
+              titulo_curado: serie.name,
+              sinopse_api: serie.overview,
+              sinopse_curada: serie.overview,
               poster_url_api: serie.poster_path ? `https://image.tmdb.org/t/p/w500${serie.poster_path}` : null,
-              data_lancamento_api: serie.first_air_date,
-              avaliacao: serie.vote_average,
-              generos: serie.genre_ids.map(String),
+              data_lancamento_api: firstAirDate,
+              data_lancamento_curada: firstAirDate,
+              generos_api: serie.genre_ids,
+              plataformas_api: [],
               plataformas_curadas: [],
+              avaliacao_api: serie.vote_average ? serie.vote_average * 10 : null,
             },
           });
         }

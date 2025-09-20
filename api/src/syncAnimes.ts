@@ -4,11 +4,9 @@ import { logger } from './logger';
 
 const prisma = new PrismaClient();
 
-const truncateString = (str: string | null | undefined, maxLength: number): string | null => {
-  if (str === null || str === undefined) {
-    return null;
-  }
-  return str.length > maxLength ? str.substring(0, maxLength) : str;
+const truncate = (str: string | null | undefined, num: number) => {
+  if (!str) return null;
+  return str.length > num ? str.slice(0, num > 3 ? num - 3 : num) + '...' : str;
 };
 
 export async function syncAnimes(year: number) {
@@ -28,7 +26,7 @@ export async function syncAnimes(year: number) {
               romaji
               english
             }
-            description
+            description(asHtml: false)
             coverImage {
               extraLarge
             }
@@ -39,11 +37,12 @@ export async function syncAnimes(year: number) {
             }
             averageScore
             genres
-            studios {
+            studios(isMain: true) {
               nodes {
                 name
               }
             }
+            source
           }
         }
       }
@@ -57,7 +56,7 @@ export async function syncAnimes(year: number) {
       const variables = {
         year,
         page,
-        perPage: 100,
+        perPage: 50, // Anilist limit
       };
 
       const response = await anilistApi.post('', { query, variables });
@@ -70,41 +69,45 @@ export async function syncAnimes(year: number) {
       }
 
       for (const anime of animes) {
-        const truncatedRomajiTitle = truncateString(anime.title.romaji || '', 255) as string;
-        const truncatedEnglishTitle = truncateString(anime.title.english, 255);
-        const truncatedDescription = truncateString(anime.description, 1000);
+        const releaseDate = (anime.startDate && anime.startDate.year && anime.startDate.month && anime.startDate.day)
+          ? new Date(anime.startDate.year, anime.startDate.month - 1, anime.startDate.day)
+          : null;
+
+        const studio = anime.studios.nodes.length > 0 ? anime.studios.nodes[0].name : null;
 
         await prisma.anime.upsert({
-          where: { externalId: String(anime.id) },
+          where: { id: anime.id },
           update: {
-            title: truncatedRomajiTitle,
-            englishTitle: truncatedEnglishTitle,
-            description: truncatedDescription,
-            imageUrl: anime.coverImage.extraLarge,
-            releaseDate: (anime.startDate && anime.startDate.year && anime.startDate.month && anime.startDate.day)
-              ? new Date(`${anime.startDate.year}-${String(anime.startDate.month).padStart(2, '0')}-${String(anime.startDate.day).padStart(2, '0')}`)
-              : null,
-            averageScore: anime.averageScore,
-            genres: anime.genres,
-            studio: anime.studios.nodes.length > 0 ? anime.studios.nodes[0].name : null,
+            titulo_api: truncate(anime.title.english || anime.title.romaji, 255),
+            titulo_curado: truncate(anime.title.romaji || anime.title.english, 255)!,
+            sinopse_api: anime.description,
+            poster_url_api: anime.coverImage.extraLarge,
+            data_lancamento_api: releaseDate,
+            generos_api: anime.genres,
+            estudio: studio,
+            fonte: anime.source,
+            avaliacao_api: anime.averageScore,
           },
           create: {
-            externalId: String(anime.id),
-            title: truncatedRomajiTitle,
-            englishTitle: truncatedEnglishTitle,
-            description: truncatedDescription,
-            imageUrl: anime.coverImage.extraLarge,
-            releaseDate: (anime.startDate && anime.startDate.year && anime.startDate.month && anime.startDate.day)
-              ? new Date(`${anime.startDate.year}-${String(anime.startDate.month).padStart(2, '0')}-${String(anime.startDate.day).padStart(2, '0')}`)
-              : null,
-            averageScore: anime.averageScore,
-            genres: anime.genres,
-            studio: anime.studios.nodes.length > 0 ? anime.studios.nodes[0].name : null,
+            id: anime.id,
+            titulo_api: truncate(anime.title.english || anime.title.romaji, 255),
+            titulo_curado: truncate(anime.title.romaji || anime.title.english, 255)!,
+            sinopse_api: anime.description,
+            sinopse_curada: anime.description,
+            poster_url_api: anime.coverImage.extraLarge,
+            data_lancamento_api: releaseDate,
+            data_lancamento_curada: releaseDate,
+            generos_api: anime.genres,
+            plataformas_api: [],
+            plataformas_curadas: [],
+            estudio: studio,
+            fonte: anime.source,
+            avaliacao_api: anime.averageScore,
           },
         });
       }
       totalAnimesSynced += animes.length;
-      logger.info(`  Página ${page}/${data.pageInfo.lastPage}: ${animes.length} animes sincronizados. Datas: ${animes.map((a: any) => `${a.startDate.year}-${a.startDate.month}-${a.startDate.day}`).join(', ')}`);
+      logger.info(`  Página ${page}/${data.pageInfo.lastPage}: ${animes.length} animes sincronizados.`);
 
       page++;
       hasNextPage = data.pageInfo.hasNextPage;
@@ -119,8 +122,7 @@ export async function syncAnimes(year: number) {
       logger.info(`Nenhum anime encontrado para ${year}.`);
     }
   } catch (error: any) {
-    logger.error(`Erro ao sincronizar animes de ${year}: ${error.message || error}`);
+    const errorMessage = error.response ? JSON.stringify(error.response.data) : error.message;
+    logger.error(`Erro ao sincronizar animes de ${year}: ${errorMessage}`);
   }
 }
-
-syncAnimes(2025).catch(console.error);
