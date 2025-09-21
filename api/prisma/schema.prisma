@@ -6,15 +6,19 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
 }
+
+// =================================================================================
+// MODELOS PRINCIPAIS DE MÍDIA
+// Estas são as tabelas centrais que armazenam as informações de cada tipo de mídia.
+// =================================================================================
 
 model Filme {
   id                          Int       @id
   titulo_api                  String?   @db.VarChar(255)
-  titulo_curado               String    @db.VarChar(255)
+  titulo_curado               String?   @db.VarChar(255)
   poster_url_api              String?   @db.VarChar(255)
   poster_curado               String?   @db.VarChar(255)
   data_lancamento_api         DateTime? @db.Date
@@ -29,123 +33,286 @@ model Filme {
   generos_curados             Json?     @db.JsonB
   premiacoes                  Json?     @db.JsonB
   duracao                     Int?
-  diretor                     String?   @db.VarChar(255)
-  escritor                    String?   @db.VarChar(255)
-  elenco                      Json?     @db.JsonB
   ingresso_link               String?   @db.VarChar(255)
   em_prevenda                 Boolean   @default(false)
   ultima_verificacao_ingresso DateTime? @db.Timestamp()
   avaliacao_api               Float?
+
+  // Relacionamentos
+  elenco PessoaEmFilme[]
+  equipe EquipeEmFilme[]
 }
 
 model Serie {
-  id                      Int       @id
-  titulo_api              String?   @db.VarChar(255)
-  titulo_curado           String    @db.VarChar(255)
-  poster_url_api          String?   @db.VarChar(255)
-  poster_curado           String?   @db.VarChar(255)
-  data_lancamento_api     DateTime? @db.Date
-  data_lancamento_curada  DateTime? @db.Date
-  sinopse_api             String?   @db.Text
-  sinopse_curada          String?   @db.Text
-  plataformas_api         String[]
-  plataformas_curadas     String[]
-  trailer_url_api         String?   @db.VarChar(255)
-  trailer_url_curado      String?   @db.VarChar(255)
-  generos_api             Json?     @db.JsonB
-  generos_curados         Json?     @db.JsonB
-  premiacoes              Json?     @db.JsonB
-  numero_temporadas       Int?
-  numero_episodios        Int?
-  criadores               String[]
-  elenco                  Json?     @db.JsonB
-  avaliacao_api           Float?
+  id                     Int       @id
+  titulo_api             String?   @db.VarChar(255)
+  titulo_curado          String?   @db.VarChar(255)
+  poster_url_api         String?   @db.VarChar(255)
+  poster_curado          String?   @db.VarChar(255)
+  data_lancamento_api    DateTime? @db.Date
+  data_lancamento_curada DateTime? @db.Date
+  sinopse_api            String?   @db.Text
+  sinopse_curada         String?   @db.Text
+  plataformas_api        String[]
+  plataformas_curadas    String[]
+  trailer_url_api        String?   @db.VarChar(255)
+  trailer_url_curado     String?   @db.VarChar(255)
+  generos_api            Json?     @db.JsonB
+  generos_curados        Json?     @db.JsonB
+  premiacoes             Json?     @db.JsonB
+  numero_temporadas      Int?
+  numero_episodios       Int?
+  criadores              String[]
+  avaliacao_api          Float?
+
+  // Relacionamentos
+  elenco PessoaEmSerie[]
+  equipe EquipeEmSerie[]
 }
 
 model Anime {
-  id                      Int       @id
-  titulo_api              String?   @db.VarChar(255)
-  titulo_curado           String    @db.VarChar(255)
-  poster_url_api          String?   @db.VarChar(255)
-  poster_curado           String?   @db.VarChar(255)
-  data_lancamento_api     DateTime? @db.Date
-  data_lancamento_curada  DateTime? @db.Date
-  sinopse_api             String?   @db.Text
-  sinopse_curada          String?   @db.Text
-  plataformas_api         String[]
-  plataformas_curadas     String[]
-  trailer_url_api         String?   @db.VarChar(255)
-  trailer_url_curado      String?   @db.VarChar(255)
-  generos_api             Json?     @db.JsonB
-  generos_curados         Json?     @db.JsonB
-  premiacoes              Json?     @db.JsonB
-  fonte                   String?   @db.VarChar(255)
-  estudio                 String?   @db.VarChar(255)
-  dublagem_info           Boolean   @default(false)
-  staff                   Json?     @db.JsonB
-  personagens              Json?     @db.JsonB
-  avaliacao_api           Float?
+  id                     Int       @id
+  titulo_api             String?   @db.VarChar(255)
+  titulo_curado          String?   @db.VarChar(255)
+  poster_url_api         String?   @db.VarChar(255)
+  poster_curado          String?   @db.VarChar(255)
+  data_lancamento_api    DateTime? @db.Date
+  data_lancamento_curada DateTime? @db.Date
+  sinopse_api            String?   @db.Text
+  sinopse_curada         String?   @db.Text
+  plataformas_api        String[]
+  plataformas_curadas    String[]
+  trailer_url_api        String?   @db.VarChar(255)
+  trailer_url_curado     String?   @db.VarChar(255)
+  generos_api            Json?     @db.JsonB
+  generos_curados        Json?     @db.JsonB
+  premiacoes             Json?     @db.JsonB
+  fonte                  String?   @db.VarChar(255)
+  dublagem_info          Boolean   @default(false)
+  avaliacao_api          Float?
+
+  // Relacionamentos
+  estudios    EstudioEmAnime[]
+  staff       StaffEmAnime[]
+  personagens PersonagemEmAnime[]
 }
 
 model Jogo {
-  id                      Int       @id
-  titulo_api              String?   @db.VarChar(255)
-  titulo_curado           String    @db.VarChar(255)
-  poster_url_api          String?   @db.VarChar(255)
-  poster_curado           String?   @db.VarChar(255)
-  data_lancamento_api     DateTime? @db.Date
-  data_lancamento_curada  DateTime? @db.Date
-  sinopse_api             String?   @db.Text
-  sinopse_curada          String?   @db.Text
-  plataformas_api         String[]
-  plataformas_curadas     String[]
-  trailer_url_api         String?   @db.VarChar(255)
-  trailer_url_curado      String?   @db.VarChar(255)
-  generos_api             Json?     @db.JsonB
-  generos_curados         Json?     @db.JsonB
-  premiacoes              Json?     @db.JsonB
-  desenvolvedores         String[]
-  publicadoras            String[]
-  evento_anuncio_id       Int?
-  evento_anuncio          EventoAnuncio? @relation(fields: [evento_anuncio_id], references: [id])
-  avaliacao_api           Float?
+  id                     Int       @id
+  titulo_api             String?   @db.VarChar(255)
+  titulo_curado          String?   @db.VarChar(255)
+  poster_url_api         String?   @db.VarChar(255)
+  poster_curado          String?   @db.VarChar(255)
+  data_lancamento_api    DateTime? @db.Date
+  data_lancamento_curada DateTime? @db.Date
+  sinopse_api            String?   @db.Text
+  sinopse_curada         String?   @db.Text
+  plataformas_api        String[]
+  plataformas_curadas    String[]
+  trailer_url_api        String?   @db.VarChar(255)
+  trailer_url_curado     String?   @db.VarChar(255)
+  generos_api            Json?     @db.JsonB
+  generos_curados        Json?     @db.JsonB
+  premiacoes             Json?     @db.JsonB
+  avaliacao_api          Float?
+
+  // Relacionamentos
+  evento_anuncio_id Int?
+  evento_anuncio    EventoAnuncio? @relation(fields: [evento_anuncio_id], references: [id])
+  empresas          EmpresaEmJogo[]
 }
 
+
+// =================================================================================
+// MODELOS DE ENTIDADES (Pessoas, Empresas, etc.)
+// Tabelas que armazenam informações únicas para evitar duplicação.
+// Ex: Um ator/dublador só existe uma vez aqui, mesmo que participe de várias mídias.
+// =================================================================================
+
+// --- Entidades para Filmes e Séries ---
+model Pessoa {
+  id       Int    @id
+  nome     String @db.VarChar(255)
+  foto_url String? @db.VarChar(255)
+
+  filmes_atuados   PessoaEmFilme[]
+  series_atuadas   PessoaEmSerie[]
+  filmes_dirigidos EquipeEmFilme[]
+  series_dirigidas EquipeEmSerie[]
+}
+
+// --- Entidades para Animes ---
+model Personagem {
+  id       Int     @id
+  nome     String  @db.VarChar(255)
+  foto_url String? @db.VarChar(255)
+
+  animes PersonagemEmAnime[]
+}
+
+model Dublador {
+  id       Int     @id
+  nome     String  @db.VarChar(255)
+  foto_url String? @db.VarChar(255)
+  idioma   String  @db.VarChar(50) // Ex: "Japanese", "Portuguese (BR)"
+
+  personagens_dublados PersonagemEmAnime[]
+}
+
+model MembroStaff {
+  id       Int     @id
+  nome     String  @db.VarChar(255)
+  foto_url String? @db.VarChar(255)
+
+  animes_trabalhados StaffEmAnime[]
+}
+
+model Estudio {
+  id   Int    @id
+  nome String @db.VarChar(255)
+
+  animes_produzidos EstudioEmAnime[]
+}
+
+// --- Entidades para Jogos ---
+model Empresa {
+  id       Int     @id
+  nome     String  @db.VarChar(255)
+  logo_url String? @db.VarChar(255)
+
+  jogos EmpresaEmJogo[]
+}
+
+
+// =================================================================================
+// TABELAS PIVOT (JUNÇÕES / RELACIONAMENTOS)
+// Tabelas que conectam as Mídias com as Entidades.
+// =================================================================================
+
+// --- Pivots de Filmes e Séries ---
+model PessoaEmFilme {
+  filme      Filme  @relation(fields: [filme_id], references: [id])
+  filme_id   Int
+  pessoa     Pessoa @relation(fields: [pessoa_id], references: [id])
+  pessoa_id  Int
+  personagem String @db.VarChar(255)
+
+  @@id([filme_id, pessoa_id])
+}
+
+model EquipeEmFilme {
+  filme     Filme  @relation(fields: [filme_id], references: [id])
+  filme_id  Int
+  pessoa    Pessoa @relation(fields: [pessoa_id], references: [id])
+  pessoa_id Int
+  funcao    String @db.VarChar(100) // Ex: "Director", "Writer"
+
+  @@id([filme_id, pessoa_id, funcao])
+}
+
+model PessoaEmSerie {
+  serie      Serie  @relation(fields: [serie_id], references: [id])
+  serie_id   Int
+  pessoa     Pessoa @relation(fields: [pessoa_id], references: [id])
+  pessoa_id  Int
+  personagem String @db.VarChar(255)
+
+  @@id([serie_id, pessoa_id])
+}
+
+model EquipeEmSerie {
+  serie     Serie  @relation(fields: [serie_id], references: [id])
+  serie_id  Int
+  pessoa    Pessoa @relation(fields: [pessoa_id], references: [id])
+  pessoa_id Int
+  funcao    String @db.VarChar(100)
+
+  @@id([serie_id, pessoa_id, funcao])
+}
+
+// --- Pivots de Animes ---
+model PersonagemEmAnime {
+  anime         Anime      @relation(fields: [anime_id], references: [id])
+  anime_id      Int
+  personagem    Personagem @relation(fields: [personagem_id], references: [id])
+  personagem_id Int
+  dublador      Dublador   @relation(fields: [dublador_id], references: [id])
+  dublador_id   Int
+
+  @@id([anime_id, personagem_id, dublador_id])
+}
+
+model StaffEmAnime {
+  anime    Anime       @relation(fields: [anime_id], references: [id])
+  anime_id Int
+  staff    MembroStaff @relation(fields: [staff_id], references: [id])
+  staff_id Int
+  funcao   String      @db.VarChar(100)
+
+  @@id([anime_id, staff_id, funcao])
+}
+
+model EstudioEmAnime {
+  anime      Anime   @relation(fields: [anime_id], references: [id])
+  anime_id   Int
+  estudio    Estudio @relation(fields: [estudio_id], references: [id])
+  estudio_id Int
+
+  @@id([anime_id, estudio_id])
+}
+
+// --- Pivots de Jogos ---
+model EmpresaEmJogo {
+  jogo       Jogo    @relation(fields: [jogo_id], references: [id])
+  jogo_id    Int
+  empresa    Empresa @relation(fields: [empresa_id], references: [id])
+  empresa_id Int
+  funcao     String  @db.VarChar(50) // "Developer" ou "Publisher"
+
+  @@id([jogo_id, empresa_id, funcao])
+}
+
+
+// =================================================================================
+// MODELOS DE USUÁRIO E SISTEMA
+// Tabelas relacionadas a usuários, preferências, notificações e eventos.
+// =================================================================================
+
 model User {
-  id              Int       @id @default(autoincrement())
-  email           String    @unique @db.VarChar(255)
-  hashed_password String    @db.VarChar(255)
-  role            String    @default("user") @db.VarChar(50)
-  quer_avaliar    Boolean   @default(true)
-  data_criacao    DateTime  @default(now()) @db.Timestamp()
+  id              Int                          @id @default(autoincrement())
+  email           String                       @unique @db.VarChar(255)
+  hashed_password String                       @db.VarChar(255)
+  role            String                       @default("user") @db.VarChar(50)
+  quer_avaliar    Boolean                      @default(true)
+  data_criacao    DateTime                     @default(now()) @db.Timestamp()
   preferencias    preferencias_usuario_midia[]
 }
 
 model preferencias_usuario_midia {
-  id              Int       @id @default(autoincrement())
-  usuario_id      Int
-  midia_id        Int
-  tipo_midia      String    @db.VarChar(50)
-  status          String    @db.VarChar(50)
-  avaliacao       String?   @db.VarChar(50)
-  data_interacao  DateTime  @default(now()) @db.Timestamp()
-  usuario         User      @relation(fields: [usuario_id], references: [id])
+  id             Int      @id @default(autoincrement())
+  usuario        User     @relation(fields: [usuario_id], references: [id])
+  usuario_id     Int
+  midia_id       Int
+  tipo_midia     String   @db.VarChar(50)
+  status         String   @db.VarChar(50)
+  avaliacao      String?  @db.VarChar(50)
+  data_interacao DateTime @default(now()) @db.Timestamp()
 }
 
 model Notificacao {
-  id              Int       @id @default(autoincrement())
-  usuario_id      Int?
-  midia_id        Int?
-  tipo_midia      String?   @db.VarChar(50)
-  titulo          String    @db.VarChar(255)
+  id               Int      @id @default(autoincrement())
+  usuario_id       Int?
+  midia_id         Int?
+  tipo_midia       String?  @db.VarChar(50)
+  titulo           String   @db.VarChar(255)
   tipo_notificacao String   @db.VarChar(50)
-  foi_visualizada Boolean   @default(false)
-  data_criacao    DateTime  @default(now()) @db.Timestamp()
+  foi_visualizada  Boolean  @default(false)
+  data_criacao     DateTime @default(now()) @db.Timestamp()
 }
 
 model EventoAnuncio {
-  id          Int       @id @default(autoincrement())
-  nome        String    @db.VarChar(255)
-  data_evento DateTime  @db.Date
+  id          Int      @id @default(autoincrement())
+  nome        String   @db.VarChar(255)
+  data_evento DateTime @db.Date
   jogos       Jogo[]
 }
