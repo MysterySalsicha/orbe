@@ -76,7 +76,6 @@ export const syncMovies = async (year: number) => {
               create: {
                 id: movie.id,
                 ...payload,
-                title_curado: movie.title || movie.original_title,
               },
             });
             logger.info(`  Filme [${movie.id}] "${movie.title}" sincronizado.`);

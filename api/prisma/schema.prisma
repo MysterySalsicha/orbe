@@ -89,7 +89,7 @@ model Filme {
   // Titles
   title_api               String?   @db.VarChar(255)
   original_title_api      String?   @db.VarChar(255)
-  title_curado            String    @db.VarChar(255)
+  title_curado            String?   @db.VarChar(255)
 
   // Overview
   overview_api            String?   @db.Text
@@ -141,7 +141,7 @@ model Serie {
   // Titles
   name_api                String?   @db.VarChar(255)
   original_name_api       String?   @db.VarChar(255)
-  name_curado             String    @db.VarChar(255)
+  name_curado             String?   @db.VarChar(255)
 
   // Overview
   overview_api            String?   @db.Text
@@ -192,7 +192,7 @@ model Jogo {
 
   // Titles & Identifiers
   name_api                String?   @db.VarChar(255)
-  name_curado             String    @db.VarChar(255)
+  name_curado             String?   @db.VarChar(255)
   slug_api                String?   @db.VarChar(255)
 
   // Descriptions

@@ -78,7 +78,6 @@ export const syncSeries = async (year: number) => {
               create: {
                 id: serie.id,
                 ...payload,
-                name_curado: serie.name || serie.original_name,
               },
             });
             logger.info(`  Série [${serie.id}] "${serie.name}" sincronizada.`);

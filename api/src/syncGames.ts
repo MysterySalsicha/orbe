@@ -84,7 +84,6 @@ export const syncGames = async (year: number) => {
             create: {
               id: game.id,
               ...payload,
-              name_curado: game.name,
             },
           });
           logger.info(`  Jogo [${game.id}] "${game.name}" sincronizado.`);

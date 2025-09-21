@@ -182,8 +182,6 @@ export async function syncAnimes(year: number) {
               create: {
                 id: anime.id,
                 ...animePayload,
-                title_curado: anime.title,
-                genres_curado: anime.genres,
               },
             });
 
