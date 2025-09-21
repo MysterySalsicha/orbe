@@ -1,127 +1,133 @@
-import { tmdbApi } from './clients';
+// api/src/syncMovies.ts
+
 import { PrismaClient } from '@prisma/client';
 import { logger } from './logger';
+import { tmdb } from './clients';
+import { MovieDb } from 'moviedb-promise';
 
 const prisma = new PrismaClient();
 
-// Helper to avoid hitting TMDB rate limits too hard.
-const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
-export const syncMovies = async (year: number) => {
+async function syncMovies() {
+  logger.info('🎬 Iniciando sincronização de filmes...');
   try {
-    let totalMoviesSyncedOverall = 0;
+    const upcomingMovies = await tmdb.movieUpcoming({ page: 1 });
+    const moviesToProcess = upcomingMovies.results || [];
+    const totalMovies = moviesToProcess.length;
 
-    // We can discover more movies per page, but process them with delays.
-    const discoverParams = {
-      primary_release_year: year,
-      page: 1,
-      'vote_count.gte': 100, // Only get movies with a minimum number of votes to filter out noise
-      sort_by: 'popularity.desc',
-    };
+    logger.info(`Encontrados ${totalMovies} filmes para processar.`);
 
-    let hasMorePages = true;
-
-    while (hasMorePages) {
-      logger.info(`Buscando filmes para ${year}, página ${discoverParams.page}...`);
-      const response = await tmdbApi.get('/discover/movie', { params: discoverParams });
-      const movies = response.data.results;
-
-      if (movies.length === 0) {
-        hasMorePages = false;
-        break;
-      }
-
-      logger.info(`Encontrados ${movies.length} filmes. Processando detalhes...`);
-
-      for (const movie of movies) {
-        try {
-          // Get full movie details, including credits
-          const { data: movieDetails } = await tmdbApi.get(`/movie/${movie.id}`, {
-            params: { append_to_response: 'credits' },
-          });
-          await sleep(350); // Pause between each detailed fetch
-
-          const releaseDate = movieDetails.release_date ? new Date(movieDetails.release_date) : null;
-
-          // Filter crew to get unique individuals, as one person can have multiple roles.
-          // We use connectOrCreate for Pessoa, so the person is created only once.
-          // The relation table EquipeEmFilme has a composite key that includes the 'funcao' (job),
-          // so multiple roles for the same person are stored correctly.
-          const cast = movieDetails.credits.cast.slice(0, 20); // Limit to top 20 cast members
-          const crew = movieDetails.credits.crew;
-
-          await prisma.filme.upsert({
-            where: { id: movieDetails.id },
-            update: {
-              titulo_api: movieDetails.original_title,
-              titulo_curado: movieDetails.title,
-              sinopse_api: movieDetails.overview,
-              poster_url_api: movieDetails.poster_path ? `https://image.tmdb.org/t/p/w500${movieDetails.poster_path}` : null,
-              data_lancamento_api: releaseDate,
-              generos_api: movieDetails.genres.map((g: any) => g.id),
-              duracao: movieDetails.runtime,
-              avaliacao_api: movieDetails.vote_average ? movieDetails.vote_average * 10 : null,
-            },
-            create: {
-              id: movieDetails.id,
-              titulo_api: movieDetails.original_title,
-              titulo_curado: movieDetails.title,
-              sinopse_api: movieDetails.overview,
-              sinopse_curada: movieDetails.overview,
-              poster_url_api: movieDetails.poster_path ? `https://image.tmdb.org/t/p/w500${movieDetails.poster_path}` : null,
-              data_lancamento_api: releaseDate,
-              data_lancamento_curada: releaseDate,
-              generos_api: movieDetails.genres.map((g: any) => g.id),
-              plataformas_api: [],
-              plataformas_curadas: [],
-              duracao: movieDetails.runtime,
-              avaliacao_api: movieDetails.vote_average ? movieDetails.vote_average * 10 : null,
-              elenco: {
-                create: cast.map((person: any) => ({
-                  personagem: person.character,
-                  pessoa: {
-                    connectOrCreate: {
-                      where: { id: person.id },
-                      create: {
-                        id: person.id,
-                        nome: person.name,
-                        foto_url: person.profile_path ? `https://image.tmdb.org/t/p/w500${person.profile_path}` : undefined,
-                      },
-                    },
-                  },
-                })),
-              },
-              equipe: {
-                create: crew.map((person: any) => ({
-                  funcao: person.job,
-                  pessoa: {
-                    connectOrCreate: {
-                      where: { id: person.id },
-                      create: {
-                        id: person.id,
-                        nome: person.name,
-                        foto_url: person.profile_path ? `https://image.tmdb.org/t/p/w500${person.profile_path}` : undefined,
-                      },
-                    },
-                  },
-                })),
-              },
-            },
-          });
-          logger.info(`  - Sincronizado: ${movieDetails.title}`);
-          totalMoviesSyncedOverall++;
-        } catch (detailError: any) {
-            logger.error(`Erro ao processar detalhes do filme ID ${movie.id}: ${detailError.message}`);
+    let processedCount = 0;
+    for (const movieSummary of moviesToProcess) {
+      processedCount++;
+      try {
+        if (!movieSummary.id) {
+          logger.warn(`Filme sem ID encontrado, pulando. Título: ${movieSummary.title}`);
+          continue;
         }
-      }
 
-      discoverParams.page++;
-      if (response.data.total_pages && discoverParams.page > response.data.total_pages) {
-        hasMorePages = false;
+        logger.info(
+          `(${processedCount}/${totalMovies}) Processando filme ID: ${movieSummary.id} - "${movieSummary.title}"`,
+        );
+
+        const movieDetails = await tmdb.movieInfo({
+          id: movieSummary.id,
+          append_to_response: 'credits',
+        });
+
+        const validCast = movieDetails.credits?.cast?.filter(p => p.id && p.name) ?? [];
+        const crewData = movieDetails.credits?.crew?.filter(p => p.id && p.name && p.job) ?? [];
+
+        // **A CORREÇÃO PRINCIPAL ESTÁ AQUI**
+        // Removemos membros duplicados da equipe (mesma pessoa com a mesma função).
+        // Isso garante que a chave única (filme_id, pessoa_id, funcao) não seja violada.
+        const uniqueCrew = crewData.reduce((acc, current) => {
+          const key = `${current.id}-${current.job}`;
+          if (!acc.find(item => `${item.id}-${item.job}` === key)) {
+            acc.push(current);
+          }
+          return acc;
+        }, [] as typeof crewData);
+
+
+        await prisma.filme.upsert({
+          where: { id: movieDetails.id },
+          update: {
+            titulo_api: movieDetails.title,
+            poster_url_api: movieDetails.poster_path,
+            data_lancamento_api: movieDetails.release_date ? new Date(movieDetails.release_date) : null,
+            sinopse_api: movieDetails.overview,
+            avaliacao_api: movieDetails.vote_average,
+            // A lógica de update não precisa recriar relações, apenas os campos do filme
+          },
+          create: {
+            id: movieDetails.id!,
+            titulo_api: movieDetails.title,
+            poster_url_api: movieDetails.poster_path,
+            data_lancamento_api: movieDetails.release_date ? new Date(movieDetails.release_date) : null,
+            sinopse_api: movieDetails.overview,
+            generos_api: movieDetails.genres,
+            duracao: movieDetails.runtime,
+            avaliacao_api: movieDetails.vote_average,
+
+            elenco: {
+              create: validCast.map(ator => ({
+                personagem: ator.character ?? 'N/A',
+                pessoa: {
+                  connectOrCreate: {
+                    where: { id: ator.id! },
+                    create: {
+                      id: ator.id!,
+                      nome: ator.name!,
+                      foto_url: ator.profile_path,
+                    },
+                  },
+                },
+              })),
+            },
+
+            // Usamos a lista de equipe já filtrada e sem duplicatas
+            equipe: {
+              create: uniqueCrew.map(membro => ({
+                funcao: membro.job!,
+                pessoa: {
+                  connectOrCreate: {
+                    where: { id: membro.id! },
+                    create: {
+                      id: membro.id!,
+                      nome: membro.name!,
+                      foto_url: membro.profile_path,
+                    },
+                  },
+                },
+              })),
+            },
+          },
+        });
+
+        logger.info(
+          `✅ Filme [${movieDetails.id}] "${movieDetails.title}" sincronizado.`,
+        );
+
+        await delay(250);
+
+      } catch (error) {
+        logger.error(
+          `❌ Erro ao processar o filme ID ${movieSummary.id}. Pulando.`,
+          error,
+        );
       }
     }
-    logger.info(`Total de ${totalMoviesSyncedOverall} filmes sincronizados para o ano ${year}.`);
-  } catch (error: any) {
-    logger.error(`Erro ao sincronizar filmes para o ano ${year}: ${error.message || error}`);
+
+    logger.info('✅ Sincronização de filmes concluída!');
+  } catch (error) {
+    logger.error('🚨 Erro fatal durante a sincronização de filmes:', error);
+    await prisma.$disconnect();
+    process.exit(1);
+  } finally {
+    await prisma.$disconnect();
   }
-};
+}
+
+syncMovies();
