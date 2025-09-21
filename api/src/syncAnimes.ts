@@ -3,20 +3,54 @@
 // e utiliza transações do Prisma para garantir a integridade dos dados durante o salvamento.
 
 import { anilistApi } from './clients';
-import { PrismaClient } from '@prisma/client';
+import { Prisma, PrismaClient } from '@prisma/client';
 import { logger } from './logger';
 
+// Uma única instância do Prisma Client é suficiente com a nova abordagem.
 const prisma = new PrismaClient();
+
+// As interfaces ajudam a garantir a forma dos dados da API.
+interface CharacterNode {
+  id: number;
+  name: { first: string; last: string; full: string; native: string };
+  image: { large: string };
+  description: string;
+  gender: string;
+  age: number;
+}
+
+interface Anime {
+  id: number;
+  idMal: number;
+  title: { romaji: string; english: string; native: string };
+  description: string;
+  format: string;
+  status: string;
+  startDate: { year: number; month: number; day: number };
+  endDate: { year: number; month: number; day: number };
+  season: string;
+  seasonYear: number;
+  episodes: number;
+  duration: number;
+  countryOfOrigin: string;
+  source: string;
+  coverImage: { extraLarge: string; color: string };
+  bannerImage: string;
+  genres: string[];
+  averageScore: number;
+  nextAiringEpisode: { airingAt: number; timeUntilAiring: number; episode: number };
+  trailer: { id: string; site: string; thumbnail: string };
+  tags: { id: number; name: string; description: string; }[];
+  streamingEpisodes: { title: string; thumbnail: string; url: string; site: string }[];
+  studios: { edges: { isMain: boolean; node: { id: number; name: string; isAnimationStudio: boolean }; }[]; };
+  characters: { edges: { role: string; node: CharacterNode; }[]; };
+  staff: { edges: { role: string; node: { id: number; name: { full: string; native: string }; image: { large: string }; primaryOccupations: string[]; }; }[]; };
+}
 
 const ANIME_SYNC_QUERY = `
 query ($page: Int, $perPage: Int, $year: Int) {
   Page(page: $page, perPage: $perPage) {
-    pageInfo {
-      total
-      currentPage
-      lastPage
-      hasNextPage
-    }
+    pageInfo { total currentPage lastPage hasNextPage }
     media(seasonYear: $year, type: ANIME, sort: POPULARITY_DESC) {
       id
       idMal
@@ -38,44 +72,11 @@ query ($page: Int, $perPage: Int, $year: Int) {
       averageScore
       nextAiringEpisode { airingAt timeUntilAiring episode }
       trailer { id site thumbnail }
-      tags { id name description isSpoiler }
+      tags { id name description }
       streamingEpisodes { title thumbnail url site }
-      studios {
-        edges {
-          isMain
-          node { id name isAnimationStudio }
-        }
-      }
-      characters(sort: [ROLE, RELEVANCE, ID], perPage: 25) {
-        edges {
-          role
-          node {
-            id
-            name { first last full native }
-            image { large }
-            description(asHtml: false)
-            gender
-            age
-            voiceActors {
-              id
-              name { full native }
-              image { large }
-              languageV2
-            }
-          }
-        }
-      }
-      staff(sort: [RELEVANCE, ID], perPage: 25) {
-        edges {
-          role
-          node {
-            id
-            name { full native }
-            image { large }
-            primaryOccupations
-          }
-        }
-      }
+      studios { edges { isMain node { id name isAnimationStudio } } }
+      characters(sort: [ROLE, RELEVANCE, ID], perPage: 25) { edges { role node { id name { first last full native } image { large } description(asHtml: false) gender age } } }
+      staff(sort: [RELEVANCE, ID], perPage: 25) { edges { role node { id name { full native } image { large } primaryOccupations } } }
     }
   }
 }
@@ -86,8 +87,8 @@ const parseDate = (date: { year: number; month: number; day: number } | null) =>
   return new Date(date.year, date.month - 1, date.day);
 };
 
-export async function syncAnimes(year: number) {
-  logger.info(`Iniciando sincronização completa de animes para o ano ${year}...`);
+export async function syncAnimes(year: number, month: number) {
+  logger.info(`Iniciando sincronização de animes para o ano ${year}, mês ${month}...`);
   let page = 1;
   let hasNextPage = true;
   let totalAnimesSynced = 0;
@@ -96,161 +97,88 @@ export async function syncAnimes(year: number) {
     try {
       const response = await anilistApi.post('', {
         query: ANIME_SYNC_QUERY,
-        variables: { year, page, perPage: 15 }, // Keep perPage lower due to query complexity
+        variables: { year, page, perPage: 50 }, // Aumentado o tamanho da página
       });
 
       const data = response.data.data.Page;
-      const animes = data.media;
+      const animes: Anime[] = data.media;
 
-      if (animes.length === 0) {
+      if (!animes || animes.length === 0) {
         hasNextPage = false;
         break;
       }
 
-      logger.info(`Processando ${animes.length} animes da página ${page}/${data.pageInfo.lastPage || 'desconhecida'}`);
+      const animesForMonth = animes.filter((anime) => anime.startDate && anime.startDate.month === month);
 
-      for (const anime of animes) {
+      if (animesForMonth.length === 0) {
+        page++;
+        hasNextPage = data.pageInfo.hasNextPage;
+        continue;
+      }
+
+      logger.info(`Processando ${animesForMonth.length} animes do mês ${month} da página ${page}/${data.pageInfo.lastPage || 'desconhecida'}`);
+
+      for (const anime of animesForMonth) {
         try {
-          await prisma.$transaction(async (tx) => {
-            // 1. Upsert entidades independentes
-            for (const tag of anime.tags) {
-              await tx.tag.upsert({
-                where: { id: tag.id },
-                update: { name: tag.name, description: tag.description, isSpoiler: tag.isSpoiler },
-                create: { id: tag.id, name: tag.name, description: tag.description, isSpoiler: tag.isSpoiler },
-              });
-            }
-            for (const studioEdge of anime.studios.edges) {
-              const studio = studioEdge.node;
-              await tx.studio.upsert({
-                where: { id: studio.id },
-                update: { name: studio.name, isAnimationStudio: studio.isAnimationStudio },
-                create: { id: studio.id, name: studio.name, isAnimationStudio: studio.isAnimationStudio },
-              });
-            }
-            for (const staffEdge of anime.staff.edges) {
-                const staff = staffEdge.node;
-                await tx.staff.upsert({
-                    where: { id: staff.id },
-                    update: { name_api: staff.name, image_api: staff.image, primaryOccupations_api: staff.primaryOccupations },
-                    create: { id: staff.id, name_api: staff.name, image_api: staff.image, primaryOccupations_api: staff.primaryOccupations, name_curado: staff.name?.full },
-                });
-            }
+          const animePayload = {
+            idMal: anime.idMal,
+            title_api: anime.title,
+            format_api: anime.format,
+            status_api: anime.status,
+            description_api: anime.description,
+            startDate_api: parseDate(anime.startDate),
+            endDate_api: parseDate(anime.endDate),
+            season_api: anime.season,
+            seasonYear_api: anime.seasonYear,
+            episodes_api: anime.episodes,
+            duration_api: anime.duration,
+            countryOfOrigin_api: anime.countryOfOrigin,
+            source_api: anime.source,
+            coverImage_api: anime.coverImage,
+            bannerImage_api: anime.bannerImage,
+            nextAiringEpisode_api: anime.nextAiringEpisode,
+            trailer_api: anime.trailer,
+            avaliacao_api: anime.averageScore,
+            genres_api: anime.genres,
+            // Campos JSON desnormalizados
+            tags_api: anime.tags as unknown as Prisma.InputJsonValue,
+            studios_api: anime.studios as unknown as Prisma.InputJsonValue,
+            characters_api: anime.characters as unknown as Prisma.InputJsonValue,
+            staff_api: anime.staff as unknown as Prisma.InputJsonValue,
+            streamingEpisodes_api: anime.streamingEpisodes as unknown as Prisma.InputJsonValue,
+          };
 
-            for (const charEdge of anime.characters.edges) {
-              const character = charEdge.node;
-              for (const va of character.voiceActors) {
-                await tx.voiceActor.upsert({
-                  where: { id: va.id },
-                  update: { name_api: va.name, image_api: va.image },
-                  create: { id: va.id, name_api: va.name, image_api: va.image, name_curado: va.name?.full },
-                });
-              }
-              await tx.character.upsert({
-                where: { id: character.id },
-                update: { name_api: character.name, image_api: character.image, description_api: character.description, gender_api: character.gender, age_api: character.age },
-                create: { id: character.id, name_api: character.name, image_api: character.image, description_api: character.description, gender_api: character.gender, age_api: character.age },
-              });
-            }
-
-            // 2. Upsert o Anime principal
-            const animePayload = {
-              idMal: anime.idMal,
-              title_api: anime.title,
-              format_api: anime.format,
-              status_api: anime.status,
-              description_api: anime.description,
-              startDate_api: parseDate(anime.startDate),
-              endDate_api: parseDate(anime.endDate),
-              season_api: anime.season,
-              seasonYear_api: anime.seasonYear,
-              episodes_api: anime.episodes,
-              duration_api: anime.duration,
-              countryOfOrigin_api: anime.countryOfOrigin,
-              source_api: anime.source,
-              coverImage_api: anime.coverImage,
-              bannerImage_api: anime.bannerImage,
-              nextAiringEpisode_api: anime.nextAiringEpisode,
-              trailer_api: anime.trailer,
-              avaliacao_api: anime.averageScore,
-              genres_api: anime.genres,
-            };
-
-            await tx.anime.upsert({
-              where: { id: anime.id },
-              update: animePayload,
-              create: {
-                id: anime.id,
-                ...animePayload,
-              },
-            });
-
-            // 3. Limpar e recriar relacionamentos para garantir a sincronia
-            await tx.animeCharacter.deleteMany({ where: { animeId: anime.id } });
-            await tx.animeStaff.deleteMany({ where: { animeId: anime.id } });
-            await tx.animeStudio.deleteMany({ where: { animeId: anime.id } });
-            await tx.streamingEpisode.deleteMany({ where: { animeId: anime.id } });
-
-            // Recriar
-            await tx.anime.update({
-                where: { id: anime.id },
-                data: {
-                    tags: { connect: anime.tags.map((t: any) => ({ id: t.id })) },
-                }
-            });
-
-            for (const ep of anime.streamingEpisodes) {
-                await tx.streamingEpisode.create({
-                    data: { animeId: anime.id, url_api: ep.url, title_api: ep.title, thumbnail_api: ep.thumbnail, site_api: ep.site },
-                });
-            }
-            for (const studioEdge of anime.studios.edges) {
-                await tx.animeStudio.create({
-                    data: { animeId: anime.id, studioId: studioEdge.node.id },
-                });
-            }
-            for (const staffEdge of anime.staff.edges) {
-                await tx.animeStaff.create({
-                    data: { animeId: anime.id, staffId: staffEdge.node.id, role: staffEdge.role },
-                });
-            }
-            for (const charEdge of anime.characters.edges) {
-                await tx.animeCharacter.create({
-                    data: { animeId: anime.id, characterId: charEdge.node.id, role: charEdge.role },
-                });
-                for (const va of charEdge.node.voiceActors) {
-                    await tx.characterVoiceActor.upsert({
-                        where: { characterId_voiceActorId_language: { characterId: charEdge.node.id, voiceActorId: va.id, language: va.languageV2 } },
-                        update: {},
-                        create: { characterId: charEdge.node.id, voiceActorId: va.id, language: va.languageV2 },
-                    });
-                }
-            }
-
-            logger.info(`  Anime [${anime.id}] "${anime.title.romaji}" sincronizado com sucesso.`);
-          }, {
-            maxWait: 15000, // 15 seconds
-            timeout: 30000, // 30 seconds
+          await prisma.anime.upsert({
+            where: { id: anime.id },
+            update: animePayload,
+            create: {
+              id: anime.id,
+              ...animePayload,
+            },
           });
+
           totalAnimesSynced++;
+          logger.info(`  Anime [${anime.id}] "${anime.title.romaji}" sincronizado com sucesso.`);
+
         } catch (e: any) {
-          logger.error(`Erro na transação para o anime [${anime.id}] "${anime.title.romaji}": ${e.message}`);
+          logger.error(`Erro ao sincronizar anime [${anime.id}] "${anime.title.romaji}": ${e.message}`);
         }
       }
 
       page++;
       hasNextPage = data.pageInfo.hasNextPage;
-      if (hasNextPage) {
-        await new Promise(resolve => setTimeout(resolve, 2000)); // Pausa mais longa entre páginas complexas
+      if(hasNextPage) {
+        // Pausa curta entre páginas para respeitar a API externa
+        await new Promise(resolve => setTimeout(resolve, 1000));
       }
 
     } catch (error: any) {
       const errorMessage = error.response ? JSON.stringify(error.response.data) : error.message;
       logger.error(`Erro ao buscar página ${page} de animes de ${year}: ${errorMessage}`);
-      // Pausa longa em caso de erro de API para evitar rate limit
-      await new Promise(resolve => setTimeout(resolve, 10000));
+      await new Promise(resolve => setTimeout(resolve, 10000)); // Pausa longa em caso de erro de API
     }
   }
 
-  logger.info(`Sincronização concluída para o ano ${year}. Total de ${totalAnimesSynced} animes processados.`);
+  logger.info(`Sincronização de animes concluída para o ano ${year}. Total de ${totalAnimesSynced} animes processados.`);
+  await prisma.$disconnect();
 }

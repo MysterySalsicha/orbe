@@ -9,36 +9,36 @@ const parseDate = (date: string | null) => {
   return new Date(date);
 };
 
-export const syncMovies = async (year: number) => {
-  logger.info(`Iniciando sincronização de filmes para o ano ${year}...`);
-  let totalMoviesSyncedOverall = 0;
+export const syncMovies = async (year: number, monthToSync: number) => {
+  logger.info(`Iniciando sincronização de filmes para o ano ${year}, mês ${monthToSync}...`);
+  let page = 1;
+  let totalMoviesSyncedThisMonth = 0;
+  let hasMorePages = true;
 
-  for (let month = 1; month <= 12; month++) {
-    let page = 1;
-    let totalMoviesSyncedThisMonth = 0;
-    let hasMorePages = true;
+  logger.info(`Buscando filmes para ${monthToSync}/${year}...`);
 
-    logger.info(`Buscando filmes para ${month}/${year}...`);
+  while (hasMorePages) {
+    try {
+      const discoverResponse = await tmdbApi.get('/discover/movie', {
+        params: {
+          primary_release_year: year,
+          'primary_release_date.gte': `${year}-${String(monthToSync).padStart(2, '0')}-01`,
+          'primary_release_date.lte': `${year}-${String(monthToSync).padStart(2, '0')}-31`,
+          page: page,
+        },
+      });
 
-    while (hasMorePages) {
-      try {
-        const discoverResponse = await tmdbApi.get('/discover/movie', {
-          params: {
-            primary_release_year: year,
-            'primary_release_date.gte': `${year}-${String(month).padStart(2, '0')}-01`,
-            'primary_release_date.lte': `${year}-${String(month).padStart(2, '0')}-31`,
-            page: page,
-          },
-        });
+      const moviesToSync = discoverResponse.data.results;
 
-        const moviesToSync = discoverResponse.data.results;
+      if (moviesToSync.length === 0) {
+        hasMorePages = false;
+        break;
+      }
 
-        if (moviesToSync.length === 0) {
-          hasMorePages = false;
-          break;
-        }
+      logger.info(`Processando ${moviesToSync.length} filmes do mês ${monthToSync} da página ${page}/${discoverResponse.data.total_pages || 'desconhecida'}`);
 
-        for (const basicMovie of moviesToSync) {
+      let movieIndex = 0;
+      for (const basicMovie of moviesToSync) {
           try {
             // Get detailed info for each movie
             const detailedResponse = await tmdbApi.get(`/movie/${basicMovie.id}`, {
@@ -78,10 +78,10 @@ export const syncMovies = async (year: number) => {
                 ...payload,
               },
             });
-            logger.info(`  Filme [${movie.id}] "${movie.title}" sincronizado.`);
+            logger.info(`  Filme [${movie.id}] "${movie.title}" (Lançamento: ${movie.release_date}) (${++movieIndex}/${moviesToSync.length}) sincronizado.`);
             totalMoviesSyncedThisMonth++;
           } catch (detailError: any) {
-            logger.error(`  Erro ao buscar detalhes para o filme ID ${basicMovie.id}: ${detailError.message}`);
+            logger.error(`  (${movieIndex + 1}/${moviesToSync.length}) Erro ao buscar detalhes para o filme ID ${basicMovie.id}: ${detailError.message}`);
           }
            await new Promise(resolve => setTimeout(resolve, 250)); // Rate limit between detail calls
         }
@@ -97,11 +97,9 @@ export const syncMovies = async (year: number) => {
     }
 
     if (totalMoviesSyncedThisMonth > 0) {
-        logger.info(`${totalMoviesSyncedThisMonth} filmes de ${month}/${year} sincronizados com sucesso.`);
-        totalMoviesSyncedOverall += totalMoviesSyncedThisMonth;
+        logger.info(`${totalMoviesSyncedThisMonth} filmes de ${monthToSync}/${year} sincronizados com sucesso.`);
     } else {
-        logger.info(`Nenhum filme novo encontrado para ${month}/${year}.`);
+        logger.info(`Nenhum filme novo encontrado para ${monthToSync}/${year}.`);
     }
-  }
-  logger.info(`Total de ${totalMoviesSyncedOverall} filmes sincronizados para o ano ${year}.`);
+  logger.info(`Total de ${totalMoviesSyncedThisMonth} filmes sincronizados para o ano ${year}, mês ${monthToSync}.`);
 };

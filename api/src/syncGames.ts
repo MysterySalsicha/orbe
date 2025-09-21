@@ -1,5 +1,5 @@
 import { igdbApi, getIgdbAccessToken } from './clients';
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, GameCategory, GameStatus } from '@prisma/client';
 import { logger } from './logger';
 
 const prisma = new PrismaClient();
@@ -21,8 +21,8 @@ const GAME_STATUS_MAP: { [key: number]: string } = {
   5: 'OFFLINE', 6: 'CANCELLED', 7: 'RUMORED', 8: 'DELISTED',
 };
 
-export const syncGames = async (year: number) => {
-  logger.info(`Iniciando sincronização de jogos para o ano ${year}...`);
+export const syncGames = async (year: number, monthToSync: number) => {
+  logger.info(`Iniciando sincronização de jogos para o ano ${year}, mês ${monthToSync}...`);
   try {
     await getIgdbAccessToken();
 
@@ -31,8 +31,9 @@ export const syncGames = async (year: number) => {
     let totalGamesSynced = 0;
     let hasMore = true;
 
-    const initialTimestamp = Math.floor(new Date(`${year}-01-01T00:00:00Z`).getTime() / 1000);
-    const endTimestamp = Math.floor(new Date(`${year + 1}-01-01T00:00:00Z`).getTime() / 1000);
+    const initialTimestamp = Math.floor(new Date(`${year}-${String(monthToSync).padStart(2, '0')}-01T00:00:00Z`).getTime() / 1000);
+    const endOfMonth = new Date(year, monthToSync, 0).getDate(); // Get last day of the month
+    const endTimestamp = Math.floor(new Date(`${year}-${String(monthToSync).padStart(2, '0')}-${String(endOfMonth).padStart(2, '0')}T23:59:59Z`).getTime() / 1000);
 
     const queryFields = `
       fields
@@ -56,37 +57,45 @@ export const syncGames = async (year: number) => {
           break;
         }
 
-        for (const game of games) {
-          const payload = {
-            name_api: game.name,
-            slug_api: game.slug,
-            summary_api: game.summary,
-            storyline_api: game.storyline,
-            first_release_date_api: parseTimestamp(game.first_release_date),
-            category_api: game.category !== undefined ? GAME_CATEGORY_MAP[game.category] : null,
-            status_api: game.status !== undefined ? GAME_STATUS_MAP[game.status] : null,
-            avaliacao_api: game.rating,
-            cover_api: game.cover,
-            screenshots_api: game.screenshots,
-            artworks_api: game.artworks,
-            videos_api: game.videos,
-            genres_api: game.genres,
-            themes_api: game.themes,
-            player_perspectives_api: game.player_perspectives,
-            platforms_api: game.platforms,
-            involved_companies_api: game.involved_companies,
-            websites_api: game.websites,
-          };
+        logger.info(`Processando ${games.length} jogos do mês ${monthToSync} (offset ${offset})...`);
 
-          await prisma.jogo.upsert({
-            where: { id: game.id },
-            update: payload,
-            create: {
-              id: game.id,
-              ...payload,
-            },
-          });
-          logger.info(`  Jogo [${game.id}] "${game.name}" sincronizado.`);
+        let gameIndex = 0;
+        for (const game of games) {
+          try {
+            const payload = {
+              name_api: game.name,
+              slug_api: game.slug,
+              summary_api: game.summary,
+              storyline_api: game.storyline,
+              first_release_date_api: parseTimestamp(game.first_release_date),
+              category_api: game.category !== undefined ? GAME_CATEGORY_MAP[game.category.id] as GameCategory : null,
+              status_api: game.status !== undefined ? GAME_STATUS_MAP[game.status] as GameStatus : null,
+              avaliacao_api: game.rating,
+              cover_api: game.cover,
+              screenshots_api: game.screenshots,
+              artworks_api: game.artworks,
+              videos_api: game.videos,
+              genres_api: game.genres,
+              themes_api: game.themes,
+              player_perspectives_api: game.player_perspectives,
+              platforms_api: game.platforms,
+              involved_companies_api: game.involved_companies,
+              websites_api: game.websites,
+            };
+
+            await prisma.jogo.upsert({
+              where: { id: game.id },
+              update: payload,
+              create: {
+                id: game.id,
+                ...payload,
+              },
+            });
+            logger.info(`  Jogo [${game.id}] "${game.name}" (Lançamento: ${parseTimestamp(game.first_release_date)?.toISOString().split('T')[0] || 'N/A'}) (${gameIndex + 1}/${games.length}) sincronizado.`);
+          } catch (gameError: any) {
+            logger.error(`  (${gameIndex + 1}/${games.length}) Erro na transação para o jogo [${game.id}] "${game.name}": ${gameError.message}`);
+          }
+          gameIndex++;
         }
 
         totalGamesSynced += games.length;
@@ -102,8 +111,8 @@ export const syncGames = async (year: number) => {
       }
     }
 
-    logger.info(`Total de ${totalGamesSynced} jogos sincronizados para o ano ${year}.`);
+    logger.info(`Total de ${totalGamesSynced} jogos sincronizados para o ano ${year}, mês ${monthToSync}.`);
   } catch (error: any) {
-    logger.error(`Erro fatal ao sincronizar jogos de ${year}: ${error.message}`);
+    logger.error(`Erro fatal ao sincronizar jogos de ${year}, mês ${monthToSync}: ${error.message}`);
   }
 };

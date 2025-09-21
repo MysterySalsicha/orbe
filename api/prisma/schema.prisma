@@ -245,7 +245,7 @@ model EventoAnuncio {
 }
 
 
-// ANIME-RELATED MODELS
+// ANIME-RELATED MODELS (Denormalized)
 
 model Anime {
   id                      Int      @id // From Anilist
@@ -253,12 +253,12 @@ model Anime {
 
   // Titles
   title_api               Json?
-  title_curado            Json?
+  nome_curado             String? // Formerly title_curado
 
   // Basic Info
-  format_api              MediaFormat?
-  status_api              MediaStatus?
-
+  format_api              String?
+  status_api              String?
+  
   // Description
   description_api         String? @db.Text
   description_curado      String? @db.Text
@@ -270,7 +270,7 @@ model Anime {
   endDate_curado          DateTime?
 
   // Season
-  season_api              MediaSeason?
+  season_api              String?
   seasonYear_api          Int?
 
   // Details
@@ -279,146 +279,40 @@ model Anime {
   duration_api            Int?
   duration_curado         Int?
   countryOfOrigin_api     String?
-  source_api              MediaSource?
+  source_api              String?
   source_curado           String?
 
   // Images
   coverImage_api          Json?
   bannerImage_api         String?
-  coverImage_curado       Json?
+  poster_path_curado      String? // Formerly coverImage_curado
   bannerImage_curado      String?
 
   // Advanced Features
   nextAiringEpisode_api   Json?
   trailer_api             Json?
-  trailer_curado          Json?
+  trailer_url_curado      String? // Formerly trailer_curado
 
   // Rating
   avaliacao_api           Float?
 
-  // Genres and Tags
+  // Genres (as string array)
   genres_api              String[]
   genres_curado           String[]
-  tags                    Tag[] @relation()
+  
+  // Denormalized relational data as JSON
+  tags_api                Json?
+  streamingEpisodes_api   Json?
+  characters_api          Json?
+  staff_api               Json?
+  studios_api             Json?
 
-  // Relations
-  streamingEpisodes       StreamingEpisode[]
-  characters              AnimeCharacter[]
-  staff                   AnimeStaff[]
-  studios                 AnimeStudio[]
-}
-
-model StreamingEpisode {
-  id            Int      @id @default(autoincrement())
-  title_api     String?
-  thumbnail_api String?
-  url_api       String   @unique
-  site_api      String?
-  title_curado  String?
-  url_curado    String?
-
-  animeId       Int
-  anime         Anime    @relation(fields: [animeId], references: [id])
-}
-
-model Tag {
-  id          Int      @id // From Anilist
-  name        String   @unique
-  description String?  @db.Text
-  isSpoiler   Boolean  @default(false)
-
-  animes      Anime[] @relation()
-}
-
-model Character {
-  id                  Int      @id // From Anilist
-
-  name_api            Json?
-  image_api           Json?
-  description_api     String?  @db.Text
-  gender_api          String?
-  age_api             String?
-
-  name_curado         Json?
-  image_curado        Json?
-  description_curado  String?  @db.Text
-  gender_curado       String?
-  age_curado          String?
-
-  animes              AnimeCharacter[]
-  voiceActors         CharacterVoiceActor[]
-}
-
-model VoiceActor {
-  id          Int     @id // From Anilist
-  name_api    String?
-  image_api   Json?
-  name_curado String?
-
-  characters  CharacterVoiceActor[]
-}
-
-model Staff {
-  id                      Int      @id // From Anilist
-  name_api                String?
-  image_api               Json?
-  primaryOccupations_api  String[]
-  name_curado             String?
-
-  animes                  AnimeStaff[]
-}
-
-model Studio {
-  id                  Int     @id // From Anilist
-  name                String  @unique
-  isAnimationStudio   Boolean
-
-  animes              AnimeStudio[]
-}
-
-// Explicit Join Tables for relationships with metadata
-
-model AnimeCharacter {
-  animeId      Int
-  characterId  Int
-  role         CharacterRole
-
-  anime        Anime     @relation(fields: [animeId], references: [id])
-  character    Character @relation(fields: [characterId], references: [id])
-
-  @@id([animeId, characterId])
-}
-
-model CharacterVoiceActor {
-  characterId   Int
-  voiceActorId  Int
-  language      String // e.g., "Japanese", "Portuguese (BR)"
-
-  character     Character  @relation(fields: [characterId], references: [id])
-  voiceActor    VoiceActor @relation(fields: [voiceActorId], references: [id])
-
-  @@id([characterId, voiceActorId, language])
-}
-
-model AnimeStaff {
-  animeId  Int
-  staffId  Int
-  role     String
-
-  anime    Anime @relation(fields: [animeId], references: [id])
-  staff    Staff @relation(fields: [staffId], references: [id])
-
-  @@id([animeId, staffId, role])
-}
-
-model AnimeStudio {
-  animeId  Int
-  studioId Int
-
-  anime    Anime  @relation(fields: [animeId], references: [id])
-  studio   Studio @relation(fields: [studioId], references: [id])
-
-  @@id([animeId, studioId])
+  // Curated denormalized data
+  tags_curado             Json?
+  plataformas_curado      Json? // Formerly streamingEpisodes_curado
+  characters_curado       Json?
+  staff_curado            Json?
+  studios_curado          Json?
 }
 
 

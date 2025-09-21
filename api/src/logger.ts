@@ -9,26 +9,31 @@ if (!fs.existsSync(logDirectory)) {
   fs.mkdirSync(logDirectory, { recursive: true });
 }
 
-const log = (message: string, level: 'info' | 'error' = 'info') => {
+const writeToFile = (message: string, level: 'info' | 'error' | 'debug' = 'info') => {
   const timestamp = new Date().toISOString();
   const logMessage = `[${timestamp}] [${level.toUpperCase()}] ${message}\n`;
 
-  // Append to file
   fs.appendFile(logFilePath, logMessage, (err) => {
     if (err) {
       console.error('Failed to write to log file:', err);
     }
   });
-
-  // Also log to console
-  if (level === 'error') {
-    console.error(message);
-  } else {
-    console.log(message);
-  }
 };
 
-export const logger = {
-  info: (message: string) => log(message, 'info'),
-  error: (message: string) => log(message, 'error'),
+export const logger: {
+  info: (message: string) => void;
+  error: (message: string) => void;
+  debug: (message: string) => void;
+} = {
+  info: (message: string) => {
+    console.log(`[INFO] ${message}`);
+    writeToFile(message, 'info');
+  },
+  error: (message: string) => {
+    console.error(`[ERROR] ${message}`);
+    writeToFile(message, 'error');
+  },
+  debug: (message: string) => {
+    // O modo de depuração está desativado. Nenhuma ação é executada.
+  },
 };

@@ -23,7 +23,7 @@ export const syncEvents = async () => {
     const oneYearAgo = Math.floor(new Date(new Date().setFullYear(new Date().getFullYear() - 1)).getTime() / 1000);
 
     const queryFields = `
-      fields name, description, start_time, end_time, logo.*, games;
+      fields name, description, start_time, end_time, event_logo;
       where start_time > ${oneYearAgo};
       sort start_time desc;
     `;
@@ -54,7 +54,7 @@ export const syncEvents = async () => {
             description_api: event.description,
             start_time_api: parseTimestamp(event.start_time),
             end_time_api: parseTimestamp(event.end_time),
-            logo_api: event.logo,
+            logo_api: event.event_logo || null,
           };
 
           await prisma.eventoAnuncio.upsert({
