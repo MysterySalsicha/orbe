@@ -4,83 +4,107 @@ import { logger } from './logger';
 
 const prisma = new PrismaClient();
 
+const parseDate = (date: string | null) => {
+  if (!date) return null;
+  return new Date(date);
+};
+
 export const syncSeries = async (year: number) => {
-  try {
-    let totalSeriesSyncedOverall = 0;
-    for (let month = 1; month <= 12; month++) {
-      let page = 1;
-      let totalSeriesSyncedThisMonth = 0;
-      let hasMorePages = true;
+  logger.info(`Iniciando sincronização de séries para o ano ${year}...`);
+  let totalSeriesSyncedOverall = 0;
 
-      logger.info(`Iniciando sincronização de séries para ${month}/${year}...`);
+  for (let month = 1; month <= 12; month++) {
+    let page = 1;
+    let totalSeriesSyncedThisMonth = 0;
+    let hasMorePages = true;
 
-      while (hasMorePages) {
-        const response = await tmdbApi.get('/discover/tv', {
+    logger.info(`Buscando séries para ${month}/${year}...`);
+
+    while (hasMorePages) {
+      try {
+        const discoverResponse = await tmdbApi.get('/discover/tv', {
           params: {
             first_air_date_year: year,
             'first_air_date.gte': `${year}-${String(month).padStart(2, '0')}-01`,
             'first_air_date.lte': `${year}-${String(month).padStart(2, '0')}-31`,
             page: page,
-            per_page: 100,
           },
         });
 
-        const series = response.data.results;
+        const seriesToSync = discoverResponse.data.results;
 
-        if (series.length === 0) {
+        if (seriesToSync.length === 0) {
           hasMorePages = false;
           break;
         }
 
-        for (const serie of series) {
-          const firstAirDate = serie.first_air_date ? new Date(serie.first_air_date) : null;
+        for (const basicSerie of seriesToSync) {
+          try {
+            // Get detailed info for each series
+            const detailedResponse = await tmdbApi.get(`/tv/${basicSerie.id}`, {
+              params: {
+                append_to_response: 'credits,videos,watch/providers',
+              },
+            });
+            const serie = detailedResponse.data;
 
-          await prisma.serie.upsert({
-            where: { id: serie.id },
-            update: {
-              titulo_api: serie.original_name,
-              titulo_curado: serie.name,
-              sinopse_api: serie.overview,
-              poster_url_api: serie.poster_path ? `https://image.tmdb.org/t/p/w500${serie.poster_path}` : null,
-              data_lancamento_api: firstAirDate,
-              generos_api: serie.genre_ids,
+            const payload = {
+              name_api: serie.name,
+              original_name_api: serie.original_name,
+              overview_api: serie.overview,
+              poster_path_api: serie.poster_path,
+              backdrop_path_api: serie.backdrop_path,
+              first_air_date_api: parseDate(serie.first_air_date),
+              last_air_date_api: parseDate(serie.last_air_date),
+              number_of_seasons_api: serie.number_of_seasons,
+              number_of_episodes_api: serie.number_of_episodes,
+              episode_run_time_api: serie.episode_run_time,
               avaliacao_api: serie.vote_average ? serie.vote_average * 10 : null,
-            },
-            create: {
-              id: serie.id,
-              titulo_api: serie.original_name,
-              titulo_curado: serie.name,
-              sinopse_api: serie.overview,
-              sinopse_curada: serie.overview,
-              poster_url_api: serie.poster_path ? `https://image.tmdb.org/t/p/w500${serie.poster_path}` : null,
-              data_lancamento_api: firstAirDate,
-              data_lancamento_curada: firstAirDate,
-              generos_api: serie.genre_ids,
-              plataformas_api: [],
-              plataformas_curadas: [],
-              avaliacao_api: serie.vote_average ? serie.vote_average * 10 : null,
-            },
-          });
+              vote_count_api: serie.vote_count,
+              popularity_api: serie.popularity,
+              genres_api: serie.genres,
+              created_by_api: serie.created_by,
+              networks_api: serie.networks,
+              seasons_api: serie.seasons,
+              videos_api: serie.videos?.results,
+              watch_providers_api: serie['watch/providers']?.results,
+              cast_api: serie.credits?.cast,
+              crew_api: serie.credits?.crew,
+            };
+
+            await prisma.serie.upsert({
+              where: { id: serie.id },
+              update: payload,
+              create: {
+                id: serie.id,
+                ...payload,
+                name_curado: serie.name || serie.original_name,
+              },
+            });
+            logger.info(`  Série [${serie.id}] "${serie.name}" sincronizada.`);
+            totalSeriesSyncedThisMonth++;
+          } catch (detailError: any) {
+            logger.error(`  Erro ao buscar detalhes para a série ID ${basicSerie.id}: ${detailError.message}`);
+          }
+           await new Promise(resolve => setTimeout(resolve, 250)); // Rate limit between detail calls
         }
-        totalSeriesSyncedThisMonth += series.length;
-        logger.info(`  Página ${page}/${response.data.total_pages}: ${series.length} séries sincronizadas. Datas: ${series.map((s: any) => s.first_air_date).join(', ')}`);
 
         page++;
-        if (response.data.total_pages && page > response.data.total_pages) {
+        if (page > discoverResponse.data.total_pages) {
           hasMorePages = false;
         }
-        await new Promise(resolve => setTimeout(resolve, 1000)); // Pausa entre as páginas
-      }
-
-      if (totalSeriesSyncedThisMonth > 0) {
-        logger.info(`${totalSeriesSyncedThisMonth} séries de ${month}/${year} sincronizadas com sucesso.`);
-        totalSeriesSyncedOverall += totalSeriesSyncedThisMonth;
-      } else {
-        logger.info(`Nenhuma série encontrada para ${month}/${year}.`);
+      } catch (discoverError: any) {
+        logger.error(`Erro ao buscar página ${page} de séries: ${discoverError.message}`);
+        await new Promise(resolve => setTimeout(resolve, 5000)); // Wait longer on API error
       }
     }
-    logger.info(`Total de ${totalSeriesSyncedOverall} séries sincronizadas para o ano ${year}.`);
-  } catch (error: any) {
-    logger.error(`Erro ao sincronizar séries para o ano ${year}: ${error.message || error}`);
+
+    if (totalSeriesSyncedThisMonth > 0) {
+        logger.info(`${totalSeriesSyncedThisMonth} séries de ${month}/${year} sincronizadas com sucesso.`);
+        totalSeriesSyncedOverall += totalSeriesSyncedThisMonth;
+    } else {
+        logger.info(`Nenhuma série nova encontrada para ${month}/${year}.`);
+    }
   }
+  logger.info(`Total de ${totalSeriesSyncedOverall} séries sincronizadas para o ano ${year}.`);
 };

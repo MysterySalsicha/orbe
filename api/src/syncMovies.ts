@@ -4,83 +4,105 @@ import { logger } from './logger';
 
 const prisma = new PrismaClient();
 
+const parseDate = (date: string | null) => {
+  if (!date) return null;
+  return new Date(date);
+};
+
 export const syncMovies = async (year: number) => {
-  try {
-    let totalMoviesSyncedOverall = 0;
-    for (let month = 1; month <= 12; month++) {
-      let page = 1;
-      let totalMoviesSyncedThisMonth = 0;
-      let hasMorePages = true;
+  logger.info(`Iniciando sincronização de filmes para o ano ${year}...`);
+  let totalMoviesSyncedOverall = 0;
 
-      logger.info(`Iniciando sincronização de filmes para ${month}/${year}...`);
+  for (let month = 1; month <= 12; month++) {
+    let page = 1;
+    let totalMoviesSyncedThisMonth = 0;
+    let hasMorePages = true;
 
-      while (hasMorePages) {
-        const response = await tmdbApi.get('/discover/movie', {
+    logger.info(`Buscando filmes para ${month}/${year}...`);
+
+    while (hasMorePages) {
+      try {
+        const discoverResponse = await tmdbApi.get('/discover/movie', {
           params: {
             primary_release_year: year,
             'primary_release_date.gte': `${year}-${String(month).padStart(2, '0')}-01`,
             'primary_release_date.lte': `${year}-${String(month).padStart(2, '0')}-31`,
             page: page,
-            per_page: 100,
           },
         });
 
-        const movies = response.data.results;
+        const moviesToSync = discoverResponse.data.results;
 
-        if (movies.length === 0) {
+        if (moviesToSync.length === 0) {
           hasMorePages = false;
           break;
         }
 
-        for (const movie of movies) {
-          const releaseDate = movie.release_date ? new Date(movie.release_date) : null;
+        for (const basicMovie of moviesToSync) {
+          try {
+            // Get detailed info for each movie
+            const detailedResponse = await tmdbApi.get(`/movie/${basicMovie.id}`, {
+              params: {
+                append_to_response: 'credits,videos,watch/providers',
+              },
+            });
+            const movie = detailedResponse.data;
 
-          await prisma.filme.upsert({
-            where: { id: movie.id },
-            update: {
-              titulo_api: movie.original_title,
-              titulo_curado: movie.title,
-              sinopse_api: movie.overview,
-              poster_url_api: movie.poster_path ? `https://image.tmdb.org/t/p/w500${movie.poster_path}` : null,
-              data_lancamento_api: releaseDate,
-              generos_api: movie.genre_ids,
+            const payload = {
+              title_api: movie.title,
+              original_title_api: movie.original_title,
+              overview_api: movie.overview,
+              poster_path_api: movie.poster_path,
+              backdrop_path_api: movie.backdrop_path,
+              release_date_api: parseDate(movie.release_date),
+              status_api: movie.status,
+              runtime_api: movie.runtime,
               avaliacao_api: movie.vote_average ? movie.vote_average * 10 : null,
-            },
-            create: {
-              id: movie.id,
-              titulo_api: movie.original_title,
-              titulo_curado: movie.title,
-              sinopse_api: movie.overview,
-              sinopse_curada: movie.overview,
-              poster_url_api: movie.poster_path ? `https://image.tmdb.org/t/p/w500${movie.poster_path}` : null,
-              data_lancamento_api: releaseDate,
-              data_lancamento_curada: releaseDate,
-              generos_api: movie.genre_ids,
-              plataformas_api: [],
-              plataformas_curadas: [],
-              avaliacao_api: movie.vote_average ? movie.vote_average * 10 : null,
-            },
-          });
+              vote_count_api: movie.vote_count,
+              popularity_api: movie.popularity,
+              genres_api: movie.genres,
+              spoken_languages_api: movie.spoken_languages,
+              production_countries_api: movie.production_countries,
+              production_companies_api: movie.production_companies,
+              videos_api: movie.videos?.results,
+              watch_providers_api: movie['watch/providers']?.results,
+              cast_api: movie.credits?.cast,
+              crew_api: movie.credits?.crew,
+            };
+
+            await prisma.filme.upsert({
+              where: { id: movie.id },
+              update: payload,
+              create: {
+                id: movie.id,
+                ...payload,
+                title_curado: movie.title || movie.original_title,
+              },
+            });
+            logger.info(`  Filme [${movie.id}] "${movie.title}" sincronizado.`);
+            totalMoviesSyncedThisMonth++;
+          } catch (detailError: any) {
+            logger.error(`  Erro ao buscar detalhes para o filme ID ${basicMovie.id}: ${detailError.message}`);
+          }
+           await new Promise(resolve => setTimeout(resolve, 250)); // Rate limit between detail calls
         }
-        totalMoviesSyncedThisMonth += movies.length;
-        logger.info(`  Página ${page}/${response.data.total_pages}: ${movies.length} filmes sincronizados. Datas: ${movies.map((m: any) => m.release_date).join(', ')}`);
 
         page++;
-        if (response.data.total_pages && page > response.data.total_pages) {
+        if (page > discoverResponse.data.total_pages) {
           hasMorePages = false;
         }
-        await new Promise(resolve => setTimeout(resolve, 1000)); // Pausa entre as páginas
-      }
-
-      if (totalMoviesSyncedThisMonth > 0) {
-        logger.info(`${totalMoviesSyncedThisMonth} filmes de ${month}/${year} sincronizados com sucesso.`);
-        totalMoviesSyncedOverall += totalMoviesSyncedThisMonth;
-      } else {
-        logger.info(`Nenhum filme encontrado para ${month}/${year}.`);
+      } catch (discoverError: any) {
+        logger.error(`Erro ao buscar página ${page} de filmes: ${discoverError.message}`);
+        await new Promise(resolve => setTimeout(resolve, 5000)); // Wait longer on API error
       }
     }
-    logger.info(`Total de ${totalMoviesSyncedOverall} filmes sincronizados para o ano ${year}.`);
-  } catch (error: any) {
-    logger.error(`Erro ao sincronizar filmes para o ano ${year}: ${error.message || error}`);
+
+    if (totalMoviesSyncedThisMonth > 0) {
+        logger.info(`${totalMoviesSyncedThisMonth} filmes de ${month}/${year} sincronizados com sucesso.`);
+        totalMoviesSyncedOverall += totalMoviesSyncedThisMonth;
+    } else {
+        logger.info(`Nenhum filme novo encontrado para ${month}/${year}.`);
+    }
   }
+  logger.info(`Total de ${totalMoviesSyncedOverall} filmes sincronizados para o ano ${year}.`);
 };

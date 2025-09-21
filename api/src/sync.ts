@@ -2,23 +2,30 @@ import { syncMovies } from './syncMovies';
 import { syncSeries } from './syncSeries';
 import { syncAnimes } from './syncAnimes';
 import { syncGames } from './syncGames';
+import { syncEvents } from './syncEvents';
 import { logger } from './logger';
 
-const syncData = async (year: number) => {
-  logger.info(`Iniciando sincronização de dados para o ano ${year}...`);
+const syncAllData = async () => {
+  const currentYear = new Date().getFullYear();
+  logger.info(`Iniciando sincronização de dados completa...`);
 
-  await syncMovies(year);
+  logger.info(`--- Sincronizando Eventos ---`);
+  await syncEvents();
   await new Promise(resolve => setTimeout(resolve, 1000));
 
-  await syncSeries(year);
+  logger.info(`--- Sincronizando Mídias para o ano de ${currentYear} ---`);
+  await syncMovies(currentYear);
   await new Promise(resolve => setTimeout(resolve, 1000));
 
-  await syncAnimes(year);
+  await syncSeries(currentYear);
   await new Promise(resolve => setTimeout(resolve, 1000));
 
-  await syncGames(year);
+  await syncAnimes(currentYear);
+  await new Promise(resolve => setTimeout(resolve, 1000));
 
-  logger.info(`Sincronização de dados para o ano ${year} concluída.`);
+  await syncGames(currentYear);
+
+  logger.info(`Sincronização de dados completa concluída.`);
 };
 
-syncData(2025).catch(logger.error);
+syncAllData().catch(logger.error);
