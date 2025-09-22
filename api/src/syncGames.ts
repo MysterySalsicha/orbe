@@ -13,12 +13,26 @@ export const syncGames = async (year: number) => {
     let totalGamesSynced = 0;
     let hasMore = true;
 
-    while (hasMore) {
-      const response = await igdbApi.post(
-        '/games',
-        `fields name, summary, cover.url, first_release_date, rating, genres.name, involved_companies.company.name, involved_companies.developer, involved_companies.publisher; where first_release_date >= ${new Date(`${year}-01-01`).getTime() / 1000} & first_release_date < ${new Date(`${year + 1}-01-01`).getTime() / 1000}; sort first_release_date asc; limit ${limit}; offset ${offset};`
-      );
+    // Define the fields for the IGDB query
+    const fields = [
+      'name',
+      'summary',
+      'cover.url',
+      'first_release_date',
+      'rating',
+      'genres.name',
+      'involved_companies.company.id',
+      'involved_companies.company.name',
+      'involved_companies.company.logo.url',
+      'involved_companies.developer',
+      'involved_companies.publisher',
+    ].join(',');
 
+    const baseQuery = `fields ${fields}; where first_release_date >= ${new Date(`${year}-01-01`).getTime() / 1000} & first_release_date < ${new Date(`${year + 1}-01-01`).getTime() / 1000}; sort popularity desc;`;
+
+    while (hasMore) {
+      const query = `${baseQuery} limit ${limit}; offset ${offset};`;
+      const response = await igdbApi.post('/games', query);
       const games = response.data;
 
       if (games.length === 0) {
@@ -27,9 +41,12 @@ export const syncGames = async (year: number) => {
       }
 
       for (const game of games) {
+        if (!game.involved_companies) {
+            logger.warn(`Jogo ID ${game.id} (${game.name}) não possui empresas associadas. Pulando.`);
+            continue;
+        }
+
         const releaseDate = game.first_release_date ? new Date(game.first_release_date * 1000) : null;
-        const developers = game.involved_companies ? game.involved_companies.filter((c: any) => c.developer).map((c: any) => c.company.name) : [];
-        const publishers = game.involved_companies ? game.involved_companies.filter((c: any) => c.publisher).map((c: any) => c.company.name) : [];
         const genres = game.genres ? game.genres.map((g: any) => g.name) : [];
 
         await prisma.jogo.upsert({
@@ -41,8 +58,6 @@ export const syncGames = async (year: number) => {
             poster_url_api: game.cover ? `https:${game.cover.url.replace('t_thumb', 't_cover_big')}` : null,
             data_lancamento_api: releaseDate,
             generos_api: genres,
-            desenvolvedores: developers,
-            publicadoras: publishers,
             avaliacao_api: game.rating,
           },
           create: {
@@ -58,20 +73,55 @@ export const syncGames = async (year: number) => {
             generos_curados: [],
             plataformas_api: [],
             plataformas_curadas: [],
-            desenvolvedores: developers,
-            publicadoras: publishers,
             avaliacao_api: game.rating,
+            empresas: {
+              create: game.involved_companies.flatMap((comp: any) => {
+                const relations = [];
+                const company = comp.company;
+                if (!company) return []; // Skip if company data is missing
+
+                const createPayload = {
+                  id: company.id,
+                  nome: company.name,
+                  logo_url: comp.company.logo ? `https:${comp.company.logo.url.replace('t_thumb', 't_logo_med')}` : null,
+                };
+
+                if (comp.developer) {
+                  relations.push({
+                    funcao: 'Developer',
+                    empresa: {
+                      connectOrCreate: {
+                        where: { id: company.id },
+                        create: createPayload,
+                      },
+                    },
+                  });
+                }
+                if (comp.publisher) {
+                  relations.push({
+                    funcao: 'Publisher',
+                    empresa: {
+                      connectOrCreate: {
+                        where: { id: company.id },
+                        create: createPayload,
+                      },
+                    },
+                  });
+                }
+                return relations;
+              }),
+            },
           },
         });
       }
       totalGamesSynced += games.length;
-      logger.info(`  Página com offset ${offset}: ${games.length} jogos sincronizados. Datas: ${games.map((g: any) => g.first_release_date ? new Date(g.first_release_date * 1000).toISOString().split('T')[0] : 'N/A').join(', ')}`);
+      logger.info(`  Página com offset ${offset}: ${games.length} jogos sincronizados.`);
 
       offset += limit;
       hasMore = games.length === limit;
 
       if (hasMore) {
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        await new Promise(resolve => setTimeout(resolve, 250)); // IGDB is less strict with rate limits
       }
     }
 
@@ -81,6 +131,10 @@ export const syncGames = async (year: number) => {
       logger.info(`Nenhum jogo encontrado para ${year}.`);
     }
   } catch (error: any) {
-    logger.error(`Erro ao sincronizar jogos de ${year}: ${error.message || error}`);
+    const errorMessage = error.response ? JSON.stringify(error.response.data) : error.message;
+    logger.error(`Erro ao sincronizar jogos de ${year}: ${errorMessage}`);
+    if (!error.response) {
+      console.error(error);
+    }
   }
 };
