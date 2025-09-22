@@ -1,151 +1,542 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
 
 generator client {
   provider = "prisma-client-js"
 }
 
-datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL")
-}
+// =================================================================================
+// MODELOS DE MÍDIA PRINCIPAIS
+// =================================================================================
 
 model Filme {
-  id                          Int       @id
-  titulo_api                  String?   @db.VarChar(255)
-  titulo_curado               String    @db.VarChar(255)
-  poster_url_api              String?   @db.VarChar(255)
-  poster_curado               String?   @db.VarChar(255)
-  data_lancamento_api         DateTime? @db.Date
-  data_lancamento_curada      DateTime? @db.Date
-  sinopse_api                 String?   @db.Text
-  sinopse_curada              String?   @db.Text
-  plataformas_api             String[]
-  plataformas_curadas         String[]
-  trailer_url_api             String?   @db.VarChar(255)
-  trailer_url_curado          String?   @db.VarChar(255)
-  generos_api                 Json?     @db.JsonB
-  generos_curados             Json?     @db.JsonB
-  premiacoes                  Json?     @db.JsonB
-  duracao                     Int?
-  diretor                     String?   @db.VarChar(255)
-  escritor                    String?   @db.VarChar(255)
-  elenco                      Json?     @db.JsonB
-  ingresso_link               String?   @db.VarChar(255)
-  em_prevenda                 Boolean   @default(false)
-  ultima_verificacao_ingresso DateTime? @db.Timestamp()
-  avaliacao_api               Float?
+  id              Int       @id @default(autoincrement())
+  tmdbId          Int       @unique
+  imdbId          String?   @unique
+  title           String
+  originalTitle   String?
+  overview        String?   @db.Text
+  releaseDate     DateTime?
+  runtime         Int?
+  budget          BigInt?
+  revenue         BigInt?
+  popularity      Float?
+  voteAverage     Float?
+  voteCount       Int?
+  status          String?
+  tagline         String?
+  homepage        String?
+  posterPath      String?
+  backdropPath    String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  // Relacionamentos
+  genres          FilmeGenero[]
+  companies       FilmeCompany[]
+  countries       FilmeCountry[]
+  languages       FilmeLanguage[]
+  cast            FilmeCast[]
+  crew            FilmeCrew[]
+  videos          Video[]
 }
 
 model Serie {
-  id                      Int       @id
-  titulo_api              String?   @db.VarChar(255)
-  titulo_curado           String    @db.VarChar(255)
-  poster_url_api          String?   @db.VarChar(255)
-  poster_curado           String?   @db.VarChar(255)
-  data_lancamento_api     DateTime? @db.Date
-  data_lancamento_curada  DateTime? @db.Date
-  sinopse_api             String?   @db.Text
-  sinopse_curada          String?   @db.Text
-  plataformas_api         String[]
-  plataformas_curadas     String[]
-  trailer_url_api         String?   @db.VarChar(255)
-  trailer_url_curado      String?   @db.VarChar(255)
-  generos_api             Json?     @db.JsonB
-  generos_curados         Json?     @db.JsonB
-  premiacoes              Json?     @db.JsonB
-  numero_temporadas       Int?
-  numero_episodios        Int?
-  criadores               String[]
-  elenco                  Json?     @db.JsonB
-  avaliacao_api           Float?
+  id               Int       @id @default(autoincrement())
+  tmdbId           Int       @unique
+  name             String
+  originalName     String?
+  overview         String?   @db.Text
+  firstAirDate     DateTime?
+  lastAirDate      DateTime?
+  numberOfSeasons  Int?
+  numberOfEpisodes Int?
+  popularity       Float?
+  voteAverage      Float?
+  voteCount        Int?
+  status           String?
+  posterPath       String?
+  backdropPath     String?
+  homepage         String?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  // Relacionamentos
+  genres           SerieGenero[]
+  networks         SerieNetwork[]
+  seasons          Temporada[]
+  createdBy        SerieCreator[]
+  cast             SerieCast[]
+  crew             SerieCrew[]
+  videos           Video[]
 }
 
 model Anime {
-  id                      Int       @id
-  titulo_api              String?   @db.VarChar(255)
-  titulo_curado           String    @db.VarChar(255)
-  poster_url_api          String?   @db.VarChar(255)
-  poster_curado           String?   @db.VarChar(255)
-  data_lancamento_api     DateTime? @db.Date
-  data_lancamento_curada  DateTime? @db.Date
-  sinopse_api             String?   @db.Text
-  sinopse_curada          String?   @db.Text
-  plataformas_api         String[]
-  plataformas_curadas     String[]
-  trailer_url_api         String?   @db.VarChar(255)
-  trailer_url_curado      String?   @db.VarChar(255)
-  generos_api             Json?     @db.JsonB
-  generos_curados         Json?     @db.JsonB
-  premiacoes              Json?     @db.JsonB
-  fonte                   String?   @db.VarChar(255)
-  estudio                 String?   @db.VarChar(255)
-  dublagem_info           Boolean   @default(false)
-  staff                   Json?     @db.JsonB
-  personagens              Json?     @db.JsonB
-  avaliacao_api           Float?
+  id             Int       @id @default(autoincrement())
+  anilistId      Int       @unique
+  malId          Int?      @unique
+  titleRomaji    String
+  titleEnglish   String?
+  titleNative    String?
+  description    String?   @db.Text
+  episodes       Int?
+  season         String?
+  seasonYear     Int?
+  format         String?
+  status         String?
+  startDate      DateTime?
+  endDate        DateTime?
+  averageScore   Int?
+  meanScore      Int?
+  popularity     Int?
+  duration       Int?
+  source         String?
+  siteUrl        String?
+  coverImage     String?
+  bannerImage    String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  // Relacionamentos
+  genres         AnimeOnGenero[]
+  studios        AnimeOnStudio[]
+  characters     AnimeCharacter[]
+  staff          AnimeStaff[]
+  streamingLinks AnimeStreamingLink[]
 }
 
 model Jogo {
-  id                      Int       @id
-  titulo_api              String?   @db.VarChar(255)
-  titulo_curado           String    @db.VarChar(255)
-  poster_url_api          String?   @db.VarChar(255)
-  poster_curado           String?   @db.VarChar(255)
-  data_lancamento_api     DateTime? @db.Date
-  data_lancamento_curada  DateTime? @db.Date
-  sinopse_api             String?   @db.Text
-  sinopse_curada          String?   @db.Text
-  plataformas_api         String[]
-  plataformas_curadas     String[]
-  trailer_url_api         String?   @db.VarChar(255)
-  trailer_url_curado      String?   @db.VarChar(255)
-  generos_api             Json?     @db.JsonB
-  generos_curados         Json?     @db.JsonB
-  premiacoes              Json?     @db.JsonB
-  desenvolvedores         String[]
-  publicadoras            String[]
-  evento_anuncio_id       Int?
-  evento_anuncio          EventoAnuncio? @relation(fields: [evento_anuncio_id], references: [id])
-  avaliacao_api           Float?
+  id                    Int       @id @default(autoincrement())
+  igdbId                Int       @unique
+  name                  String
+  slug                  String?
+  summary               String?   @db.Text
+  storyline             String?   @db.Text
+  firstReleaseDate      DateTime?
+  rating                Float?
+  ratingCount           Int?
+  aggregatedRating      Float?
+  aggregatedRatingCount Int?
+  url                   String?
+  cover                 String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  // Relacionamentos
+  genres                JogoOnGenero[]
+  platforms             JogoOnPlataforma[]
+  companies             JogoOnCompany[]
+  themes                JogoOnTheme[]
+  playerPerspectives    JogoOnPlayerPerspective[]
+  screenshots           Screenshot[]
+  artworks              Artwork[]
+  videos                Video[]
+  websites              Website[]
 }
 
-model User {
-  id              Int       @id @default(autoincrement())
-  email           String    @unique @db.VarChar(255)
-  hashed_password String    @db.VarChar(255)
-  role            String    @default("user") @db.VarChar(50)
-  quer_avaliar    Boolean   @default(true)
-  data_criacao    DateTime  @default(now()) @db.Timestamp()
-  preferencias    preferencias_usuario_midia[]
+// =================================================================================
+// MODELOS DE ENTIDADES (Pessoas, Gêneros, Empresas, etc.)
+// =================================================================================
+
+model Video {
+  id        Int     @id @default(autoincrement())
+  tmdbId    String? @unique
+  key       String
+  name      String
+  site      String
+  type      String
+  official  Boolean
+
+  filme   Filme? @relation(fields: [filmeId], references: [id])
+  filmeId Int?
+
+  serie   Serie? @relation(fields: [serieId], references: [id])
+  serieId Int?
+
+  jogo    Jogo?  @relation(fields: [jogoId], references: [id])
+  jogoId  Int?
 }
 
-model preferencias_usuario_midia {
-  id              Int       @id @default(autoincrement())
-  usuario_id      Int
-  midia_id        Int
-  tipo_midia      String    @db.VarChar(50)
-  status          String    @db.VarChar(50)
-  avaliacao       String?   @db.VarChar(50)
-  data_interacao  DateTime  @default(now()) @db.Timestamp()
-  usuario         User      @relation(fields: [usuario_id], references: [id])
+// --- ENTIDADES: FILMES E SÉRIES ---
+
+model Genero {
+  id     Int    @id @default(autoincrement())
+  tmdbId Int    @unique
+  name   String @unique
+  filmes FilmeGenero[]
+  series SerieGenero[]
 }
 
-model Notificacao {
-  id              Int       @id @default(autoincrement())
-  usuario_id      Int?
-  midia_id        Int?
-  tipo_midia      String?   @db.VarChar(50)
-  titulo          String    @db.VarChar(255)
-  tipo_notificacao String   @db.VarChar(50)
-  foi_visualizada Boolean   @default(false)
-  data_criacao    DateTime  @default(now()) @db.Timestamp()
+model Company {
+  id     Int    @id @default(autoincrement())
+  tmdbId Int    @unique
+  name   String
+  filmes FilmeCompany[]
 }
 
-model EventoAnuncio {
-  id          Int       @id @default(autoincrement())
-  nome        String    @db.VarChar(255)
-  data_evento DateTime  @db.Date
-  jogos       Jogo[]
+model Country {
+  id     Int    @id @default(autoincrement())
+  iso    String @unique
+  name   String
+  filmes FilmeCountry[]
+}
+
+model Language {
+  id     Int    @id @default(autoincrement())
+  iso    String @unique
+  name   String
+  filmes FilmeLanguage[]
+}
+
+model Pessoa {
+  id          Int     @id @default(autoincrement())
+  tmdbId      Int     @unique
+  name        String
+  profilePath String?
+  filmeCast   FilmeCast[]
+  filmeCrew   FilmeCrew[]
+  serieCast   SerieCast[]
+  serieCrew   SerieCrew[]
+  createdBy   SerieCreator[]
+}
+
+model Network {
+  id       Int     @id @default(autoincrement())
+  tmdbId   Int     @unique
+  name     String
+  logoPath String?
+  series   SerieNetwork[]
+}
+
+model Temporada {
+  id           Int       @id @default(autoincrement())
+  tmdbId       Int       @unique
+  airDate      DateTime?
+  episodeCount Int?
+  name         String
+  overview     String?   @db.Text
+  posterPath   String?
+  seasonNumber Int
+  serie        Serie     @relation(fields: [serieId], references: [id])
+  serieId      Int
+}
+
+// --- ENTIDADES: ANIMES ---
+
+model AnimeGenero {
+  id     Int    @id @default(autoincrement())
+  name   String @unique
+  animes AnimeOnGenero[]
+}
+
+model AnimeStudio {
+  id        Int    @id @default(autoincrement())
+  anilistId Int    @unique
+  name      String @unique
+  animes    AnimeOnStudio[]
+}
+
+model Personagem {
+  id        Int     @id @default(autoincrement())
+  anilistId Int     @unique
+  name      String
+  image     String?
+  animes    AnimeCharacter[]
+}
+
+model Dublador {
+  id                   Int      @id @default(autoincrement())
+  anilistId            Int      @unique
+  name                 String
+  language             String
+  image                String?
+  personagens_dublados AnimeCharacter[]
+}
+
+model MembroStaff {
+  id                 Int     @id @default(autoincrement())
+  anilistId          Int     @unique
+  name               String
+  image              String?
+  animes_trabalhados AnimeStaff[]
+}
+
+model AnimeStreamingLink {
+  id        Int     @id @default(autoincrement())
+  url       String
+  site      String
+  thumbnail String?
+  anime     Anime   @relation(fields: [animeId], references: [id])
+  animeId   Int
+}
+
+// --- ENTIDADES: JOGOS ---
+
+model JogoGenero {
+  id     Int    @id @default(autoincrement())
+  igdbId Int    @unique
+  name   String @unique
+  jogos  JogoOnGenero[]
+}
+
+model JogoPlataforma {
+  id     Int    @id @default(autoincrement())
+  igdbId Int    @unique
+  name   String @unique
+  jogos  JogoOnPlataforma[]
+}
+
+model JogoCompany {
+  id        Int     @id @default(autoincrement())
+  igdbId    Int     @unique
+  name      String
+  developer Boolean
+  publisher Boolean
+  jogos     JogoOnCompany[]
+}
+
+model JogoTheme {
+  id     Int    @id @default(autoincrement())
+  igdbId Int    @unique
+  name   String @unique
+  jogos  JogoOnTheme[]
+}
+
+model JogoPlayerPerspective {
+  id     Int    @id @default(autoincrement())
+  igdbId Int    @unique
+  name   String @unique
+  jogos  JogoOnPlayerPerspective[]
+}
+
+model Screenshot {
+  id     Int     @id @default(autoincrement())
+  igdbId String  @unique
+  url    String
+  jogo   Jogo    @relation(fields: [jogoId], references: [id])
+  jogoId Int
+}
+
+model Artwork {
+  id     Int     @id @default(autoincrement())
+  igdbId String  @unique
+  url    String
+  jogo   Jogo    @relation(fields: [jogoId], references: [id])
+  jogoId Int
+}
+
+model Website {
+  id       Int    @id @default(autoincrement())
+  igdbId   Int
+  category Int
+  url      String
+  jogo     Jogo   @relation(fields: [jogoId], references: [id])
+  jogoId   Int
+}
+
+
+// =================================================================================
+// TABELAS DE JUNÇÃO (MUITOS-PARA-MUITOS EXPLÍCITAS)
+// =================================================================================
+
+// --- JUNÇÕES: FILMES ---
+
+model FilmeGenero {
+  filme    Filme  @relation(fields: [filmeId], references: [id])
+  filmeId  Int
+  genero   Genero @relation(fields: [generoId], references: [id])
+  generoId Int
+
+  @@id([filmeId, generoId])
+}
+
+model FilmeCompany {
+  filme     Filme   @relation(fields: [filmeId], references: [id])
+  filmeId   Int
+  company   Company @relation(fields: [companyId], references: [id])
+  companyId Int
+
+  @@id([filmeId, companyId])
+}
+
+model FilmeCountry {
+  filme     Filme   @relation(fields: [filmeId], references: [id])
+  filmeId   Int
+  country   Country @relation(fields: [countryId], references: [id])
+  countryId Int
+
+  @@id([filmeId, countryId])
+}
+
+model FilmeLanguage {
+  filme      Filme    @relation(fields: [filmeId], references: [id])
+  filmeId    Int
+  language   Language @relation(fields: [languageId], references: [id])
+  languageId Int
+
+  @@id([filmeId, languageId])
+}
+
+model FilmeCast {
+  filme       Filme   @relation(fields: [filmeId], references: [id])
+  filmeId     Int
+  pessoa      Pessoa  @relation(fields: [pessoaId], references: [id])
+  pessoaId    Int
+  character   String?
+  order       Int?
+
+  @@id([filmeId, pessoaId])
+}
+
+model FilmeCrew {
+  filme      Filme  @relation(fields: [filmeId], references: [id])
+  filmeId    Int
+  pessoa     Pessoa @relation(fields: [pessoaId], references: [id])
+  pessoaId   Int
+  job        String?
+  department String?
+
+  @@id([filmeId, pessoaId]) // Removed 'job' as it is optional
+}
+
+// --- JUNÇÕES: SÉRIES ---
+
+model SerieGenero {
+  serie    Serie  @relation(fields: [serieId], references: [id])
+  serieId  Int
+  genero   Genero @relation(fields: [generoId], references: [id])
+  generoId Int
+
+  @@id([serieId, generoId])
+}
+
+model SerieNetwork {
+  serie     Serie   @relation(fields: [serieId], references: [id])
+  serieId   Int
+  network   Network @relation(fields: [networkId], references: [id])
+  networkId Int
+
+  @@id([serieId, networkId])
+}
+
+model SerieCreator {
+  serie    Serie  @relation(fields: [serieId], references: [id])
+  serieId  Int
+  pessoa   Pessoa @relation(fields: [pessoaId], references: [id])
+  pessoaId Int
+
+  @@id([serieId, pessoaId])
+}
+
+model SerieCast {
+  serie       Serie   @relation(fields: [serieId], references: [id])
+  serieId     Int
+  pessoa      Pessoa  @relation(fields: [pessoaId], references: [id])
+  pessoaId    Int
+  character   String?
+  order       Int?
+
+  @@id([serieId, pessoaId])
+}
+
+model SerieCrew {
+  serie      Serie  @relation(fields: [serieId], references: [id])
+  serieId    Int
+  pessoa     Pessoa @relation(fields: [pessoaId], references: [id])
+  pessoaId   Int
+  job        String?
+  department String?
+
+  @@id([serieId, pessoaId]) // Removed 'job' as it is optional
+}
+
+// --- JUNÇÕES: ANIMES ---
+
+model AnimeOnGenero {
+  anime    Anime       @relation(fields: [animeId], references: [id])
+  animeId  Int
+  genero   AnimeGenero @relation(fields: [generoId], references: [id])
+  generoId Int
+
+  @@id([animeId, generoId])
+}
+
+model AnimeOnStudio {
+  anime     Anime       @relation(fields: [animeId], references: [id])
+  animeId   Int
+  studio    AnimeStudio @relation(fields: [studioId], references: [id])
+  studioId  Int
+
+  @@id([animeId, studioId])
+}
+
+model AnimeCharacter {
+  anime       Anime      @relation(fields: [animeId], references: [id])
+  animeId     Int
+  character   Personagem @relation(fields: [characterId], references: [id])
+  characterId Int
+  dublador    Dublador   @relation(fields: [dubladorId], references: [id])
+  dubladorId  Int
+  role        String
+
+  @@id([animeId, characterId, dubladorId])
+}
+
+model AnimeStaff {
+  anime    Anime       @relation(fields: [animeId], references: [id])
+  animeId  Int
+  staff    MembroStaff @relation(fields: [staffId], references: [id])
+  staffId  Int
+  role     String
+
+  @@id([animeId, staffId, role])
+}
+
+// --- JUNÇÕES: JOGOS ---
+
+model JogoOnGenero {
+  jogo     Jogo       @relation(fields: [jogoId], references: [id])
+  jogoId   Int
+  genero   JogoGenero @relation(fields: [generoId], references: [id])
+  generoId Int
+
+  @@id([jogoId, generoId])
+}
+
+model JogoOnPlataforma {
+  jogo       Jogo           @relation(fields: [jogoId], references: [id])
+  jogoId     Int
+  plataforma JogoPlataforma @relation(fields: [plataformaId], references: [id])
+  plataformaId Int
+
+  @@id([jogoId, plataformaId])
+}
+
+model JogoOnCompany {
+  jogo      Jogo        @relation(fields: [jogoId], references: [id])
+  jogoId    Int
+  company   JogoCompany @relation(fields: [companyId], references: [id])
+  companyId Int
+
+  @@id([jogoId, companyId])
+}
+
+model JogoOnTheme {
+  jogo    Jogo      @relation(fields: [jogoId], references: [id])
+  jogoId  Int
+  theme   JogoTheme @relation(fields: [themeId], references: [id])
+  themeId Int
+
+  @@id([jogoId, themeId])
+}
+
+model JogoOnPlayerPerspective {
+  jogo          Jogo                  @relation(fields: [jogoId], references: [id])
+  jogoId        Int
+  perspective   JogoPlayerPerspective @relation(fields: [perspectiveId], references: [id])
+  perspectiveId Int
+
+  @@id([jogoId, perspectiveId])
 }
