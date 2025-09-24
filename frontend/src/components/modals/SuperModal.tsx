@@ -23,6 +23,7 @@ import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
+import { apiClient } from '@/lib/api';
 import AwardIcon from '@/components/ui/AwardIcons';
 import PlatformIcon from '@/components/ui/PlatformIcons';
 import CalendarModal from './CalendarModal';
@@ -35,44 +36,27 @@ import type { Filme, Serie, Jogo, Anime, Character, CastMember, StaffMember, Pla
 const SuperModal: React.FC = () => {
   const { isSuperModalOpen, superModalData, closeSuperModal, isAuthenticated, user, openCalendarModal, closeCalendarModal, isCalendarModalOpen } = useAppStore();
   
-  const [elenco, setElenco] = useState<CastMember[]>([]);
-  const [staff, setStaff] = useState<StaffMember[]>([]);
   const [personagens, setPersonagens] = useState<Character[]>([]);
   const [comentarios, setComentarios] = useState<Comentario[]>([]);
   const [newComment, setNewComment] = useState('');
   const [isEditMode, setIsEditMode] = useState(false);
-  const [userInteraction, setUserInteraction] = useState({
-    favorited: false,
-    wantToWatch: false,
-    watching: false,
-    watched: false,
-    notInterested: false
-  });
-
-  useEffect(() => {
-    if (!isSuperModalOpen) {
-      setElenco([]);
-      setStaff([]);
-      setPersonagens([]);
-      setComentarios([]);
-      setNewComment('');
-      setIsEditMode(false);
-    }
-  }, [isSuperModalOpen]);
+  const [details, setDetails] = useState<any>(null);
+  const [isLoadingDetails, setIsLoadingDetails] = useState(true);
 
   const { midia, type } = superModalData;
 
   const loadAdditionalData = useCallback(async () => {
     if (!midia || !type) return;
+
+    setIsLoadingDetails(true);
+    setDetails(null);
     try {
-      if (type === 'filme') setElenco((midia as Filme).elenco || []);
-      else if (type === 'serie') setElenco((midia as Serie).elenco || []);
-      else if (type === 'anime') {
-        setStaff((midia as Anime).staff || []);
-        setPersonagens((midia as Anime).personagens || []);
-      }
+      const data = await apiClient.get(`/${type}s/${midia.id}/details`);
+      setDetails(data);
     } catch (error) {
       console.error('Erro ao carregar dados adicionais:', error);
+    } finally {
+      setIsLoadingDetails(false);
     }
   }, [midia, type]);
 
@@ -147,17 +131,30 @@ const SuperModal: React.FC = () => {
   );
 
   const renderContent = () => {
-    if (!midia || !type) return null;
+    if (isLoadingDetails) {
+      return (
+        <div className="text-center p-8">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+          <p className="text-muted-foreground mt-4">Carregando detalhes...</p>
+        </div>
+      );
+    }
 
+    if (!details) {
+      // Opcional: mostrar uma mensagem de erro se os detalhes não puderem ser carregados
+      return <div className="text-center p-8 text-destructive">Erro ao carregar detalhes.</div>;
+    }
+
+    // Passa o objeto de detalhes completo para os componentes filhos
     switch (type) {
       case 'anime':
-        return <AnimeModalContent anime={midia as Anime} staff={staff} personagens={personagens} openCalendarModal={openCalendarModal} />;
+        return <AnimeModalContent anime={details as Anime} openCalendarModal={openCalendarModal} />;
       case 'filme':
-        return <FilmeModalContent filme={midia as Filme} elenco={elenco} openCalendarModal={openCalendarModal} />;
+        return <FilmeModalContent filme={details as Filme} openCalendarModal={openCalendarModal} />;
       case 'serie':
-        return <SerieModalContent serie={midia as Serie} elenco={elenco} openCalendarModal={openCalendarModal} />;
+        return <SerieModalContent serie={details as Serie} openCalendarModal={openCalendarModal} />;
       case 'jogo':
-        return <JogoModalContent jogo={midia as Jogo} openCalendarModal={openCalendarModal} />;
+        return <JogoModalContent jogo={details as Jogo} openCalendarModal={openCalendarModal} />;
       default:
         return null;
     }
@@ -236,17 +233,6 @@ const SuperModal: React.FC = () => {
 
           <div className="p-6 pt-0">
             {renderContent()}
-
-            <div className="mt-6">
-              <h3 className="text-lg font-semibold orbe-text-secondary mb-3">Comentários</h3>
-              {isAuthenticated ? (
-                <div className="mb-6">
-                  <Textarea placeholder="Escreva seu comentário..." value={newComment} onChange={(e) => setNewComment(e.target.value)} className="mb-2" />
-                  <Button onClick={handlePostComment} disabled={!newComment.trim()}><Send className="h-4 w-4 mr-2" /> Enviar Comentário</Button>
-                </div>
-              ) : (<p className="text-muted-foreground mb-4">Faça login para deixar um comentário.</p>)}
-              {comentarios.length > 0 ? (<div className="space-y-4">{comentarios.map((comment) => (<div key={comment.id} className="flex gap-3 p-4 bg-muted rounded-lg"><Image src={comment.avatar || '/placeholder-avatar.jpg'} alt={comment.username} width={40} height={40} className="rounded-full object-cover" /><div><p className="font-semibold text-foreground">{comment.username}</p><p className="text-sm text-muted-foreground">{format(parseISO(comment.timestamp), 'dd/MM/yyyy HH:mm', { locale: ptBR })}</p><p className="mt-2 text-foreground leading-relaxed">{comment.text}</p></div></div>))}</div>) : (<p className="text-muted-foreground">Nenhum comentário ainda. Seja o primeiro a comentar!</p>)}
-            </div>
           </div>
         </div>
       </div>

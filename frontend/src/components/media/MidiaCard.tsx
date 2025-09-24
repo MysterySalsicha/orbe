@@ -222,6 +222,7 @@ const MidiaCard: React.FC<MidiaCardProps> = ({
             alt={midia.titulo_curado || midia.titulo_api || 'Imagem da Mídia'}
             width={200}
             height={300}
+            unoptimized={midia.poster_url_api?.includes('igdb.com') || midia.poster_url_api?.includes('anilist.co')}
             loading="lazy"
             className="object-cover object-center transition-transform duration-300 group-hover:scale-105 w-full h-full"
             draggable={false}

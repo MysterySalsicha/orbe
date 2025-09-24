@@ -9,8 +9,10 @@ if (!fs.existsSync(logDirectory)) {
   fs.mkdirSync(logDirectory, { recursive: true });
 }
 
-const log = (message: string, level: 'info' | 'error' = 'info') => {
+const log = (...args: any[]) => {
+  const level = typeof args[0] === 'string' && ['info', 'error'].includes(args[0].toLowerCase()) ? args.shift().toLowerCase() : 'info';
   const timestamp = new Date().toISOString();
+  const message = args.map(arg => typeof arg === 'object' ? JSON.stringify(arg) : String(arg)).join(' ');
   const logMessage = `[${timestamp}] [${level.toUpperCase()}] ${message}\n`;
 
   // Append to file
@@ -22,13 +24,13 @@ const log = (message: string, level: 'info' | 'error' = 'info') => {
 
   // Also log to console
   if (level === 'error') {
-    console.error(message);
+    console.error(...args);
   } else {
-    console.log(message);
+    console.log(...args);
   }
 };
 
 export const logger = {
-  info: (message: string) => log(message, 'info'),
-  error: (message: string) => log(message, 'error'),
+  info: (...args: any[]) => log('info', ...args),
+  error: (...args: any[]) => log('error', ...args),
 };

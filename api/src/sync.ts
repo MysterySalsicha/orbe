@@ -1,24 +1,38 @@
-import { syncMovies } from './syncMovies';
-import { syncSeries } from './syncSeries';
+process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
+
+import * as path from 'path';
+import * as dotenv from 'dotenv';
+dotenv.config({ path: path.resolve(__dirname, '../.env') });
+
 import { syncAnimes } from './syncAnimes';
 import { syncGames } from './syncGames';
 import { logger } from './logger';
 
-const syncData = async (year: number) => {
-  logger.info(`Iniciando sincronização de dados para o ano ${year}...`);
+const main = async () => {
+  const year = 2025;
+  const startDate = '2025-09-01';
+  const endDate = '2025-12-31';
 
-  await syncMovies(year);
-  await new Promise(resolve => setTimeout(resolve, 1000));
+  logger.info(`Iniciando sincronização de dados...`);
 
-  await syncSeries(year);
-  await new Promise(resolve => setTimeout(resolve, 1000));
+  try {
+    // As sincronizações de filmes e séries foram desativadas conforme solicitado.
 
-  await syncAnimes(year);
-  await new Promise(resolve => setTimeout(resolve, 1000));
+    // logger.info(`--- Iniciando sincronização de ANIMES ---`);
+    // await syncAnimes(year, ['SUMMER', 'FALL']);
+    // logger.info(`--- Sincronização de ANIMES concluída ---`);
 
-  await syncGames(year);
+    logger.info(`--- Iniciando sincronização de JOGOS ---`);
+    await syncGames(startDate, endDate);
+    logger.info(`--- Sincronização de JOGOS concluída ---`);
 
-  logger.info(`Sincronização de dados para o ano ${year} concluída.`);
+    logger.info(`✅ Sincronização de dados completa.`);
+  } catch (error) {
+    logger.error(`❌ Erro fatal durante o processo de sincronização: ${error}`);
+    process.exit(1);
+  } finally {
+    logger.info('Processo de sincronização finalizado.');
+  }
 };
 
-syncData(2025).catch(logger.error);
+main();

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Filter, Grid, List, Calendar, Star, TrendingUp } from 'lucide-react';
 import { realApi } from '@/data/realApi';
 import MidiaCard from '@/components/media/MidiaCard';
@@ -8,9 +8,7 @@ import type { Filme } from '@/types';
 
 export default function FilmesPage() {
   const [filmes, setFilmes] = useState<Filme[]>([]);
-  const [filteredFilmes, setFilteredFilmes] = useState<Filme[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [selectedFilter, setSelectedFilter] = useState<'todos' | 'em_cartaz' | 'em_breve' | 'populares'>('todos');
   const [selectedGenre, setSelectedGenre] = useState<string>('todos');
 
@@ -27,53 +25,23 @@ export default function FilmesPage() {
   ];
 
   useEffect(() => {
+    const loadFilmes = async () => {
+      setIsLoading(true);
+      try {
+        const response = await realApi.getFilmes({ 
+          filtro: selectedFilter === 'todos' ? undefined : selectedFilter,
+          genero: selectedGenre === 'todos' ? undefined : selectedGenre 
+        });
+        setFilmes(response.results);
+      } catch (error) {
+        console.error('Erro ao carregar filmes:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
     loadFilmes();
-  }, []);
-
-  const applyFilters = useCallback(() => {
-    let filtered = [...filmes];
-
-    // Filtro por categoria
-    switch (selectedFilter) {
-      case 'em_cartaz':
-        filtered = filtered.filter(filme => filme.em_cartaz);
-        break;
-      case 'em_breve':
-        filtered = filtered.filter(filme => !filme.em_cartaz && new Date(filme.data_lancamento_curada || filme.data_lancamento_api) > new Date());
-        break;
-      case 'populares':
-        filtered = filtered.sort((a, b) => (b.avaliacao || 0) - (a.avaliacao || 0));
-        break;
-    }
-
-    // Filtro por gênero
-    if (selectedGenre !== 'todos') {
-      filtered = filtered.filter(filme => {
-        const generos = filme.generos_curados || filme.generos_api;
-        return generos?.some(genero => 
-          genero.name.toLowerCase().includes(selectedGenre.toLowerCase())
-        );
-      });
-    }
-
-    setFilteredFilmes(filtered);
-  }, [filmes, selectedFilter, selectedGenre]);
-
-  useEffect(() => {
-    applyFilters();
-  }, [applyFilters]);
-
-  const loadFilmes = async () => {
-    setIsLoading(true);
-    try {
-      const response = await realApi.getFilmes();
-      setFilmes(response.results);
-    } catch (error) {
-      console.error('Erro ao carregar filmes:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  }, [selectedFilter, selectedGenre]);
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -105,54 +73,27 @@ export default function FilmesPage() {
           ))}
         </div>
 
-        {/* Filtros Secundários */}
-        <div className="flex flex-wrap items-center gap-4">
-          {/* Filtro de Gênero */}
-          <div className="flex items-center gap-2">
-            <Filter className="h-4 w-4 text-muted-foreground" />
-            <select
-              value={selectedGenre}
-              onChange={(e) => setSelectedGenre(e.target.value)}
-              className="bg-muted border border-border rounded-lg px-3 py-2 text-sm orbe-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
-            >
-              {genres.map((genre) => (
-                <option key={genre} value={genre}>
-                  {genre === 'todos' ? 'Todos os Gêneros' : genre.charAt(0).toUpperCase() + genre.slice(1)}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {/* Modo de Visualização */}
-          <div className="flex items-center gap-1 ml-auto">
-            <button
-              onClick={() => setViewMode('grid')}
-              className={`p-2 rounded-lg transition-colors ${
-                viewMode === 'grid'
-                  ? 'bg-primary text-primary-foreground'
-                  : 'bg-muted orbe-text-primary hover:bg-muted/80'
-              }`}
-            >
-              <Grid className="h-4 w-4" />
-            </button>
-            <button
-              onClick={() => setViewMode('list')}
-              className={`p-2 rounded-lg transition-colors ${
-                viewMode === 'list'
-                  ? 'bg-primary text-primary-foreground'
-                  : 'bg-muted orbe-text-primary hover:bg-muted/80'
-              }`}
-            >
-              <List className="h-4 w-4" />
-            </button>
-          </div>
+        {/* Filtro de Gênero */}
+        <div className="flex items-center gap-2">
+          <Filter className="h-4 w-4 text-muted-foreground" />
+          <select
+            value={selectedGenre}
+            onChange={(e) => setSelectedGenre(e.target.value)}
+            className="bg-muted border border-border rounded-lg px-3 py-2 text-sm orbe-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
+          >
+            {genres.map((genre) => (
+              <option key={genre} value={genre}>
+                {genre === 'todos' ? 'Todos os Gêneros' : genre.charAt(0).toUpperCase() + genre.slice(1)}
+              </option>
+            ))}
+          </select>
         </div>
       </div>
 
       {/* Contador de Resultados */}
       <div className="mb-6">
         <p className="text-muted-foreground">
-          {isLoading ? 'Carregando...' : `${filteredFilmes.length} ${filteredFilmes.length === 1 ? 'filme encontrado' : 'filmes encontrados'}`}
+          {isLoading ? 'Carregando...' : `${filmes.length} ${filmes.length === 1 ? 'filme encontrado' : 'filmes encontrados'}`}
         </p>
       </div>
 
@@ -161,13 +102,9 @@ export default function FilmesPage() {
         <div className="flex items-center justify-center py-12">
           <div className="loading-spinner h-8 w-8"></div>
         </div>
-      ) : filteredFilmes.length > 0 ? (
-        <div className={`grid gap-6 ${
-          viewMode === 'grid' 
-            ? 'grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5' 
-            : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3'
-        }`}>
-          {filteredFilmes.map((filme) => (
+      ) : filmes.length > 0 ? (
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+          {filmes.map((filme) => (
             <MidiaCard
               key={filme.id}
               midia={filme}

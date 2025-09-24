@@ -540,3 +540,32 @@ model JogoOnPlayerPerspective {
 
   @@id([jogoId, perspectiveId])
 }
+
+// =================================================================================
+// MODELOS DE USUÁRIO E PREFERÊNCIAS
+// =================================================================================
+
+model User {
+  id              Int                          @id @default(autoincrement())
+  email           String                       @unique
+  hashed_password String
+  role            String                       @default("user")
+  quer_avaliar    Boolean                      @default(true)
+  data_criacao    DateTime                     @default(now())
+
+  // Relacionamento com as preferências do usuário
+  preferencias    preferencias_usuario_midia[]
+}
+
+model preferencias_usuario_midia {
+  id             Int      @id @default(autoincrement())
+  usuario_id     Int
+  midia_id       Int      // O ID da API externa (TMDB, Anilist, IGDB)
+  tipo_midia     String   // 'filme', 'serie', 'anime', 'jogo'
+  status         String   // 'favorito', 'quero_assistir', 'acompanhando', 'assistido', 'oculto'
+  avaliacao      String?  // 'gostei', 'amei', 'nao_gostei'
+  data_interacao DateTime @default(now())
+
+  // Relacionamento com o usuário
+  usuario        User     @relation(fields: [usuario_id], references: [id])
+}

@@ -1,33 +1,54 @@
 'use client';
 
-import { Play, Calendar, ShoppingCart, ExternalLink } from 'lucide-react';
+import Image from 'next/image';
+import { Play, Calendar } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { format, parseISO } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
+import PlatformIcon from '@/components/ui/PlatformIcons';
 import type { Jogo, CalendarModalData } from '@/types';
 
 interface JogoModalContentProps {
-  jogo: Jogo;
+  jogo: any; // Recebe o objeto de detalhes completo da API do IGDB
   openCalendarModal: (data: CalendarModalData) => void;
 }
 
 const JogoModalContent: React.FC<JogoModalContentProps> = ({ jogo, openCalendarModal }) => {
-  const isAvailableToBuy = jogo.plataformas_jogo && jogo.plataformas_jogo.length > 0;
+
+  const trailerKey = jogo.trailer_key;
 
   return (
     <div className="space-y-6">
       {/* Botões de Ação */}
       <div className="flex flex-wrap gap-3 mb-6">
-        <Button disabled={!isAvailableToBuy} asChild>
-          <a href={isAvailableToBuy ? jogo.plataformas_jogo[0].store_url : undefined} target="_blank" rel="noopener noreferrer">
-            <ShoppingCart className="h-5 w-5 mr-2" />Comprar Jogo
-          </a>
-        </Button>
-        {jogo.trailer_url_api && (
-          <Button variant="muted" asChild>
-            <a href={jogo.trailer_url_api} target="_blank" rel="noopener noreferrer">
-              <Play className="h-5 w-5 mr-2" />Assistir Trailer
-            </a>
-          </Button>
-        )}
+        {jogo.websites?.map((site: any) => {
+          let icon = null;
+          let label = '';
+          switch (site.category) {
+            case 1: // Official
+              icon = <Play className="h-5 w-5 mr-2" />;
+              label = 'Site Oficial';
+              break;
+            case 13: // Steam
+              icon = <Play className="h-5 w-5 mr-2" />;
+              label = 'Steam';
+              break;
+            case 16: // Epic Games Store
+              icon = <Play className="h-5 w-5 mr-2" />;
+              label = 'Epic Games';
+              break;
+            // Adicione mais casos conforme necessário para outras plataformas de compra/download
+            default:
+              return null;
+          }
+          return (
+            <Button key={site.id} asChild>
+              <a href={site.url} target="_blank" rel="noopener noreferrer">
+                {icon}{label}
+              </a>
+            </Button>
+          );
+        })}
         <Button variant="muted" onClick={() => openCalendarModal({ midia: jogo, type: 'jogo' })}>
           <Calendar className="h-5 w-5 mr-2" />Adicionar ao Calendário
         </Button>
@@ -41,26 +62,81 @@ const JogoModalContent: React.FC<JogoModalContentProps> = ({ jogo, openCalendarM
         </div>
       )}
 
-      {/* Lojas Digitais */}
-      {isAvailableToBuy && (
+      {/* Trailer */}
+      {trailerKey && (
         <div>
-          <h3 className="text-lg font-semibold orbe-text-secondary mb-2">Onde Comprar</h3>
-          <div className="flex flex-wrap gap-3">
-            {jogo.plataformas_jogo.map((loja) => (
-              <a
-                key={loja.id}
-                href={loja.store_url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-2 px-3 py-2 bg-muted hover:bg-muted/80 rounded-lg transition-colors"
-              >
-                <ExternalLink className="h-4 w-4" />
-                <span className="text-sm">{loja.nome}</span>
-              </a>
-            ))}
+          <h3 className="text-lg font-semibold orbe-text-secondary mb-2">Trailer</h3>
+          <div className="relative aspect-video w-full rounded-lg overflow-hidden">
+            <iframe
+              src={`https://www.youtube.com/embed/${trailerKey}`}
+              title="YouTube video player"
+              frameBorder="0"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+              referrerPolicy="strict-origin-when-cross-origin"
+              allowFullScreen
+              className="absolute top-0 left-0 w-full h-full"
+            ></iframe>
           </div>
         </div>
       )}
+
+      {/* Detalhes Adicionais */}
+      <div className="space-y-3 pt-4 border-t border-border text-sm">
+        {jogo.desenvolvedores && jogo.desenvolvedores.length > 0 && (
+          <div className="flex items-center gap-2">
+            <span className="font-semibold w-24 flex-shrink-0">Desenvolvedor(es):</span>
+            <span className="text-muted-foreground">{jogo.desenvolvedores.join(', ')}</span>
+          </div>
+        )}
+        {jogo.publicadoras && jogo.publicadoras.length > 0 && (
+          <div className="flex items-center gap-2">
+            <span className="font-semibold w-24 flex-shrink-0">Publicador(es):</span>
+            <span className="text-muted-foreground">{jogo.publicadoras.join(', ')}</span>
+          </div>
+        )}
+        {jogo.plataformas_api && jogo.plataformas_api.length > 0 && (
+          <div className="flex items-center gap-2">
+            <span className="font-semibold w-24 flex-shrink-0">Plataformas:</span>
+            <div className="flex flex-wrap gap-1">
+              {jogo.plataformas_api.map((p: any) => (
+                <span key={p.nome} className="bg-muted px-2 py-1 rounded-full text-xs text-muted-foreground">
+                  {p.nome}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+        {jogo.generos_api && jogo.generos_api.length > 0 && (
+          <div className="flex items-center gap-2">
+            <span className="font-semibold w-24 flex-shrink-0">Gêneros:</span>
+            <div className="flex flex-wrap gap-1">
+              {jogo.generos_api.map((g: any) => (
+                <span key={g} className="bg-muted px-2 py-1 rounded-full text-xs text-muted-foreground">
+                  {g}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+        {jogo.temas && jogo.temas.length > 0 && (
+          <div className="flex items-center gap-2">
+            <span className="font-semibold w-24 flex-shrink-0">Temas:</span>
+            <div className="flex flex-wrap gap-1">
+              {jogo.temas.map((t: any) => (
+                <span key={t} className="bg-muted px-2 py-1 rounded-full text-xs text-muted-foreground">
+                  {t}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+        {jogo.data_lancamento_api && (
+          <div className="flex items-center gap-2">
+            <span className="font-semibold w-24 flex-shrink-0">Lançamento:</span>
+            <span className="text-muted-foreground">{format(parseISO(jogo.data_lancamento_api), 'dd/MM/yyyy', { locale: ptBR })}</span>
+          </div>
+        )}
+      </div>
     </div>
   );
 };
