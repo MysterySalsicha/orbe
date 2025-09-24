@@ -1,11 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { realApi } from '@/data/realApi';
-import MidiaCard from '@/components/media/MidiaCard';
-import type { Serie } from '@/types';
-
-import { useState, useEffect } from 'react';
 import { Filter, Grid, Star } from 'lucide-react';
 import { realApi } from '@/data/realApi';
 import MidiaCard from '@/components/media/MidiaCard';
