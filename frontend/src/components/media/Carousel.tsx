@@ -2,7 +2,7 @@ import React, { useRef, useState, useEffect, forwardRef, useCallback } from "rea
 import MidiaCard from "./MidiaCard";
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
-import { Filme, Serie, Anime, Jogo, TipoMidia } from "@/types";
+import { Filme, Serie, Anime, Jogo, TipoMidia, Preferencias, UserAction, UserInteraction } from "@/types";
 
 interface CarouselProps {
   items: (Filme | Serie | Anime | Jogo)[];
@@ -12,6 +12,8 @@ interface CarouselProps {
   showNavigation?: boolean;
   onTitleClick?: () => void;
   onNavigate?: (direction: 'prev' | 'next') => void;
+  userInteractions?: UserInteraction[];
+  onInteraction?: (action: UserAction, midia: Filme | Serie | Anime | Jogo) => void;
 }
 
 const DRAG_SENSITIVITY = 2.6;
@@ -24,6 +26,8 @@ const Carousel = forwardRef<HTMLDivElement, CarouselProps>(({
   showNavigation = false,
   onTitleClick,
   onNavigate,
+  userInteractions,
+  onInteraction,
 }, ref) => {
 
   const localRef = useRef<HTMLDivElement | null>(null);
@@ -204,7 +208,7 @@ const Carousel = forwardRef<HTMLDivElement, CarouselProps>(({
             className="flex-shrink-0 snap-center flex justify-center items-center" // Added flex centering
             style={{ willChange: "transform", minWidth: 200 }}
           >
-            <MidiaCard midia={item} type={type} />
+            <MidiaCard midia={item} type={type} userInteractions={userInteractions} onInteraction={onInteraction} />
           </div>
         ))}
       </div>

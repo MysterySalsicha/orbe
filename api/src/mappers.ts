@@ -26,6 +26,7 @@ export const mapFilmeToMidia = (filme: any) => {
     diretor: getCrewMember(filme.crew, 'Director'),
     escritor: getCrewMember(filme.crew, 'Writer'),
     generos_api: filme.genres?.map((g: any) => g.genero.name) ?? [],
+    plataformas_api: filme.streamingProviders?.map((p: any) => ({ nome: p.provider.name })) ?? [],
     elenco: filme.cast?.map((c: any) => ({ id: c.pessoa.tmdbId, nome: c.pessoa.name, personagem: c.character, foto_url: c.pessoa.profilePath ? `${TMDB_IMAGE_BASE_URL}${c.pessoa.profilePath}` : null })) ?? [],
     videos: filme.videos?.map((v: any) => ({ key: v.key, site: v.site, nome: v.name })) ?? [],
     homepage: filme.homepage, // Adicionado para o botão Assistir
@@ -45,6 +46,7 @@ export const mapSerieToMidia = (serie: any) => ({
   numero_temporadas: serie.numberOfSeasons,
   numero_episodios: serie.numberOfEpisodes,
   generos_api: serie.genres?.map((g: any) => g.genero.name) ?? [],
+  plataformas_api: serie.streamingProviders?.map((p: any) => ({ nome: p.provider.name })) ?? [],
   criadores: serie.createdBy?.map((c: any) => ({ id: c.pessoa.tmdbId, nome: c.pessoa.name, foto_url: c.pessoa.profilePath ? `${TMDB_IMAGE_BASE_URL}${c.pessoa.profilePath}` : null })) ?? [],
   elenco: serie.cast?.map((c: any) => ({ id: c.pessoa.tmdbId, nome: c.pessoa.name, personagem: c.character, foto_url: c.pessoa.profilePath ? `${TMDB_IMAGE_BASE_URL}${c.pessoa.profilePath}` : null })) ?? [],
   videos: serie.videos?.map((v: any) => ({ key: v.key, site: v.site, nome: v.name })) ?? [],
@@ -53,6 +55,10 @@ export const mapSerieToMidia = (serie: any) => ({
 
 export const mapAnimeToMidia = (anime: any) => {
   const hasPtBrDub = anime.characters?.some((c: any) => c.dublador?.language === 'Portuguese (Brazil)');
+
+  const nextAiringEpisode = anime.airingSchedule?.nodes
+    ?.filter((node: any) => node.airingAt * 1000 > Date.now())
+    .sort((a: any, b: any) => a.episode - b.episode)[0];
 
   return {
     id: anime.anilistId,
@@ -68,6 +74,9 @@ export const mapAnimeToMidia = (anime: any) => {
     mal_link: anime.malId ? `https://myanimelist.net/anime/${anime.malId}` : null,
     trailer_key: anime.videos?.find((v: any) => v.site === 'YouTube')?.key,
     generos_api: anime.genres?.map((g: any) => g.genero.name) ?? [],
+    plataformas_api: anime.streamingLinks?.map((l: any) => ({ nome: l.site })) ?? [],
+    proximo_episodio: nextAiringEpisode ? new Date(nextAiringEpisode.airingAt * 1000).toISOString() : null,
+    numero_episodio_atual: nextAiringEpisode ? nextAiringEpisode.episode : null,
     personagens: anime.characters?.map((c: any) => ({
       id: c.character.anilistId,
       nome: c.character.name,
@@ -78,7 +87,16 @@ export const mapAnimeToMidia = (anime: any) => {
       }
     })) ?? [],
     staff: anime.staff?.map((s: any) => ({ id: s.staff.anilistId, nome: s.staff.name, funcao: s.role, foto_url: s.staff.image })) ?? [],
-    links_streaming: anime.streamingLinks?.map((l: any) => ({ url: l.url, site: l.site })) ?? [],
+    relations: [
+      ...(anime.sourceRelations?.map((rel: any) => ({
+        relationType: rel.type,
+        node: { id: rel.relatedAnime.anilistId, title: { romaji: rel.relatedAnime.titleRomaji } }
+      })) ?? []),
+      ...(anime.relatedRelations?.map((rel: any) => ({
+        relationType: rel.type,
+        node: { id: rel.sourceAnime.anilistId, title: { romaji: rel.sourceAnime.titleRomaji } }
+      })) ?? []),
+    ],
   };
 };
 
@@ -99,4 +117,5 @@ export const mapJogoToMidia = (jogo: any) => ({
   screenshots: jogo.screenshots?.map((s: any) => s.url) ?? [],
   artworks: jogo.artworks?.map((a: any) => a.url) ?? [],
   videos: jogo.videos?.map((v: any) => ({ key: v.key, site: v.site, nome: v.name })) ?? [],
+  websites: jogo.websites?.map((w: any) => ({ category: w.category, url: w.url })) ?? [],
 });

@@ -10,7 +10,7 @@ if (!fs.existsSync(logDirectory)) {
 }
 
 const log = (...args: any[]) => {
-  const level = typeof args[0] === 'string' && ['info', 'error'].includes(args[0].toLowerCase()) ? args.shift().toLowerCase() : 'info';
+  const level = typeof args[0] === 'string' && ['info', 'warn', 'error'].includes(args[0].toLowerCase()) ? args.shift().toLowerCase() : 'info';
   const timestamp = new Date().toISOString();
   const message = args.map(arg => typeof arg === 'object' ? JSON.stringify(arg) : String(arg)).join(' ');
   const logMessage = `[${timestamp}] [${level.toUpperCase()}] ${message}\n`;
@@ -22,15 +22,20 @@ const log = (...args: any[]) => {
     }
   });
 
-  // Also log to console
-  if (level === 'error') {
-    console.error(...args);
-  } else {
-    console.log(...args);
+  // Also log to console (only in development)
+  if (process.env.NODE_ENV !== 'production') {
+    if (level === 'error') {
+      console.error(...args);
+    } else if (level === 'warn') {
+      console.warn(...args);
+    } else {
+      console.log(...args);
+    }
   }
 };
 
 export const logger = {
   info: (...args: any[]) => log('info', ...args),
+  warn: (...args: any[]) => log('warn', ...args),
   error: (...args: any[]) => log('error', ...args),
 };

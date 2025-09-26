@@ -3,10 +3,11 @@
 import Image from 'next/image';
 import { Play, Calendar, ShoppingCart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import PlatformIcon from '@/components/ui/PlatformIcons';
 import type { Filme, CastMember, CalendarModalData } from '@/types';
 
 interface FilmeModalContentProps {
-  filme: any; // Recebe o objeto de detalhes completo da API
+  filme: Filme; // Recebe o objeto de detalhes completo da API
   openCalendarModal: (data: CalendarModalData) => void;
 }
 
@@ -14,7 +15,7 @@ const FilmeModalContent: React.FC<FilmeModalContentProps> = ({ filme, openCalend
 
   // Encontra o trailer oficial na lista de vídeos
   const trailer = filme.videos?.find(
-    (video: any) => video.type === 'Trailer' && video.official === true
+    (video: Video) => video.type === 'Trailer' && video.official === true
   );
   const trailerKey = trailer ? trailer.key : filme.videos?.[0]?.key;
 
@@ -25,20 +26,47 @@ const FilmeModalContent: React.FC<FilmeModalContentProps> = ({ filme, openCalend
     return path; // A URL completa já vem do mapper
   };
 
+  // --- Lógica dos Botões de Ação ---
+  const twoMonthsAgo = new Date();
+  twoMonthsAgo.setMonth(twoMonthsAgo.getMonth() - 2);
+  const isOld = filme.data_lancamento_api && new Date(filme.data_lancamento_api) < twoMonthsAgo;
+
+  const isOnStreaming = filme.plataformas_api && filme.plataformas_api.length > 0;
+  const primaryPlatform = isOnStreaming ? filme.plataformas_api[0] : null;
+
+  const showBuyTicketButton = !isOld && !isOnStreaming;
+  const canBuyTicket = filme.ingresso_link && filme.ingresso_link !== '';
+
   return (
     <div className="space-y-6">
-      {/* Botões de Ação - A lógica pode precisar de revisão com os novos dados */}
-      <div className="flex flex-wrap gap-3 mb-6">
-        <Button disabled={true} asChild>
-          <a href="#" target="_blank" rel="noopener noreferrer">
-            <ShoppingCart className="h-5 w-5 mr-2" />Comprar Ingresso
-          </a>
-        </Button>
-        <Button disabled={!filme.homepage} asChild>
-          <a href={filme.homepage || '#'} target="_blank" rel="noopener noreferrer">
-            <Play className="h-5 w-5 mr-2" />Assistir Agora
-          </a>
-        </Button>
+      {/* Botões de Ação */}
+      <div className="flex flex-wrap items-center gap-4 mb-6">
+        {isOnStreaming && primaryPlatform && (
+          <div className='space-y-2'>
+            <p className='text-sm text-muted-foreground'>Disponível em:</p>
+            <Button asChild>
+              <a href={filme.homepage || '#'} target="_blank" rel="noopener noreferrer">
+                <PlatformIcon platform={primaryPlatform.nome} className="h-5 w-5 mr-2" />
+                Assistir na {primaryPlatform.nome}
+              </a>
+            </Button>
+          </div>
+        )}
+
+        {showBuyTicketButton && (
+          <Button disabled={!canBuyTicket} asChild={canBuyTicket}>
+            {canBuyTicket ? (
+              <a href={filme.ingresso_link} target="_blank" rel="noopener noreferrer">
+                <ShoppingCart className="h-5 w-5 mr-2" />Comprar Ingresso
+              </a>
+            ) : (
+              <span>
+                <ShoppingCart className="h-5 w-5 mr-2" />Comprar ingresso indisponível
+              </span>
+            )}
+          </Button>
+        )}
+
         {!hasReleased && (
           <Button variant="muted" onClick={() => openCalendarModal({ midia: filme, type: 'filme' })}>
             <Calendar className="h-5 w-5 mr-2" />Adicionar ao Calendário
@@ -54,10 +82,12 @@ const FilmeModalContent: React.FC<FilmeModalContentProps> = ({ filme, openCalend
         </div>
       )}
 
-      {(filme.diretor || filme.escritor) && (
+      {(filme.diretor || filme.escritor || filme.generos_api || filme.duracao) && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+          {filme.duracao && <div><span className="font-semibold orbe-text-secondary">Duração:</span> <span className="text-muted-foreground">{filme.duracao}</span></div>}
           {filme.diretor && <div><span className="font-semibold orbe-text-secondary">Direção:</span> <span className="text-muted-foreground">{filme.diretor}</span></div>}
           {filme.escritor && <div><span className="font-semibold orbe-text-secondary">Roteiro:</span> <span className="text-muted-foreground">{filme.escritor}</span></div>}
+          {filme.generos_api && filme.generos_api.length > 0 && <div className="md:col-span-2"><span className="font-semibold orbe-text-secondary">Gêneros:</span> <span className="text-muted-foreground">{filme.generos_api.join(', ')}</span></div>}
         </div>
       )}
 
@@ -84,7 +114,7 @@ const FilmeModalContent: React.FC<FilmeModalContentProps> = ({ filme, openCalend
         <div>
           <h3 className="text-lg font-semibold orbe-text-secondary mb-3">Elenco</h3>
           <div className="flex space-x-4 overflow-x-auto scrollbar-hide pb-2">
-            {filme.elenco.slice(0, 15).map((ator: any) => (
+            {filme.elenco.slice(0, 15).map((ator: CastMember) => (
               <div key={ator.nome} className="flex-shrink-0 text-center w-24">
                 <div className="w-20 h-20 bg-muted rounded-full mb-2 overflow-hidden mx-auto">
                   <Image src={getImageUrl(ator.foto_url)} alt={ator.nome} width={80} height={80} className="w-full h-full object-cover" unoptimized={true} />

@@ -1,5 +1,11 @@
 // Tipos base para o Orbe Nerd
 
+export interface Video {
+  type: string;
+  official: boolean;
+  key: string;
+}
+
 export interface Genre {
   id: number;
   name: string;
@@ -23,7 +29,7 @@ export interface CastMember {
 export interface StaffMember {
   id: number;
   nome: string;
-  cargo: string;
+  funcao: string;
   foto_url?: string;
 }
 
@@ -36,11 +42,20 @@ export interface Character {
       nome: string;
       foto_url?: string;
     };
-    pt_br?: {
+    pt?: {
       nome: string;
       foto_url?: string;
     };
   };
+}
+
+export interface Website {
+  category: number;
+  url: string;
+}
+
+export interface Creator {
+  nome: string;
 }
 
 export interface GamePlatform {
@@ -85,13 +100,27 @@ export interface Filme extends Midia {
   em_prevenda: boolean;
   em_cartaz?: boolean; // Propriedade adicionada
   ultima_verificacao_ingresso?: string;
+  videos?: Video[];
+  status?: string;
+}
+
+export interface Temporada {
+  numero: number;
+  nome?: string;
+  episodios: number;
 }
 
 export interface Serie extends Midia {
   numero_temporadas: number;
   numero_episodios: number;
-  criadores: string[];
+  criadores: Creator[];
   elenco: CastMember[];
+  videos?: Video[];
+  temporadas?: Temporada[];
+}
+
+export interface Relation {
+  relationType: string;
 }
 
 export interface Anime extends Serie {
@@ -104,6 +133,7 @@ export interface Anime extends Serie {
   numero_episodio_atual?: number;
   eventos_recorrentes_calendario?: boolean;
   tags?: string[];
+  relations?: Relation[];
 }
 
 export interface Jogo extends Midia {
@@ -111,6 +141,8 @@ export interface Jogo extends Midia {
   publicadoras: string[];
   plataformas_jogo: GamePlatform[];
   evento_anuncio_id?: number;
+  websites?: Website[];
+  temas?: string[];
 }
 
 export interface Preferencias {
@@ -166,7 +198,8 @@ export interface Notification {
   midia_id?: number;
   tipo_midia?: TipoMidia;
   titulo: string;
-  tipo_notificacao: 
+  message?: string;
+  type: 
     | 'NOVO_ITEM' 
     | 'ATUALIZACAO_DATA' 
     | 'DUBLAGEM' 
@@ -175,7 +208,7 @@ export interface Notification {
     | 'FALHA_LINK_INGRESSO' 
     | 'LANCAMENTO_FAVORITO';
   foi_visualizada: boolean;
-  data_criacao: string;
+  createdAt: string;
   importante?: boolean;
 }
 
@@ -192,8 +225,9 @@ export interface MidiaCardProps {
   type: TipoMidia;
   showCountdown?: boolean;
   userInteractions?: UserInteraction[];
-  onInteraction?: (action: string, midia: Filme | Serie | Anime | Jogo) => void;
+  onInteraction?: (action: UserAction, midia: Filme | Serie | Anime | Jogo) => void;
   onClick?: () => void;
+  isFocused?: boolean;
 }
 
 export interface HeaderProps {

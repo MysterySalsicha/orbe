@@ -1,4 +1,6 @@
 import express from 'express';
+import http from 'http';
+import { WebSocketServer, WebSocket } from 'ws';
 import { PrismaClient } from '@prisma/client';
 import { logger } from './logger';
 import bcrypt from 'bcrypt';
@@ -6,16 +8,52 @@ import jwt from 'jsonwebtoken';
 import cors from 'cors';
 
 import mediaRoutes from './mediaRoutes';
+import webhookRoutes from './webhookRoutes';
+import userRoutes from './userRoutes';
 
 const app = express();
+const server = http.createServer(app);
+const wss = new WebSocketServer({ server });
+
 const prisma = new PrismaClient();
 const JWT_SECRET = process.env.JWT_SECRET || 'seu_segredo_jwt_super_secreto';
+
+// Gerenciamento de conexões WebSocket
+const clients = new Set<WebSocket>();
+
+wss.on('connection', (ws) => {
+  clients.add(ws);
+  logger.info('Novo cliente WebSocket conectado.');
+
+  ws.on('close', () => {
+    clients.delete(ws);
+    logger.info('Cliente WebSocket desconectado.');
+  });
+
+  ws.on('error', (error) => {
+    logger.error('Erro no WebSocket:', error);
+    clients.delete(ws); 
+  });
+});
+
+// Função para enviar mensagem para todos os clientes conectados
+export const broadcast = (message: object) => {
+  const messageString = JSON.stringify(message);
+  logger.info(`Enviando broadcast para ${clients.size} clientes: ${messageString}`);
+  clients.forEach(client => {
+    if (client.readyState === WebSocket.OPEN) {
+      client.send(messageString);
+    }
+  });
+};
 
 app.use(cors());
 app.use(express.json());
 
-// Usar as rotas de mídia
+// Usar as rotas de mídia e webhooks
 app.use('/api', mediaRoutes);
+app.use('/api', webhookRoutes);
+app.use('/api', userRoutes);
 
 // Rota de Registro
 app.post('/register', async (req, res) => {
@@ -26,7 +64,6 @@ app.post('/register', async (req, res) => {
   }
 
   try {
-    // CORREÇÃO: 'usuario' para 'user'
     const existingUser = await prisma.user.findUnique({
       where: { email },
     });
@@ -37,7 +74,6 @@ app.post('/register', async (req, res) => {
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // CORREÇÃO: 'usuario' para 'user'
     const newUser = await prisma.user.create({
       data: {
         email,
@@ -61,7 +97,6 @@ app.post('/login', async (req, res) => {
     }
 
     try {
-        // CORREÇÃO: 'usuario' para 'user'
         const user = await prisma.user.findUnique({
             where: { email },
         });
@@ -101,7 +136,6 @@ app.get('/profile', async (req, res) => {
     try {
         const decoded = jwt.verify(token, JWT_SECRET) as { userId: number };
         
-        // CORREÇÃO: 'usuario' para 'user'
         const user = await prisma.user.findUnique({
             where: { id: decoded.userId },
             select: {
@@ -125,6 +159,6 @@ app.get('/profile', async (req, res) => {
 
 
 const PORT = process.env.PORT || 3001;
-app.listen(PORT, () => {
-  logger.info(`🚀 Servidor rodando na porta ${PORT}`);
+server.listen(PORT, () => {
+  logger.info(`🚀 Servidor HTTP e WebSocket rodando na porta ${PORT}`);
 });

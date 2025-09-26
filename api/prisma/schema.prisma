@@ -1,6 +1,7 @@
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 generator client {
@@ -32,15 +33,23 @@ model Filme {
   backdropPath    String?
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
+  adult           Boolean?  @default(false)
+  collectionId    Int?
+  ingresso_link   String?
+  em_prevenda     Boolean?  @default(false)
+  ultima_verificacao_ingresso DateTime?
 
   // Relacionamentos
   genres          FilmeGenero[]
   companies       FilmeCompany[]
   countries       FilmeCountry[]
   languages       FilmeLanguage[]
+  collection      Collection? @relation(fields: [collectionId], references: [id])
   cast            FilmeCast[]
   crew            FilmeCrew[]
   videos          Video[]
+  streamingProviders FilmeOnStreamingProvider[]
+  premiacoes         Json?
 }
 
 model Serie {
@@ -62,15 +71,23 @@ model Serie {
   homepage         String?
   createdAt        DateTime  @default(now())
   updatedAt        DateTime  @updatedAt
+  adult            Boolean?  @default(false)
+  inProduction     Boolean?
+  type             String?
+  tagline          String?
+  episodeRunTime   Int[]
 
   // Relacionamentos
   genres           SerieGenero[]
   networks         SerieNetwork[]
+  languages        SerieLanguage[]
   seasons          Temporada[]
   createdBy        SerieCreator[]
   cast             SerieCast[]
   crew             SerieCrew[]
   videos           Video[]
+  streamingProviders SerieOnStreamingProvider[]
+  premiacoes         Json?
 }
 
 model Anime {
@@ -96,6 +113,11 @@ model Anime {
   siteUrl        String?
   coverImage     String?
   bannerImage    String?
+  synonyms       String[]
+  countryOfOrigin String?
+  hashtag        String?
+  isLicensed     Boolean?
+  isAdult        Boolean?  @default(false)
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
 
@@ -105,6 +127,14 @@ model Anime {
   characters     AnimeCharacter[]
   staff          AnimeStaff[]
   streamingLinks AnimeStreamingLink[]
+  tags           AnimeOnTag[]
+  ranks          AnimeRank[]
+  externalLinks  AnimeExternalLink[]
+  // Relacionamentos entre animes (sequels, prequels, etc.)
+  sourceRelations  AnimeRelation[] @relation("SourceRelations")
+  relatedRelations AnimeRelation[] @relation("RelatedRelations")
+  airingSchedule      AiringSchedule[] @relation("AnimeToAiringSchedule")
+  premiacoes          Json?
 }
 
 model Jogo {
@@ -121,6 +151,9 @@ model Jogo {
   aggregatedRatingCount Int?
   url                   String?
   cover                 String?
+  category              String?
+  status                String?
+  hypes                 Int?
   createdAt             DateTime  @default(now())
   updatedAt             DateTime  @updatedAt
 
@@ -134,6 +167,14 @@ model Jogo {
   artworks              Artwork[]
   videos                Video[]
   websites              Website[]
+  ageRatings            JogoOnAgeRating[]
+  gameModes             JogoOnGameMode[]
+  gameEngines           JogoOnGameEngine[]
+  sourceRelations       GameRelation[] @relation("SourceRelations")
+  relatedRelations      GameRelation[] @relation("RelatedRelations")
+  eventId               Int?
+  event                 Event?         @relation(fields: [eventId], references: [id])
+  premiacoes            Json?
 }
 
 // =================================================================================
@@ -188,6 +229,15 @@ model Language {
   iso    String @unique
   name   String
   filmes FilmeLanguage[]
+  series SerieLanguage[]
+}
+
+model Collection {
+  id           Int     @id @unique
+  name         String
+  posterPath   String?
+  backdropPath String?
+  filmes       Filme[]
 }
 
 model Pessoa {
@@ -221,6 +271,15 @@ model Temporada {
   seasonNumber Int
   serie        Serie     @relation(fields: [serieId], references: [id])
   serieId      Int
+}
+
+model StreamingProvider {
+  id        Int      @id @default(autoincrement())
+  tmdbId    Int      @unique
+  name      String
+  logoPath  String?
+  filmes    FilmeOnStreamingProvider[]
+  series    SerieOnStreamingProvider[]
 }
 
 // --- ENTIDADES: ANIMES ---
@@ -272,6 +331,42 @@ model AnimeStreamingLink {
   animeId   Int
 }
 
+model AnimeTag {
+  id          Int      @id
+  name        String   @unique
+  description String?
+  category    String?
+  isAdult     Boolean?
+  animes      AnimeOnTag[]
+}
+
+model AnimeRank {
+  id      Int    @id @default(autoincrement())
+  anime   Anime  @relation(fields: [animeId], references: [id])
+  animeId Int
+  rank    Int
+  type    String // Ex: 'RATED' ou 'POPULAR'
+  context String
+  year    Int?
+  allTime Boolean?
+}
+
+model AnimeExternalLink {
+  id      Int    @id @default(autoincrement())
+  anime   Anime  @relation(fields: [animeId], references: [id])
+  animeId Int
+  url     String
+  site    String
+}
+
+model AiringSchedule {
+  id       Int      @id @default(autoincrement())
+  anime    Anime    @relation("AnimeToAiringSchedule", fields: [animeId], references: [id])
+  animeId  Int
+  airingAt DateTime
+  episode  Int
+}
+
 // --- ENTIDADES: JOGOS ---
 
 model JogoGenero {
@@ -292,8 +387,6 @@ model JogoCompany {
   id        Int     @id @default(autoincrement())
   igdbId    Int     @unique
   name      String
-  developer Boolean
-  publisher Boolean
   jogos     JogoOnCompany[]
 }
 
@@ -334,6 +427,28 @@ model Website {
   url      String
   jogo     Jogo   @relation(fields: [jogoId], references: [id])
   jogoId   Int
+}
+
+model AgeRating {
+  id          Int      @id
+  category    String   // e.g., 'ESRB', 'PEGI'
+  rating      String   // e.g., 'T', '12'
+  description String?
+  jogos       JogoOnAgeRating[]
+}
+
+model GameMode {
+  id    Int    @id
+  name  String @unique
+  slug  String @unique
+  jogos JogoOnGameMode[]
+}
+
+model GameEngine {
+  id    Int    @id
+  name  String @unique
+  slug  String @unique
+  jogos JogoOnGameEngine[]
 }
 
 
@@ -401,6 +516,15 @@ model FilmeCrew {
   @@id([filmeId, pessoaId]) // Removed 'job' as it is optional
 }
 
+model FilmeOnStreamingProvider {
+  filme      Filme             @relation(fields: [filmeId], references: [id])
+  filmeId    Int
+  provider   StreamingProvider @relation(fields: [providerId], references: [id])
+  providerId Int
+
+  @@id([filmeId, providerId])
+}
+
 // --- JUNÇÕES: SÉRIES ---
 
 model SerieGenero {
@@ -419,6 +543,24 @@ model SerieNetwork {
   networkId Int
 
   @@id([serieId, networkId])
+}
+
+model SerieLanguage {
+  serie      Serie    @relation(fields: [serieId], references: [id])
+  serieId    Int
+  language   Language @relation(fields: [languageId], references: [id])
+  languageId Int
+
+  @@id([serieId, languageId])
+}
+
+model SerieOnStreamingProvider {
+  serie      Serie             @relation(fields: [serieId], references: [id])
+  serieId    Int
+  provider   StreamingProvider @relation(fields: [providerId], references: [id])
+  providerId Int
+
+  @@id([serieId, providerId])
 }
 
 model SerieCreator {
@@ -494,6 +636,25 @@ model AnimeStaff {
   @@id([animeId, staffId, role])
 }
 
+model AnimeOnTag {
+  anime   Anime    @relation(fields: [animeId], references: [id])
+  animeId Int
+  tag     AnimeTag @relation(fields: [tagId], references: [id])
+  tagId   Int
+
+  @@id([animeId, tagId])
+}
+
+model AnimeRelation {
+  sourceAnimeId  Int
+  sourceAnime    Anime  @relation("SourceRelations", fields: [sourceAnimeId], references: [id])
+  relatedAnimeId Int
+  relatedAnime   Anime  @relation("RelatedRelations", fields: [relatedAnimeId], references: [id])
+  relationType   String // Ex: SEQUEL, PREQUEL, ADAPTATION, etc.
+
+  @@id([sourceAnimeId, relatedAnimeId, relationType])
+}
+
 // --- JUNÇÕES: JOGOS ---
 
 model JogoOnGenero {
@@ -519,8 +680,9 @@ model JogoOnCompany {
   jogoId    Int
   company   JogoCompany @relation(fields: [companyId], references: [id])
   companyId Int
+  role      String // From IGDB: developer, publisher, porting, supporting
 
-  @@id([jogoId, companyId])
+  @@id([jogoId, companyId, role])
 }
 
 model JogoOnTheme {
@@ -541,6 +703,54 @@ model JogoOnPlayerPerspective {
   @@id([jogoId, perspectiveId])
 }
 
+model JogoOnAgeRating {
+  jogo        Jogo      @relation(fields: [jogoId], references: [id])
+  jogoId      Int
+  ageRating   AgeRating @relation(fields: [ageRatingId], references: [id])
+  ageRatingId Int
+
+  @@id([jogoId, ageRatingId])
+}
+
+model JogoOnGameMode {
+  jogo       Jogo     @relation(fields: [jogoId], references: [id])
+  jogoId     Int
+  gameMode   GameMode @relation(fields: [gameModeId], references: [id])
+  gameModeId Int
+
+  @@id([jogoId, gameModeId])
+}
+
+model JogoOnGameEngine {
+  jogo       Jogo       @relation(fields: [jogoId], references: [id])
+  jogoId     Int
+  gameEngine GameEngine @relation(fields: [gameEngineId], references: [id])
+  gameEngineId Int
+
+  @@id([jogoId, gameEngineId])
+}
+
+model GameRelation {
+  sourceGameId  Int
+  sourceGame    Jogo   @relation("SourceRelations", fields: [sourceGameId], references: [id])
+  relatedGameId Int
+  relatedGame   Jogo   @relation("RelatedRelations", fields: [relatedGameId], references: [id])
+  type          String // From IGDB: dlc, expansion, remake, remaster, parent_game, etc.
+
+  @@id([sourceGameId, relatedGameId, type])
+}
+
+model Event {
+  id          Int       @id @default(autoincrement())
+  igdbId      Int       @unique
+  name        String
+  description String?
+  start_time  DateTime?
+  end_time    DateTime?
+  url         String?
+  games       Jogo[]
+}
+
 // =================================================================================
 // MODELOS DE USUÁRIO E PREFERÊNCIAS
 // =================================================================================
@@ -555,6 +765,19 @@ model User {
 
   // Relacionamento com as preferências do usuário
   preferencias    preferencias_usuario_midia[]
+  notifications   Notification[]
+}
+
+model Notification {
+  id               Int      @id @default(autoincrement())
+  user             User     @relation(fields: [userId], references: [id])
+  userId           Int
+  type             String   // Ex: 'NEW_SEASON'
+  message          String
+  isRead           Boolean  @default(false)
+  relatedMediaId   Int?
+  relatedMediaType String?
+  createdAt        DateTime @default(now())
 }
 
 model preferencias_usuario_midia {
@@ -568,4 +791,6 @@ model preferencias_usuario_midia {
 
   // Relacionamento com o usuário
   usuario        User     @relation(fields: [usuario_id], references: [id])
+
+  @@unique([usuario_id, midia_id, tipo_midia], name: "usuario_midia_unique")
 }

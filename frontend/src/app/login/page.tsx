@@ -20,7 +20,7 @@ export default function LoginPage() {
     setIsLoading(true);
 
     try {
-      const response = await realApi.login(formData.email, formData.password);
+      const response = await realApi.login({ email: formData.email, password: formData.password });
       if (response && response.user) {
         login(response.user);
         // Optionally store token in localStorage or cookies

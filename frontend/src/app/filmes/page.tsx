@@ -9,8 +9,18 @@ import type { Filme } from '@/types';
 export default function FilmesPage() {
   const [filmes, setFilmes] = useState<Filme[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingFilters, setIsLoadingFilters] = useState(true);
+
+  // Estados para as opções de filtro dinâmicas
+  const [availableGenres, setAvailableGenres] = useState<string[]>([]);
+  const [availableYears, setAvailableYears] = useState<number[]>([]);
+  const [availableStatuses, setAvailableStatuses] = useState<string[]>([]);
+
+  // Estados para os filtros selecionados
   const [selectedFilter, setSelectedFilter] = useState<'todos' | 'em_cartaz' | 'em_breve' | 'populares'>('todos');
   const [selectedGenre, setSelectedGenre] = useState<string>('todos');
+  const [selectedYear, setSelectedYear] = useState<string>('todos');
+  const [selectedStatus, setSelectedStatus] = useState<string>('todos');
 
   const filters = [
     { id: 'todos' as const, label: 'Todos os Filmes', icon: Grid },
@@ -19,18 +29,34 @@ export default function FilmesPage() {
     { id: 'populares' as const, label: 'Populares', icon: Star },
   ];
 
-  const genres = [
-    'todos', 'ação', 'aventura', 'comédia', 'drama', 'ficção científica', 
-    'terror', 'thriller', 'romance', 'animação', 'documentário'
-  ];
+  // Efeito para buscar as opções de filtro da API
+  useEffect(() => {
+    const loadFilterOptions = async () => {
+      setIsLoadingFilters(true);
+      try {
+        const response = await realApi.getFilmeFilters();
+        setAvailableGenres(response.genres || []);
+        setAvailableYears(response.years || []);
+        setAvailableStatuses(response.statuses || []);
+      } catch (error) {
+        console.error('Erro ao carregar opções de filtros:', error);
+      } finally {
+        setIsLoadingFilters(false);
+      }
+    };
+    loadFilterOptions();
+  }, []);
 
+  // Efeito para buscar os filmes com base nos filtros selecionados
   useEffect(() => {
     const loadFilmes = async () => {
       setIsLoading(true);
       try {
         const response = await realApi.getFilmes({ 
           filtro: selectedFilter === 'todos' ? undefined : selectedFilter,
-          genero: selectedGenre === 'todos' ? undefined : selectedGenre 
+          genero: selectedGenre === 'todos' ? undefined : selectedGenre,
+          ano: selectedYear === 'todos' ? undefined : selectedYear,
+          status: selectedStatus === 'todos' ? undefined : selectedStatus,
         });
         setFilmes(response.results);
       } catch (error) {
@@ -41,7 +67,7 @@ export default function FilmesPage() {
     };
 
     loadFilmes();
-  }, [selectedFilter, selectedGenre]);
+  }, [selectedFilter, selectedGenre, selectedYear, selectedStatus]);
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -73,20 +99,58 @@ export default function FilmesPage() {
           ))}
         </div>
 
-        {/* Filtro de Gênero */}
-        <div className="flex items-center gap-2">
-          <Filter className="h-4 w-4 text-muted-foreground" />
-          <select
-            value={selectedGenre}
-            onChange={(e) => setSelectedGenre(e.target.value)}
-            className="bg-muted border border-border rounded-lg px-3 py-2 text-sm orbe-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
-          >
-            {genres.map((genre) => (
-              <option key={genre} value={genre}>
-                {genre === 'todos' ? 'Todos os Gêneros' : genre.charAt(0).toUpperCase() + genre.slice(1)}
-              </option>
-            ))}
-          </select>
+        {/* Filtros Secundários */}
+        <div className="flex flex-wrap items-center gap-4">
+          <div className="flex items-center gap-2">
+            <Filter className="h-4 w-4 text-muted-foreground" />
+            <select
+              value={selectedGenre}
+              onChange={(e) => setSelectedGenre(e.target.value)}
+              disabled={isLoadingFilters}
+              className="bg-muted border border-border rounded-lg px-3 py-2 text-sm orbe-text-primary focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50"
+            >
+              <option value="todos">Todos os Gêneros</option>
+              {availableGenres.map((genre) => (
+                <option key={genre} value={genre}>
+                  {genre.charAt(0).toUpperCase() + genre.slice(1)}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <Calendar className="h-4 w-4 text-muted-foreground" />
+            <select
+              value={selectedYear}
+              onChange={(e) => setSelectedYear(e.target.value)}
+              disabled={isLoadingFilters}
+              className="bg-muted border border-border rounded-lg px-3 py-2 text-sm orbe-text-primary focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50"
+            >
+              <option value="todos">Todos os Anos</option>
+              {availableYears.map((year) => (
+                <option key={year} value={year}>
+                  {year}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <Star className="h-4 w-4 text-muted-foreground" />
+            <select
+              value={selectedStatus}
+              onChange={(e) => setSelectedStatus(e.target.value)}
+              disabled={isLoadingFilters}
+              className="bg-muted border border-border rounded-lg px-3 py-2 text-sm orbe-text-primary focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50"
+            >
+              <option value="todos">Todos os Status</option>
+              {availableStatuses.map((status) => (
+                <option key={status} value={status!}>
+                  {status}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
       </div>
 

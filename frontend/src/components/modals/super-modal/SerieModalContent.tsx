@@ -3,10 +3,11 @@
 import Image from 'next/image';
 import { Play, Calendar } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import PlatformIcon from '@/components/ui/PlatformIcons';
 import type { Serie, CastMember, CalendarModalData } from '@/types';
 
 interface SerieModalContentProps {
-  serie: any; // Recebe o objeto de detalhes completo da API
+  serie: Serie; // Recebe o objeto de detalhes completo da API
   openCalendarModal: (data: CalendarModalData) => void;
 }
 
@@ -14,7 +15,7 @@ const SerieModalContent: React.FC<SerieModalContentProps> = ({ serie, openCalend
 
   // Encontra o trailer oficial na lista de vídeos
   const trailer = serie.videos?.find(
-    (video: any) => video.type === 'Trailer' && video.official === true
+    (video: Video) => video.type === 'Trailer' && video.official === true
   );
   const trailerKey = trailer ? trailer.key : serie.videos?.[0]?.key;
 
@@ -23,15 +24,26 @@ const SerieModalContent: React.FC<SerieModalContentProps> = ({ serie, openCalend
     return path; // A URL completa já vem do mapper
   };
 
+  // --- Lógica dos Botões de Ação ---
+  const isOnStreaming = serie.plataformas_api && serie.plataformas_api.length > 0;
+  const primaryPlatform = isOnStreaming ? serie.plataformas_api[0] : null;
+
   return (
     <div className="space-y-6">
       {/* Botões de Ação */}
-      <div className="flex flex-wrap gap-3 mb-6">
-        <Button disabled={!serie.homepage} asChild>
-          <a href={serie.homepage || '#'} target="_blank" rel="noopener noreferrer">
-            <Play className="h-5 w-5 mr-2" />Assistir Agora
-          </a>
-        </Button>
+      <div className="flex flex-wrap items-center gap-4 mb-6">
+        {isOnStreaming && primaryPlatform && (
+          <div className='space-y-2'>
+            <p className='text-sm text-muted-foreground'>Disponível em:</p>
+            <Button asChild>
+              <a href={serie.homepage || '#'} target="_blank" rel="noopener noreferrer">
+                <PlatformIcon platform={primaryPlatform.nome} className="h-5 w-5 mr-2" />
+                Assistir na {primaryPlatform.nome}
+              </a>
+            </Button>
+          </div>
+        )}
+
         <Button variant="muted" onClick={() => openCalendarModal({ midia: serie, type: 'serie' })}>
           <Calendar className="h-5 w-5 mr-2" />Adicionar ao Calendário
         </Button>
@@ -48,7 +60,8 @@ const SerieModalContent: React.FC<SerieModalContentProps> = ({ serie, openCalend
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
         {serie.numero_temporadas && <div><span className="font-semibold orbe-text-secondary">Temporadas:</span> <span className="text-muted-foreground">{serie.numero_temporadas}</span></div>}
         {serie.numero_episodios && <div><span className="font-semibold orbe-text-secondary">Episódios:</span> <span className="text-muted-foreground">{serie.numero_episodios}</span></div>}
-        {serie.criadores && serie.criadores.length > 0 && <div><span className="font-semibold orbe-text-secondary">Criador(es):</span> <span className="text-muted-foreground">{serie.criadores.map((c: any) => c.nome).join(', ')}</span></div>}
+        {serie.criadores && serie.criadores.length > 0 && <div><span className="font-semibold orbe-text-secondary">Criador(es):</span> <span className="text-muted-foreground">{serie.criadores.map((c: Creator) => c.nome).join(', ')}</span></div>}
+        {serie.generos_api && serie.generos_api.length > 0 && <div className="md:col-span-3"><span className="font-semibold orbe-text-secondary">Gêneros:</span> <span className="text-muted-foreground">{serie.generos_api.join(', ')}</span></div>}
       </div>
 
       {/* Trailer */}
@@ -74,7 +87,7 @@ const SerieModalContent: React.FC<SerieModalContentProps> = ({ serie, openCalend
         <div>
           <h3 className="text-lg font-semibold orbe-text-secondary mb-3">Elenco Principal</h3>
           <div className="flex space-x-4 overflow-x-auto scrollbar-hide pb-2">
-            {serie.elenco.slice(0, 15).map((ator: any) => (
+            {serie.elenco.slice(0, 15).map((ator: CastMember) => (
               <div key={ator.nome} className="flex-shrink-0 text-center w-24">
                 <div className="w-20 h-20 bg-muted rounded-full mb-2 overflow-hidden mx-auto">
                   <Image src={getImageUrl(ator.foto_url)} alt={ator.nome} width={80} height={80} className="w-full h-full object-cover" unoptimized={true} />
@@ -92,7 +105,7 @@ const SerieModalContent: React.FC<SerieModalContentProps> = ({ serie, openCalend
         <div>
           <h3 className="text-lg font-semibold orbe-text-secondary mb-3">Temporadas</h3>
           <div className="space-y-2 text-sm">
-            {serie.temporadas.map((temporada: any) => (
+            {serie.temporadas.map((temporada: Temporada) => (
               <div key={temporada.numero} className="flex justify-between items-center bg-muted p-2 rounded-lg">
                 <span className="font-medium text-foreground">{temporada.nome || `Temporada ${temporada.numero}`}</span>
                 <span className="text-muted-foreground">{temporada.episodios} episódios</span>

@@ -44,11 +44,11 @@ export const realApi = {
   },
 
   // Filmes
-  getFilmes: async (params: { filtro?: string; genero?: string; page?: number }): Promise<{ results: Filme[]; total_pages: number; total_results: number }> => {
+  getFilmes: async (params: { filtro?: string; genero?: string; page?: number; ano?: string; status?: string }): Promise<{ results: Filme[]; total_pages: number; total_results: number }> => {
     try {
       const response = await orbeNerdApi.getFilmes(params);
       
-      const mappedResults = response.results.map((filme: any) => ({
+      const mappedResults = response.results.map((filme: Filme) => ({
         id: filme.id,
         titulo_api: filme.titulo_api,
         titulo_curado: filme.titulo_curado,
@@ -71,12 +71,14 @@ export const realApi = {
     }
   },
 
+  getFilmeFilters: orbeNerdApi.getFilmeFilters,
+
   // Series
-  getSeries: async (params: { genero?: string; page?: number }): Promise<{ results: Serie[]; total_pages: number; total_results: number }> => {
+  getSeries: async (params: { filtro?: string; genero?: string; page?: number; ano?: string; status?: string }): Promise<{ results: Serie[]; total_pages: number; total_results: number }> => {
     try {
       const response = await orbeNerdApi.getSeries(params);
       
-      const mappedResults = response.results.map((serie: any) => ({
+      const mappedResults = response.results.map((serie: Serie) => ({
         id: serie.id,
         titulo_api: serie.titulo_api,
         titulo_curado: serie.titulo_curado,
@@ -99,12 +101,14 @@ export const realApi = {
     }
   },
 
+  getSerieFilters: orbeNerdApi.getSerieFilters,
+
   // Animes
-  getAnimes: async (params: { genero?: string; page?: number }): Promise<{ results: Anime[]; total_pages: number; total_results: number }> => {
+  getAnimes: async (params: { filtro?: string; genero?: string; page?: number; ano?: string; formato?: string; fonte?: string; status?: string }): Promise<{ results: Anime[]; total_pages: number; total_results: number }> => {
     try {
       const response = await orbeNerdApi.getAnimes(params);
       
-      const mappedResults = response.results.map((anime: any) => ({
+      const mappedResults = response.results.map((anime: Anime) => ({
         id: anime.id,
         titulo_api: anime.titulo_api,
         titulo_curado: anime.titulo_curado,
@@ -127,12 +131,14 @@ export const realApi = {
     }
   },
 
+  getAnimeFilters: orbeNerdApi.getAnimeFilters,
+
   // Jogos
-  getJogos: async (params: { genero?: string; page?: number }): Promise<{ results: Jogo[]; total_pages: number; total_results: number }> => {
+  getJogos: async (params: { filtro?: string; genero?: string; page?: number; plataforma?: string; modo?: string; ano?: string }): Promise<{ results: Jogo[]; total_pages: number; total_results: number }> => {
     try {
       const response = await orbeNerdApi.getJogos(params);
       
-      const mappedResults = response.results.map((jogo: any) => ({
+      const mappedResults = response.results.map((jogo: Jogo) => ({
           id: jogo.id,
           titulo_api: jogo.titulo_api,
           titulo_curado: jogo.titulo_curado,
@@ -155,12 +161,19 @@ export const realApi = {
     }
   },
 
+  getJogoFilters: orbeNerdApi.getJogoFilters,
+
   // Manter os outros métodos como estão, pois não foram reportados erros neles
   getFilmeDetails: orbeNerdApi.getFilmeDetails,
   getSerieDetails: orbeNerdApi.getSerieDetails,
   getAnimeDetails: orbeNerdApi.getAnimeDetails,
+  getAnimeNextEpisode: orbeNerdApi.getAnimeNextEpisode,
   getJogoDetails: orbeNerdApi.getJogoDetails,
-  search: async (query: string, type?: string, page: number = 1) => {
+  updateFilme: orbeNerdApi.updateFilme,
+  updateSerie: orbeNerdApi.updateSerie,
+  updateAnime: orbeNerdApi.updateAnime,
+  updateJogo: orbeNerdApi.updateJogo,
+  search: async (query: string, category?: string, page: number = 1) => {
     try {
       const response = await orbeNerdApi.search(query, type, page);
       
@@ -170,13 +183,13 @@ export const realApi = {
 
       // A lógica de mapeamento aqui pode ser complexa, vamos simplificar por agora
       // garantindo que o formato de retorno esteja correto.
-      const mappedResults = response.results.map((item: any) => item);
+      const mappedResults = response.results.map((item: SearchResultItem) => item);
 
       return {
-        filmes: mappedResults.filter((item: any) => item.tipo === 'filme'),
-        series: mappedResults.filter((item: any) => item.tipo === 'serie'),
-        animes: mappedResults.filter((item: any) => item.tipo === 'anime'),
-        jogos: mappedResults.filter((item: any) => item.tipo === 'jogo'),
+        filmes: mappedResults.filter((item: SearchResultItem) => item.tipo === 'filme'),
+        series: mappedResults.filter((item: SearchResultItem) => item.tipo === 'serie'),
+        animes: mappedResults.filter((item: SearchResultItem) => item.tipo === 'anime'),
+        jogos: mappedResults.filter((item: SearchResultItem) => item.tipo === 'jogo'),
         total: response.total_results || mappedResults.length
       };
     } catch (error) {
@@ -201,7 +214,10 @@ export const realApi = {
   },
   getNotifications: orbeNerdApi.getNotifications,
   markNotificationAsRead: orbeNerdApi.markNotificationAsRead,
-  login: orbeNerdApi.login
+  login: orbeNerdApi.login,
+  getInteractions: orbeNerdApi.getInteractions,
+  upsertInteraction: orbeNerdApi.upsertInteraction,
+  getAwards: orbeNerdApi.getAwards,
 };
 
 export default realApi;

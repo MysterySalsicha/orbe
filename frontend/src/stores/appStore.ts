@@ -1,11 +1,12 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import type { User, Notification, Theme, Filme, Serie, Anime, Jogo } from '@/types';
+import type { User, Notification, Theme, Filme, Serie, Anime, Jogo, Preferencia } from '@/types';
 
 interface AppState {
   // Estado do usuário
   user: User | null;
   isAuthenticated: boolean;
+  userInteractions: Preferencia[];
   
   // Estado do tema
   theme: Theme;
@@ -46,6 +47,8 @@ interface AppState {
   setUser: (user: User | null) => void;
   login: (user: User) => void;
   logout: () => void;
+  setInteractions: (interactions: Preferencia[]) => void;
+  upsertInteraction: (interaction: Preferencia) => void;
   
   // Ações do tema
   setTheme: (theme: Theme) => void;
@@ -55,6 +58,7 @@ interface AppState {
   addNotification: (notification: Notification) => void;
   markNotificationAsRead: (id: number) => void;
   markAllNotificationsAsRead: () => void;
+  deleteNotification: (id: number) => void;
   
   // Ações dos modais
   openSearch: () => void;
@@ -80,6 +84,7 @@ export const useAppStore = create<AppState>()(
       // Estado inicial
       user: null,
       isAuthenticated: false,
+      userInteractions: [],
       theme: 'system',
       notifications: [],
       unreadCount: 0,
@@ -119,8 +124,23 @@ export const useAppStore = create<AppState>()(
         user: null, 
         isAuthenticated: false,
         notifications: [],
-        unreadCount: 0
+        unreadCount: 0,
+        userInteractions: [],
       }),
+
+      setInteractions: (interactions) => set({ userInteractions: interactions }),
+
+      upsertInteraction: (interaction) => {
+        const { userInteractions } = get();
+        const index = userInteractions.findIndex(i => i.midia_id === interaction.midia_id && i.tipo_midia === interaction.tipo_midia);
+        const newInteractions = [...userInteractions];
+        if (index > -1) {
+          newInteractions[index] = interaction;
+        } else {
+          newInteractions.push(interaction);
+        }
+        set({ userInteractions: newInteractions });
+      },
 
       // Ações do tema
       setTheme: (theme) => set({ theme }),
@@ -162,6 +182,16 @@ export const useAppStore = create<AppState>()(
         set({ 
           notifications: updatedNotifications, 
           unreadCount: 0 
+        });
+      },
+
+      deleteNotification: (id) => {
+        const { notifications } = get();
+        const updatedNotifications = notifications.filter(n => n.id !== id);
+        const unreadCount = updatedNotifications.filter(n => !n.foi_visualizada).length;
+        set({
+          notifications: updatedNotifications,
+          unreadCount
         });
       },
 
@@ -229,6 +259,7 @@ export const useAppStore = create<AppState>()(
         user: state.user,
         isAuthenticated: state.isAuthenticated,
         theme: state.theme,
+        userInteractions: state.userInteractions,
       }),
     }
   )

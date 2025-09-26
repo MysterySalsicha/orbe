@@ -4,6 +4,8 @@ import * as path from 'path';
 import * as dotenv from 'dotenv';
 dotenv.config({ path: path.resolve(__dirname, '../.env') });
 
+import { syncMovies } from './syncMovies';
+import { syncSeries } from './syncSeries';
 import { syncAnimes } from './syncAnimes';
 import { syncGames } from './syncGames';
 import { logger } from './logger';
@@ -16,7 +18,13 @@ const main = async () => {
   logger.info(`Iniciando sincronização de dados...`);
 
   try {
-    // As sincronizações de filmes e séries foram desativadas conforme solicitado.
+    logger.info(`--- Iniciando sincronização de FILMES ---`);
+    await syncMovies(startDate, endDate);
+    logger.info(`--- Sincronização de FILMES concluída ---`);
+
+    logger.info(`--- Iniciando sincronização de SÉRIES ---`);
+    await syncSeries(startDate, endDate);
+    logger.info(`--- Sincronização de SÉRIES concluída ---`);
 
     // logger.info(`--- Iniciando sincronização de ANIMES ---`);
     // await syncAnimes(year, ['SUMMER', 'FALL']);

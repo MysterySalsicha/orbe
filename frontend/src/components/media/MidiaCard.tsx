@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   MoreVertical, 
   Heart, 
@@ -17,37 +17,66 @@ import { format, parseISO, differenceInDays, differenceInHours, differenceInMinu
 import Image from 'next/image';
 import { ptBR } from 'date-fns/locale';
 import { useAppStore } from '@/stores/appStore';
-import type { MidiaCardProps, UserAction } from '@/types';
+import { realApi } from '@/data/realApi';
+import type { MidiaCardProps, UserAction, Anime } from '@/types';
 
-const MidiaCard: React.FC<MidiaCardProps> = ({
+const MidiaCard = React.forwardRef<HTMLDivElement, MidiaCardProps>((
+{
   midia,
   type,
   userInteractions = [],
-  onInteraction
-}) => {
+  onInteraction,
+  isFocused,
+}, ref) => {
   const { openSuperModal, openRatingModal } = useAppStore();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [countdown, setCountdown] = useState<string>('');
   const [hasNewEpisode, setHasNewEpisode] = useState(false);
+  const [nextAiringTime, setNextAiringTime] = useState<string | null>(null);
 
-  // Verifica se é um anime com próximo episódio
-  const isAnime = type === 'anime' && 'proximo_episodio' in midia;
+  const isAnime = type === 'anime';
   const isFilme = type === 'filme' && 'em_prevenda' in midia;
 
-  const proximoEpisodio = isAnime ? midia.proximo_episodio : undefined;
-
-  // Calcula countdown em tempo real para animes
+  // Efeito para buscar e definir o tempo real do próximo episódio
   useEffect(() => {
-    if (!isAnime || !proximoEpisodio) return;
+    if (isAnime) {
+      // Define um valor inicial (potencialmente do cache) para exibição imediata
+      const initialAiringTime = (midia as Anime).proximo_episodio;
+      if (initialAiringTime) {
+        setNextAiringTime(initialAiringTime);
+      }
+
+      // Busca o dado em tempo real
+      const fetchNextEpisode = async () => {
+        try {
+          const nextEpisodeData = await realApi.getAnimeNextEpisode(midia.id);
+          if (nextEpisodeData && nextEpisodeData.airingAt) {
+            setNextAiringTime(nextEpisodeData.airingAt);
+          }
+        } catch (error) {
+          console.error('Erro ao buscar próximo episódio em tempo real:', error);
+        }
+      };
+
+      fetchNextEpisode();
+    }
+  }, [isAnime, midia.id, isAnime ? (midia as Anime).proximo_episodio : undefined]);
+
+  // Efeito para calcular o countdown sempre que o nextAiringTime mudar
+  useEffect(() => {
+    if (!isAnime || !nextAiringTime) {
+      setCountdown('');
+      return;
+    }
 
     const updateCountdown = () => {
       const now = new Date();
-      const nextEpisode = parseISO(proximoEpisodio!);
+      const nextEpisodeDate = parseISO(nextAiringTime);
       
-      if (nextEpisode > now) {
-        const days = differenceInDays(nextEpisode, now);
-        const hours = differenceInHours(nextEpisode, now) % 24;
-        const minutes = differenceInMinutes(nextEpisode, now) % 60;
+      if (nextEpisodeDate > now) {
+        const days = differenceInDays(nextEpisodeDate, now);
+        const hours = differenceInHours(nextEpisodeDate, now) % 24;
+        const minutes = differenceInMinutes(nextEpisodeDate, now) % 60;
         
         if (days > 0) {
           setCountdown(`${days}d, ${hours}h e ${minutes}m`);
@@ -56,6 +85,7 @@ const MidiaCard: React.FC<MidiaCardProps> = ({
         } else {
           setCountdown(`${minutes}m`);
         }
+        setHasNewEpisode(false);
       } else {
         setCountdown('Disponível agora!');
         setHasNewEpisode(true);
@@ -66,7 +96,7 @@ const MidiaCard: React.FC<MidiaCardProps> = ({
     const interval = setInterval(updateCountdown, 60000); // Atualiza a cada minuto
 
     return () => clearInterval(interval);
-  }, [isAnime, proximoEpisodio]);
+  }, [isAnime, nextAiringTime]);
 
   // Verifica interações do usuário
   const userInteraction = userInteractions.find(
@@ -190,17 +220,17 @@ const MidiaCard: React.FC<MidiaCardProps> = ({
     
     // Se a data de lançamento já passou, mostra episódio atual
     if (hasReleased()) {
-      return midia.numero_episodio_atual;
+      return (midia as Anime).numero_episodio_atual;
     }
     
     return null;
   };
 
   return (
-    <div className="relative group">
+    <div className="relative group" ref={ref}>
       {/* Card Principal */}
       <div 
-        className="relative bg-card rounded-lg overflow-hidden shadow-md hover:shadow-lg transition-all duration-300 cursor-pointer hover:scale-105 w-[200px]"
+        className={`relative bg-card rounded-lg overflow-hidden shadow-md hover:shadow-lg transition-all duration-300 cursor-pointer hover:scale-105 w-[200px] ${isFocused ? 'ring-2 ring-primary ring-offset-2 ring-offset-background' : ''}`}
         data-clickable-card
         onClick={handleCardClick}
         onMouseDown={handlePressStart}
@@ -309,19 +339,17 @@ const MidiaCard: React.FC<MidiaCardProps> = ({
         <div className="p-3 space-y-2">
           {/* Título */}
           <h3 className="font-semibold text-sm line-clamp-2 leading-tight text-center">
-            <span className="font-bold">Nome:</span> {midia.titulo_curado || midia.titulo_api}
+            {midia.titulo_curado || midia.titulo_api}
           </h3>
 
           {/* Data/Episódio com lógica especial para animes */}
           <div className="text-xs text-muted-foreground text-center">
-            {isAnime && hasReleased() ? (
+            {isAnime && hasReleased() && countdown ? (
               <div>
                 <span className="font-bold">Episódio {getEpisodeInfo()}:</span>
-                {countdown && (
-                  <div className="text-primary font-medium mt-1 animate-pulse">
-                    {countdown}
-                  </div>
-                )}
+                <div className="text-primary font-medium mt-1 animate-pulse">
+                  {countdown}
+                </div>
               </div>
             ) : (
               <div>
@@ -395,6 +423,8 @@ const MidiaCard: React.FC<MidiaCardProps> = ({
       )}
     </div>
   );
-};
+});
 
 export default MidiaCard;
+
+MidiaCard.displayName = 'MidiaCard';

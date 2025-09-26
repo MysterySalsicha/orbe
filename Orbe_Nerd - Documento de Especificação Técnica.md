@@ -12,8 +12,11 @@
 >
 > *2.* *Arquitetura* *Geral*
 >
-> • **Backend:** API construída com **Python** e **FastAPI**, servindo
-> como um agregador de dados inteligente.
+> • **Backend:** API construída com **Node.js,** **TypeScript** **e** **Express**.
+> A decisão de desviar da especificação original (Python/FastAPI) foi
+> tomada para otimizar a integração com o frontend em Next.js e com a
+> plataforma de hospedagem Vercel, criando um ecossistema de
+> desenvolvimento mais coeso em TypeScript.
 >
 > • **Backend** **↔️** **APIs** **Externas:**
 >
@@ -524,6 +527,10 @@
 > lançado (ex: um anime que lança na quinta-feira aparecerá antes de um
 > que lança na segunda-feira seguinte). Animes finalizados devem sair do
 > carrossel.
+>     - **Filtros de Visualização:** Acima do carrossel de animes, haverá três botões de filtro:
+>         - **"Todos":** Exibe todos os animes da temporada (comportamento padrão).
+>         - **"Novos":** Filtra a lista para mostrar apenas animes que não são continuações diretas (ou seja, a fonte não é outro anime). Isso inclui animes originais e novas adaptações de mangás, light novels, etc.
+>         - **"Continuações":** Filtra a lista para mostrar apenas animes que são novas temporadas ou sequências diretas de outras obras de anime.
 >
 > o **Jogos:** O título será "Estreias de jogos de \[Ano Atual\]". Os
 > jogos já lançados **não** **serão** **removidos** do carrossel para
@@ -638,10 +645,7 @@
 > página.
 >
 > • **Interface** **Focada:** O overlay apresentará uma interface limpa,
-> com o campo de texto da busca no topo e um **teclado** **virtual**
-> **interativo** **(A-Z,** **0-9)** logo abaixo. Isso permite a busca
-> tanto por teclado físico quanto por cliques, replicando a experiência
-> de TV.
+> com o campo de texto da busca no topo.
 >
 > **Lógica** **de** **Busca** **e** **Exibição** **de** **Resultados:**
 >

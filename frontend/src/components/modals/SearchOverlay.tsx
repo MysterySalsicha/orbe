@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { X, Search } from 'lucide-react';
 import { useAppStore } from '@/stores/appStore';
 import MidiaCard from '@/components/media/MidiaCard';
@@ -9,77 +9,6 @@ import { realApi } from '@/data/realApi';
 
 const SearchOverlay: React.FC = () => {
   const { isSearchOpen, closeSearch } = useAppStore();
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState<'todos' | 'filmes' | 'series' | 'animes' | 'jogos'>('todos');
-  const [searchResults, setSearchResults] = useState<SearchResultItem[]>([]);
-  const [trendingContent, setTrendingContent] = useState<SearchResultItem[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-
-  const categories = [
-    { id: 'todos' as const, label: 'Todos' },
-    { id: 'filmes' as const, label: 'Filmes' },
-    { id: 'series' as const, label: 'Séries' },
-    { id: 'animes' as const, label: 'Animes' },
-    { id: 'jogos' as const, label: 'Jogos' },
-  ];
-
-  const popularSearches = ['Duna', 'Attack on Titan', 'The Last of Us', "Baldur's Gate 3", 'House of the Dragon', 'Demon Slayer', 'Oppenheimer', 'Zelda'];
-
-  const performSearch = useCallback(async (query: string) => {
-    setIsLoading(true);
-    try {
-      const results = await realApi.search(query, selectedCategory === 'todos' ? undefined : selectedCategory);
-      const flatResults: SearchResultItem[] = [
-        ...results.filmes.map((item: Filme) => ({ ...item, type: 'filme' as const })),
-        ...results.series.map((item: Serie) => ({ ...item, type: 'serie' as const })),
-        ...results.animes.map((item: Anime) => ({ ...item, type: 'anime' as const })),
-        ...results.jogos.map((item: Jogo) => ({ ...item, type: 'jogo' as const })),
-      ];
-      setSearchResults(flatResults);
-    } catch (error) {
-      console.error('Erro na pesquisa:', error);
-      setSearchResults([]);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [selectedCategory]);
-
-  useEffect(() => {
-    const loadTrendingContent = async () => {
-      setIsLoading(true);
-      try {
-        const trending = await realApi.getTrending();
-        const flatResults: SearchResultItem[] = trending.map((item: any) => ({ ...item, type: item.tipo as const }));
-        setTrendingContent(flatResults);
-      } catch (error) {
-        console.error('Erro ao carregar conteúdo em alta:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    if (isSearchOpen && trendingContent.length === 0) {
-      loadTrendingContent();
-    }
-  }, [isSearchOpen, trendingContent.length]);
-
-  useEffect(() => {
-    const handler = setTimeout(() => {
-      if (searchQuery.trim()) {
-        performSearch(searchQuery);
-      } else {
-        setSearchResults([]);
-      }
-    }, 300); // Debounce de 300ms
-
-    return () => {
-      clearTimeout(handler);
-    };
-  }, [searchQuery, performSearch]);
-
-  const handlePopularSearchClick = (searchTerm: string) => {
-    setSearchQuery(searchTerm);
-  };
 
   const handleClose = () => {
     setSearchQuery('');
@@ -88,18 +17,73 @@ const SearchOverlay: React.FC = () => {
     closeSearch();
   };
 
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState<'todos' | 'filmes' | 'series' | 'animes' | 'jogos'>('todos');
+  const [searchResults, setSearchResults] = useState<SearchResultItem[]>([]);
+  const [trendingContent, setTrendingContent] = useState<SearchResultItem[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [focusedIndex, setFocusedIndex] = useState(-1);
+  const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
+
   const displayContent = useMemo(() => {
     if (searchQuery.trim()) return searchResults;
     return trendingContent;
   }, [searchQuery, searchResults, trendingContent]);
 
-  const filteredContent = useMemo(() => {
-    if (selectedCategory === 'todos') return displayContent;
-    const type = selectedCategory.slice(0, -1);
-    return displayContent.filter(item => item.type === type);
+  const groupedContent = useMemo(() => {
+    const groups = {
+      filmes: displayContent.filter(item => item.type === 'filme'),
+      series: displayContent.filter(item => item.type === 'serie'),
+      animes: displayContent.filter(item => item.type === 'anime'),
+      jogos: displayContent.filter(item => item.type === 'jogo'),
+    };
+
+    if (selectedCategory === 'todos') return groups;
+    
+    return {
+      filmes: selectedCategory === 'filmes' ? groups.filmes : [],
+      series: selectedCategory === 'series' ? groups.series : [],
+      animes: selectedCategory === 'animes' ? groups.animes : [],
+      jogos: selectedCategory === 'jogos' ? groups.jogos : [],
+    };
+
   }, [displayContent, selectedCategory]);
 
+  const allItems = useMemo(() => {
+    const filmesItems: SearchResultItem[] = groupedContent.filmes.length > 0 ? groupedContent.filmes : [];
+    const seriesItems: SearchResultItem[] = groupedContent.series.length > 0 ? groupedContent.series : [];
+    const animesItems: SearchResultItem[] = groupedContent.animes.length > 0 ? groupedContent.animes : [];
+    const jogosItems: SearchResultItem[] = groupedContent.jogos.length > 0 ? groupedContent.jogos : [];
+
+    return filmesItems.concat(seriesItems, animesItems, jogosItems);
+  }, [groupedContent]);
+
+  const totalResults = Object.values(groupedContent).reduce((acc, group) => acc + group.length, 0);
+
   if (!isSearchOpen) return null;
+
+  const renderGroup = (title: string, items: SearchResultItem[], baseIndex: number) => {
+    if (items.length === 0) return null;
+    return (
+      <div key={title} className="space-y-3">
+        <h3 className="text-xl font-semibold orbe-text-primary border-b border-border pb-2">{title}</h3>
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          {items.map((item, index) => {
+            const itemIndex = baseIndex + index;
+            return (
+              <MidiaCard 
+                key={`${item.type}-${item.id}`} 
+                ref={el => { cardRefs.current[itemIndex] = el; }}
+                midia={item} 
+                type={item.type} 
+                isFocused={itemIndex === focusedIndex}
+              />
+            );
+          })}
+        </div>
+      </div>
+    );
+  };
 
   return (
     <div className="search-overlay">
@@ -137,18 +121,19 @@ const SearchOverlay: React.FC = () => {
               </div>
             </div>
           </div>
-          <div className="space-y-4">
+          <div className="space-y-6 max-h-[75vh] overflow-y-auto scrollbar-hide pr-4 -mr-4">
             <div className="flex justify-between items-center">
               <h3 className="text-lg font-semibold orbe-text-primary">{searchQuery.trim() ? 'Resultados da Pesquisa' : 'Em Alta'}</h3>
-              {filteredContent.length > 0 && (<span className="text-sm text-muted-foreground">{filteredContent.length} {filteredContent.length === 1 ? 'resultado' : 'resultados'}</span>)}
+              {totalResults > 0 && (<span className="text-sm text-muted-foreground">{totalResults} {totalResults === 1 ? 'resultado' : 'resultados'}</span>)}
             </div>
             {isLoading ? (
               <div className="flex items-center justify-center py-12"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div></div>
-            ) : filteredContent.length > 0 ? (
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 max-h-[60vh] overflow-y-auto scrollbar-hide">
-                {filteredContent.map((item) => (
-                  <MidiaCard key={`${item.type}-${item.id}`} midia={item} type={item.type} showCountdown={item.type === 'anime'} onClick={() => console.log('Abrir Super Modal para:', item)} />
-                ))}
+            ) : totalResults > 0 ? (
+              <div className="space-y-6">
+                {renderGroup('Filmes', groupedContent.filmes, 0)}
+                {renderGroup('Séries', groupedContent.series, groupedContent.filmes.length)}
+                {renderGroup('Animes', groupedContent.animes, groupedContent.filmes.length + groupedContent.series.length)}
+                {renderGroup('Jogos', groupedContent.jogos, groupedContent.filmes.length + groupedContent.series.length + groupedContent.animes.length)}
               </div>
             ) : searchQuery.trim() ? (
               <div className="text-center py-12">

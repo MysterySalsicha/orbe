@@ -5,10 +5,11 @@ import Image from 'next/image';
 import { Play, Calendar, ExternalLink } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
+import PlatformIcon from '@/components/ui/PlatformIcons';
 import type { Anime, CalendarModalData } from '@/types';
 
 interface AnimeModalContentProps {
-  anime: any; // Recebe o objeto de detalhes completo da API
+  anime: Anime; // Recebe o objeto de detalhes completo da API
   openCalendarModal: (data: CalendarModalData) => void;
 }
 
@@ -16,23 +17,34 @@ const AnimeModalContent: React.FC<AnimeModalContentProps> = ({ anime, openCalend
   const [isSynopsisExpanded, setIsSynopsisExpanded] = useState(false);
   const [selectedDubbing, setSelectedDubbing] = useState<'jp' | 'pt'>('jp');
 
-  const hasPtBrDub = anime.personagens?.some((p: any) => p.dubladores?.pt);
+  const hasPtBrDub = anime.personagens?.some((p: Character) => p.dubladores?.pt);
+
+  // --- Lógica dos Botões de Ação ---
+  const isOnStreaming = anime.plataformas_api && anime.plataformas_api.length > 0;
+  const primaryPlatform = isOnStreaming ? anime.plataformas_api[0] : null;
 
   return (
     <div className="space-y-6">
       {/* Botões de Ação */}
-      <div className="flex flex-wrap gap-3 mb-6">
-        <Button disabled={!anime.links_streaming?.length} asChild>
-          <a href={anime.links_streaming?.[0]?.url || '#'} target="_blank" rel="noopener noreferrer">
-            <Play className="h-5 w-5 mr-2" />Assistir Agora
-          </a>
-        </Button>
+      <div className="flex flex-wrap items-center gap-4 mb-6">
+        {isOnStreaming && primaryPlatform && (
+          <div className='space-y-2'>
+            <p className='text-sm text-muted-foreground'>Disponível em:</p>
+            <Button asChild>
+              <a href={primaryPlatform.url || '#'} target="_blank" rel="noopener noreferrer">
+                <PlatformIcon platform={primaryPlatform.nome} className="h-5 w-5 mr-2" />
+                Assistir na {primaryPlatform.nome}
+              </a>
+            </Button>
+          </div>
+        )}
+
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="muted"><Calendar className="h-5 w-5 mr-2" />Adicionar ao Calendário</Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent>
-            <DropdownMenuItem disabled={!anime.data_lancamento_api} onClick={() => openCalendarModal({ midia: anime, type: 'anime', eventType: 'premiere' })}>
+            <DropdownMenuItem disabled={!anime.data_lancamento_api} onClick={() => openCalendarModal({ midia: anime, type: 'anime' })}>
               Adicionar evento de estreia
             </DropdownMenuItem>
             {/* A lógica para próximo episódio precisa ser adicionada ao mapper se necessário */}
@@ -82,7 +94,7 @@ const AnimeModalContent: React.FC<AnimeModalContentProps> = ({ anime, openCalend
         <div>
           <h3 className="text-lg font-semibold orbe-text-secondary mb-3">Equipe de Produção</h3>
           <div className="flex space-x-4 overflow-x-auto scrollbar-hide pb-2">
-            {anime.staff.map((membro: any) => (
+            {anime.staff.map((membro: StaffMember) => (
               <div key={membro.id} className="flex-shrink-0 text-center w-24">
                 <div className="w-20 h-20 bg-muted rounded-full mb-2 overflow-hidden mx-auto">
                   {membro.foto_url && (<Image src={membro.foto_url} alt={membro.nome} width={80} height={80} className="w-full h-full object-cover" unoptimized={true} />)}
@@ -112,7 +124,7 @@ const AnimeModalContent: React.FC<AnimeModalContentProps> = ({ anime, openCalend
             </div>
           </div>
           <div className="flex space-x-4 overflow-x-auto scrollbar-hide pb-2">
-            {anime.personagens.map((p: any) => (
+            {anime.personagens.map((p: Character) => (
               <div key={p.id} className="flex-shrink-0 text-center w-28 space-y-2">
                 <div className="w-24 h-24 bg-muted rounded-full mb-1 overflow-hidden mx-auto">
                   {p.foto_url && (<Image src={p.foto_url} alt={p.nome} width={96} height={96} className="w-full h-full object-cover" unoptimized={true} />)}

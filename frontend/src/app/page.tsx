@@ -1,16 +1,19 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import Carousel from '@/components/media/Carousel';
 import { realApi } from '@/data/realApi';
-import type { Filme, Serie, Anime, Jogo, Midia } from '@/types';
+import type { Filme, Serie, Anime, Jogo, Midia, TipoMidia } from '@/types';
+import { Button } from "@/components/ui/button";
 
 type GroupedMedia<T> = { [key: string]: T[] };
 type Season = 'Inverno' | 'Primavera' | 'Verão' | 'Outono';
 
 const SEASONS_ORDER: Season[] = ['Inverno', 'Primavera', 'Verão', 'Outono'];
+
+import { useAppStore } from '@/stores/appStore';
 
 const getSeasonFromMonth = (month: number): Season => {
   if (month >= 2 && month <= 4) return 'Primavera';
@@ -20,6 +23,11 @@ const getSeasonFromMonth = (month: number): Season => {
 };
 
 export default function Home() {
+  const {
+    userInteractions,
+    upsertInteraction
+  } = useAppStore();
+
   const [filmes, setFilmes] = useState<Filme[]>([]);
   const [series, setSeries] = useState<Serie[]>([]);
   const [animes, setAnimes] = useState<Anime[]>([]);
@@ -34,11 +42,27 @@ export default function Home() {
   const [currentFilmesIndex, setCurrentFilmesIndex] = useState(0);
   const [currentSeriesIndex, setCurrentSeriesIndex] = useState(0);
   const [currentAnimesIndex, setCurrentAnimesIndex] = useState(0);
+  const [animeFilter, setAnimeFilter] = useState<'todos' | 'novos' | 'continuacoes'>('todos');
+  const [movieTypeFilter, setMovieTypeFilter] = useState<'todos' | 'cinema' | 'plataforma'>('todos');
+  const [selectedPlatform, setSelectedPlatform] = useState<string>('todas');
   const currentYear = new Date().getFullYear();
   const filmesCarouselRef = useRef<HTMLDivElement>(null);
   const animesCarouselRef = useRef<HTMLDivElement>(null);
   const seriesCarouselRef = useRef<HTMLDivElement>(null);
   const jogosCarouselRef = useRef<HTMLDivElement>(null);
+
+  const handleInteraction = async (action: string, midia: Midia, type: TipoMidia) => {
+    try {
+      const newInteraction = await realApi.upsertInteraction({
+        midia_id: midia.id,
+        tipo_midia: type,
+        status: action,
+      });
+      upsertInteraction(newInteraction);
+    } catch (error) {
+      console.error('Erro ao salvar interação:', error);
+    }
+  };
 
   useEffect(() => {
     const loadData = async () => {
@@ -50,7 +74,6 @@ export default function Home() {
           realApi.getAnimes({ page: 1 }),
           realApi.getJogos({ page: 1 })
         ]);
-        console.log('Dados recebidos da API:', { filmesData, seriesData, animesData, jogosData });
         setFilmes(filmesData.results);
         setSeries(seriesData.results);
         setAnimes(animesData.results);
@@ -206,6 +229,49 @@ export default function Home() {
   const seriesData = getTitleAndItems('Séries', seriesKeys, currentSeriesIndex, groupedSeries);
   const animesData = getTitleAndItems('Animes', animesKeys, currentAnimesIndex, groupedAnimes);
 
+  const availablePlatforms = useMemo(() => {
+    const allPlatforms = filmes.flatMap(filme => filme.plataformas_api?.map(p => p.nome) ?? []);
+    return ['todas', ...Array.from(new Set(allPlatforms))];
+  }, [filmes]);
+
+  const filteredFilmes = useMemo(() => {
+    let items = filmesData.items;
+
+    if (movieTypeFilter === 'cinema') {
+      const twoMonthsAgo = new Date();
+      twoMonthsAgo.setMonth(twoMonthsAgo.getMonth() - 2);
+      items = items.filter(filme => 
+        filme.status === 'Released' && 
+        new Date(filme.data_lancamento_api) > twoMonthsAgo &&
+        (!filme.plataformas_api || filme.plataformas_api.length === 0)
+      );
+    } else if (movieTypeFilter === 'plataforma') {
+      items = items.filter(filme => filme.plataformas_api && filme.plataformas_api.length > 0);
+    }
+
+    if (selectedPlatform !== 'todas') {
+      items = items.filter(filme => filme.plataformas_api?.some(p => p.nome === selectedPlatform));
+    }
+
+    return items;
+  }, [filmesData.items, movieTypeFilter, selectedPlatform]);
+
+  const filteredAnimes = useMemo(() => {
+    if (animeFilter === 'todos') {
+      return animesData.items;
+    }
+    return animesData.items.filter(anime => {
+      const isSequel = anime.relations?.some(rel => rel.relationType === 'PREQUEL');
+      if (animeFilter === 'continuacoes') {
+        return isSequel;
+      }
+      if (animeFilter === 'novos') {
+        return !isSequel;
+      }
+      return false;
+    });
+  }, [animesData.items, animeFilter]);
+
   const getJogosTitle = () => `Estreias de jogos de ${currentYear}`;
   const getFilteredJogos = () => {
     return jogos
@@ -277,10 +343,29 @@ export default function Home() {
   return (
     <div className="bg-background">
       <main className="container mx-auto px-4 py-8 space-y-12">
-        <Carousel ref={filmesCarouselRef} title={filmesData.title} items={filmesData.items} type="filme" showNavigation={filmesKeys.length > 1} onTitleClick={handleFilmesTitleClick} onNavigate={handleFilmesNavigate} />
-        <Carousel ref={animesCarouselRef} title={animesData.title} items={animesData.items} type="anime" showNavigation={animesKeys.length > 1} onTitleClick={handleAnimesTitleClick} onNavigate={handleAnimesNavigate} />
-        <Carousel ref={seriesCarouselRef} title={seriesData.title} items={seriesData.items} type="serie" showNavigation={seriesKeys.length > 1} onTitleClick={handleSeriesTitleClick} onNavigate={handleSeriesNavigate} />
-        <Carousel ref={jogosCarouselRef} title={getJogosTitle()} items={getFilteredJogos()} type="jogo" showNavigation={false} onTitleClick={handleJogosTitleClick} />
+        <div>
+          <div className="flex justify-end items-center space-x-4 mb-4">
+            <Button variant={movieTypeFilter === 'todos' ? 'default' : 'outline'} onClick={() => setMovieTypeFilter('todos')}>Todos</Button>
+            <Button variant={movieTypeFilter === 'cinema' ? 'default' : 'outline'} onClick={() => setMovieTypeFilter('cinema')}>Cinema</Button>
+            <Button variant={movieTypeFilter === 'plataforma' ? 'default' : 'outline'} onClick={() => setMovieTypeFilter('plataforma')}>Streaming</Button>
+            <select value={selectedPlatform} onChange={(e) => setSelectedPlatform(e.target.value)} disabled={movieTypeFilter !== 'plataforma'} className="bg-muted border border-border rounded-lg px-3 py-2 text-sm orbe-text-primary focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50">
+              {availablePlatforms.map(p => <option key={p} value={p}>{p === 'todas' ? 'Todas as Plataformas' : p}</option>)}
+            </select>
+          </div>
+          <Carousel ref={filmesCarouselRef} title={filmesData.title} items={filteredFilmes} type="filme" showNavigation={filmesKeys.length > 1} onTitleClick={handleFilmesTitleClick} onNavigate={handleFilmesNavigate} userInteractions={userInteractions} onInteraction={(action, midia) => handleInteraction(action, midia, "filme")} />
+        </div>
+        
+        <div>
+          <div className="flex justify-end items-center space-x-4 mb-4">
+            <Button variant={animeFilter === 'todos' ? 'default' : 'outline'} onClick={() => setAnimeFilter('todos')}>Todos</Button>
+            <Button variant={animeFilter === 'novos' ? 'default' : 'outline'} onClick={() => setAnimeFilter('novos')}>Novos</Button>
+            <Button variant={animeFilter === 'continuacoes' ? 'default' : 'outline'} onClick={() => setAnimeFilter('continuacoes')}>Continuações</Button>
+          </div>
+          <Carousel ref={animesCarouselRef} title={animesData.title} items={filteredAnimes} type="anime" showNavigation={animesKeys.length > 1} onTitleClick={handleAnimesTitleClick} onNavigate={handleAnimesNavigate} userInteractions={userInteractions} onInteraction={(action, midia) => handleInteraction(action, midia, "anime")} />
+        </div>
+
+        <Carousel ref={seriesCarouselRef} title={seriesData.title} items={seriesData.items} type="serie" showNavigation={seriesKeys.length > 1} onTitleClick={handleSeriesTitleClick} onNavigate={handleSeriesNavigate} userInteractions={userInteractions} onInteraction={(action, midia) => handleInteraction(action, midia, "serie")} />
+        <Carousel ref={jogosCarouselRef} title={getJogosTitle()} items={getFilteredJogos()} type="jogo" showNavigation={false} onTitleClick={handleJogosTitleClick} userInteractions={userInteractions} onInteraction={(action, midia) => handleInteraction(action, midia, "jogo")} />
       </main>
     </div>
   );

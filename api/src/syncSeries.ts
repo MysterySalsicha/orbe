@@ -1,6 +1,8 @@
 import { logger } from './logger';
-import { tmdb } from './clients';
+import { tmdb, tmdbApi } from './clients';
 import { Cast, Crew } from 'moviedb-promise';
+import { broadcast } from './index';
+import { Prisma } from '@prisma/client';
 
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -27,37 +29,35 @@ async function tmdbApiWithRetry<T>(fn: () => Promise<T>, maxRetries = 5, initial
     throw new Error("Número máximo de tentativas atingido");
 }
 
-async function fetchAllSerieIdsForPeriod(startDate: string, endDate: string): Promise<number[]> {
-  logger.info(`Buscando todos os IDs de séries para o período de ${startDate} a ${endDate}...`);
+async function fetchChangedTvIds(startDate: string): Promise<number[]> {
+  logger.info(`Buscando IDs de séries alteradas desde ${startDate}...`);
   const serieIds = new Set<number>();
-  let currentPage = 1;
+  let page = 1;
   let totalPages = 1;
 
   try {
     do {
-      const response = await tmdbApiWithRetry(() => tmdb.discoverTv({
-        'first_air_date.gte': startDate,
-        'first_air_date.lte': endDate,
-        page: currentPage,
-      }));
+      const response = await tmdbApi.get('/tv/changes', {
+        params: { start_date: startDate, page },
+      });
 
-      if (response.results) {
-        for (const serie of response.results) {
-          if (serie.id) {
+      if (response.data.results) {
+        for (const serie of response.data.results) {
+          if (serie.id && !serie.adult) {
             serieIds.add(serie.id);
           }
         }
       }
 
-      totalPages = response.total_pages || 1;
-      currentPage++;
-      await delay(100);
-    } while (currentPage <= totalPages);
+      totalPages = response.data.total_pages || 1;
+      page++;
+      await delay(250);
+    } while (page <= totalPages);
     
-    logger.info(`Total de ${serieIds.size} IDs de séries únicos encontrados para o período.`);
+    logger.info(`Total de ${serieIds.size} IDs de séries alteradas encontrados.`);
     return Array.from(serieIds);
   } catch (error) {
-    logger.error(`Erro ao buscar IDs de séries: ${error}`);
+    logger.error(`Erro ao buscar IDs de séries alteradas: ${error}`);
     return [];
   }
 }
@@ -65,75 +65,70 @@ async function fetchAllSerieIdsForPeriod(startDate: string, endDate: string): Pr
 async function processSerieBatch(serieIds: number[], prisma: any): Promise<void> {
   for (const id of serieIds) {
     try {
-      const serieDetailsResponse = await tmdbApiWithRetry(() => tmdb.tvInfo({
+      const serieDetails = await tmdbApiWithRetry(() => tmdb.tvInfo({
         id,
-        append_to_response: 'credits,videos',
-      }));
-      const serieDetails = serieDetailsResponse as any;
+        language: 'pt-BR',
+        append_to_response: 'credits,videos,watch/providers',
+      })) as any;
 
-      const castData = serieDetails.credits?.cast?.filter((p: Cast) => p.id && p.name) ?? [];
-      const crewData = serieDetails.credits?.crew?.filter((p: Crew) => p.id && p.name && p.job) ?? [];
-      
-      const uniqueCast = castData.reduce((acc: Cast[], current: Cast) => {
-        if (!acc.find(item => item.id === current.id)) {
-          acc.push(current);
-        }
-        return acc;
-      }, [] as Cast[]);
+      const existingSerie = await prisma.serie.findUnique({ where: { tmdbId: id } });
 
-      const uniqueCrew = crewData.reduce((acc: Crew[], current: Crew) => {
-        if (!acc.find(item => item.id === current.id)) {
-          acc.push(current);
-        }
-        return acc;
-      }, [] as Crew[]);
-      
-      const creators = serieDetails.created_by?.filter((p: any) => p.id && p.name) ?? [];
+      const data: Prisma.SerieCreateInput = {
+        tmdbId: serieDetails.id,
+        name: serieDetails.name!,
+        originalName: serieDetails.original_name,
+        overview: serieDetails.overview,
+        firstAirDate: serieDetails.first_air_date ? new Date(serieDetails.first_air_date) : null,
+        lastAirDate: serieDetails.last_air_date ? new Date(serieDetails.last_air_date) : null,
+        numberOfEpisodes: serieDetails.number_of_episodes,
+        numberOfSeasons: serieDetails.number_of_seasons,
+        status: serieDetails.status,
+        homepage: serieDetails.homepage,
+        posterPath: serieDetails.poster_path,
+        backdropPath: serieDetails.backdrop_path,
+        voteAverage: serieDetails.vote_average,
+        voteCount: serieDetails.vote_count,
+        popularity: serieDetails.popularity,
+        type: serieDetails.type,
+        inProduction: serieDetails.in_production,
+        tagline: serieDetails.tagline,
+      };
 
-      await prisma.serie.upsert({
-        where: { tmdbId: id },
-        update: {
-            name: serieDetails.name,
-            posterPath: serieDetails.poster_path,
-        },
-        create: {
-            tmdbId: id,
-            name: serieDetails.name!,
-            originalName: serieDetails.original_name,
-            overview: serieDetails.overview,
-            firstAirDate: serieDetails.first_air_date ? new Date(serieDetails.first_air_date) : null,
-            lastAirDate: serieDetails.last_air_date ? new Date(serieDetails.last_air_date) : null,
-            numberOfEpisodes: serieDetails.number_of_episodes,
-            numberOfSeasons: serieDetails.number_of_seasons,
-            status: serieDetails.status,
-            homepage: serieDetails.homepage,
-            posterPath: serieDetails.poster_path,
-            backdropPath: serieDetails.backdrop_path,
-            voteAverage: serieDetails.vote_average,
-            voteCount: serieDetails.vote_count,
-            popularity: serieDetails.popularity,
-            // Relações
-            createdBy: { create: creators.map((creator: any) => ({ pessoa: { connectOrCreate: { where: { tmdbId: creator.id! }, create: { tmdbId: creator.id!, name: creator.name, profilePath: creator.profile_path } } } })) },
-            cast: { create: uniqueCast.map((ator: Cast) => ({ character: ator.character ?? 'N/A', order: ator.order, pessoa: { connectOrCreate: { where: { tmdbId: ator.id! }, create: { tmdbId: ator.id!, name: ator.name, profilePath: ator.profile_path } } } })) },
-            crew: { create: uniqueCrew.map((membro: Crew) => ({ job: membro.job!, department: membro.department, pessoa: { connectOrCreate: { where: { tmdbId: membro.id! }, create: { tmdbId: membro.id!, name: membro.name, profilePath: membro.profile_path } } } })) },
-            videos: { create: serieDetails.videos?.results?.map((video: any) => ({ tmdbId: video.id, key: video.key, name: video.name, site: video.site, type: video.type, official: video.official })) },
-            genres: { create: serieDetails.genres?.map((genre: any) => ({ genero: { connectOrCreate: { where: { tmdbId: genre.id! }, create: { tmdbId: genre.id!, name: genre.name! } } } })) },
-        },
-      });
-      logger.info(`✅ Série [${id}] "${serieDetails.name}" sincronizada.`);
+      if (existingSerie) {
+        const updatedSerie = await prisma.serie.update({
+          where: { tmdbId: id },
+          data,
+        });
+        logger.info(`🔄 Série [${id}] "${updatedSerie.name}" atualizada.`);
+        broadcast({ type: 'UPDATED_ITEM', mediaType: 'serie', data: updatedSerie });
+      } else {
+        const newSerie = await prisma.serie.create({ data });
+        logger.info(`✅ Série [${id}] "${newSerie.name}" criada.`);
+        broadcast({ type: 'NEW_ITEM', mediaType: 'serie', data: newSerie });
+      }
+
     } catch (error) {
       logger.error(`❌ Erro ao processar a série ID ${id}. Pulando: ${error}`);
     }
   }
 }
 
-export async function syncSeries(startDate: string, endDate: string, prisma: any) {
-  const allSerieIds = await fetchAllSerieIdsForPeriod(startDate, endDate);
+export async function syncSeries(prisma: any) {
+  const threeDaysAgo = new Date();
+  threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
+  const startDate = threeDaysAgo.toISOString().split('T')[0];
+
+  const changedSerieIds = await fetchChangedTvIds(startDate);
   const batchSize = 10;
 
-  for (let i = 0; i < allSerieIds.length; i += batchSize) {
-    const batch = allSerieIds.slice(i, i + batchSize);
-    logger.info(`Processando lote de séries: ${i + 1}-${Math.min(i + batchSize, allSerieIds.length)} de ${allSerieIds.length}`);
+  if (changedSerieIds.length === 0) {
+    logger.info('Nenhuma série para atualizar.');
+    return;
+  }
+
+  for (let i = 0; i < changedSerieIds.length; i += batchSize) {
+    const batch = changedSerieIds.slice(i, i + batchSize);
+    logger.info(`Processando lote de séries: ${i + 1}-${Math.min(i + batchSize, changedSerieIds.length)} de ${changedSerieIds.length}`);
     await processSerieBatch(batch, prisma);
   }
 }

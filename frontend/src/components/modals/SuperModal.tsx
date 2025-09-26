@@ -31,6 +31,10 @@ import AnimeModalContent from './super-modal/AnimeModalContent';
 import FilmeModalContent from './super-modal/FilmeModalContent';
 import SerieModalContent from './super-modal/SerieModalContent';
 import JogoModalContent from './super-modal/JogoModalContent';
+import FilmeEditForm from './super-modal/FilmeEditForm';
+import SerieEditForm from './super-modal/SerieEditForm';
+import AnimeEditForm from './super-modal/AnimeEditForm';
+import JogoEditForm from './super-modal/JogoEditForm';
 import type { Filme, Serie, Jogo, Anime, Character, CastMember, StaffMember, Plataforma, Comentario } from '@/types';
 
 const SuperModal: React.FC = () => {
@@ -40,7 +44,7 @@ const SuperModal: React.FC = () => {
   const [comentarios, setComentarios] = useState<Comentario[]>([]);
   const [newComment, setNewComment] = useState('');
   const [isEditMode, setIsEditMode] = useState(false);
-  const [details, setDetails] = useState<any>(null);
+  const [details, setDetails] = useState<Filme | Serie | Anime | Jogo | null>(null);
   const [isLoadingDetails, setIsLoadingDetails] = useState(true);
 
   const { midia, type } = superModalData;
@@ -62,6 +66,8 @@ const SuperModal: React.FC = () => {
 
   useEffect(() => {
     if (isSuperModalOpen && midia) {
+      // Reset edit mode when modal opens
+      setIsEditMode(false);
       loadAdditionalData();
     }
   }, [isSuperModalOpen, midia, loadAdditionalData]);
@@ -110,6 +116,15 @@ const SuperModal: React.FC = () => {
     };
   }, [isSuperModalOpen, closeSuperModal, handleClose]);
 
+  const handleSave = (updatedMedia: Filme | Serie | Anime | Jogo) => {
+    setDetails(updatedMedia);
+    setIsEditMode(false);
+  };
+
+  const handleCancel = () => {
+    setIsEditMode(false);
+  };
+
   const handleInteraction = (action: keyof typeof userInteraction) => {
     setUserInteraction((prev) => ({ ...prev, [action]: !prev[action] }));
   };
@@ -141,8 +156,22 @@ const SuperModal: React.FC = () => {
     }
 
     if (!details) {
-      // Opcional: mostrar uma mensagem de erro se os detalhes não puderem ser carregados
       return <div className="text-center p-8 text-destructive">Erro ao carregar detalhes.</div>;
+    }
+
+    if (isEditMode) {
+        switch (type) {
+            case 'filme':
+                return <FilmeEditForm filme={details as Filme} onSave={handleSave} onCancel={handleCancel} />;
+            case 'serie':
+                return <SerieEditForm serie={details as Serie} onSave={handleSave} onCancel={handleCancel} />;
+            case 'anime':
+                return <AnimeEditForm anime={details as Anime} onSave={handleSave} onCancel={handleCancel} />;
+            case 'jogo':
+                return <JogoEditForm jogo={details as Jogo} onSave={handleSave} onCancel={handleCancel} />;
+            default:
+                return <div className="text-center p-8">Modo de edição não disponível para este tipo de mídia.</div>;
+        }
     }
 
     // Passa o objeto de detalhes completo para os componentes filhos

@@ -9,7 +9,7 @@ import PlatformIcon from '@/components/ui/PlatformIcons';
 import type { Jogo, CalendarModalData } from '@/types';
 
 interface JogoModalContentProps {
-  jogo: any; // Recebe o objeto de detalhes completo da API do IGDB
+  jogo: Jogo; // Recebe o objeto de detalhes completo da API do IGDB
   openCalendarModal: (data: CalendarModalData) => void;
 }
 
@@ -17,38 +17,27 @@ const JogoModalContent: React.FC<JogoModalContentProps> = ({ jogo, openCalendarM
 
   const trailerKey = jogo.trailer_key;
 
+  const storeIds: { [key: number]: string } = {
+    13: 'Steam',
+    16: 'Epic Games',
+    17: 'GOG',
+    // Adicionar outros IDs de loja aqui, ex: PlayStation, Xbox, se disponíveis
+  };
+
   return (
     <div className="space-y-6">
       {/* Botões de Ação */}
-      <div className="flex flex-wrap gap-3 mb-6">
-        {jogo.websites?.map((site: any) => {
-          let icon = null;
-          let label = '';
-          switch (site.category) {
-            case 1: // Official
-              icon = <Play className="h-5 w-5 mr-2" />;
-              label = 'Site Oficial';
-              break;
-            case 13: // Steam
-              icon = <Play className="h-5 w-5 mr-2" />;
-              label = 'Steam';
-              break;
-            case 16: // Epic Games Store
-              icon = <Play className="h-5 w-5 mr-2" />;
-              label = 'Epic Games';
-              break;
-            // Adicione mais casos conforme necessário para outras plataformas de compra/download
-            default:
-              return null;
-          }
-          return (
-            <Button key={site.id} asChild>
-              <a href={site.url} target="_blank" rel="noopener noreferrer">
-                {icon}{label}
+      <div className="flex flex-wrap items-center gap-4 mb-6">
+        <div className='space-y-2'>
+          <p className='text-sm text-muted-foreground'>Disponível para compra:</p>
+          <div className="flex flex-wrap gap-3">
+            {jogo.websites?.filter((site: Website) => storeIds[site.category]).map((site: Website) => (
+              <a key={site.url} href={site.url} target="_blank" rel="noopener noreferrer" title={`Comprar na ${storeIds[site.category]}`}>
+                <PlatformIcon platform={storeIds[site.category]} className="h-8 w-8 hover:scale-110 transition-transform" />
               </a>
-            </Button>
-          );
-        })}
+            ))}
+          </div>
+        </div>
         <Button variant="muted" onClick={() => openCalendarModal({ midia: jogo, type: 'jogo' })}>
           <Calendar className="h-5 w-5 mr-2" />Adicionar ao Calendário
         </Button>
@@ -98,7 +87,7 @@ const JogoModalContent: React.FC<JogoModalContentProps> = ({ jogo, openCalendarM
           <div className="flex items-center gap-2">
             <span className="font-semibold w-24 flex-shrink-0">Plataformas:</span>
             <div className="flex flex-wrap gap-1">
-              {jogo.plataformas_api.map((p: any) => (
+              {jogo.plataformas_api.map((p: Plataforma) => (
                 <span key={p.nome} className="bg-muted px-2 py-1 rounded-full text-xs text-muted-foreground">
                   {p.nome}
                 </span>
@@ -110,7 +99,7 @@ const JogoModalContent: React.FC<JogoModalContentProps> = ({ jogo, openCalendarM
           <div className="flex items-center gap-2">
             <span className="font-semibold w-24 flex-shrink-0">Gêneros:</span>
             <div className="flex flex-wrap gap-1">
-              {jogo.generos_api.map((g: any) => (
+              {jogo.generos_api.map((g: Genre) => (
                 <span key={g} className="bg-muted px-2 py-1 rounded-full text-xs text-muted-foreground">
                   {g}
                 </span>
@@ -122,7 +111,7 @@ const JogoModalContent: React.FC<JogoModalContentProps> = ({ jogo, openCalendarM
           <div className="flex items-center gap-2">
             <span className="font-semibold w-24 flex-shrink-0">Temas:</span>
             <div className="flex flex-wrap gap-1">
-              {jogo.temas.map((t: any) => (
+              {jogo.temas.map((t: string) => (
                 <span key={t} className="bg-muted px-2 py-1 rounded-full text-xs text-muted-foreground">
                   {t}
                 </span>
