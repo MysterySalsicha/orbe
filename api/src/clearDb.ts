@@ -70,8 +70,6 @@ async function clearDatabase() {
     await prisma.user.deleteMany({});
     await prisma.pessoa.deleteMany({});
     await prisma.genero.deleteMany({});
-    await prisma.animeGenero.deleteMany({});
-    await prisma.jogoGenero.deleteMany({});
     await prisma.company.deleteMany({});
     await prisma.jogoCompany.deleteMany({});
     await prisma.country.deleteMany({});

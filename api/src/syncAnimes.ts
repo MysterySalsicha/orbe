@@ -2,7 +2,7 @@ import * as path from 'path';
 import * as dotenv from 'dotenv';
 dotenv.config({ path: path.resolve(__dirname, '../.env') });
 
-import { PrismaClient, Prisma } from '@prisma/client';
+import { PrismaClient } from '@prisma/client';
 import { anilistApi } from './clients';
 import { logger } from './logger';
 
@@ -62,7 +62,7 @@ async function fetchAllAnimeIdsForSeasons(year: number, seasons: string[]): Prom
 
                 hasNextPage = pageData.pageInfo.hasNextPage;
                 page++;
-            await delay(1000);
+                await delay(1000);
             } catch (error: any) {
                 const errorMessage = error.response ? JSON.stringify(error.response.data) : error.message;
                 logger.error(`Erro ao buscar animes para ${season} ${year}: ${errorMessage}`);
@@ -74,7 +74,6 @@ async function fetchAllAnimeIdsForSeasons(year: number, seasons: string[]): Prom
     logger.info(`Busca de IDs de animes concluída.`);
     return seasonAnimeIds;
 }
-
 
 async function processAnimeBatch(animeIds: number[]): Promise<void> {
     const detailQuery = `
@@ -111,10 +110,17 @@ async function processAnimeBatch(animeIds: number[]): Promise<void> {
             edges {
               role
               node { id name { full } image { large } }
-              voiceActors(language: JAPANESE, sort: RELEVANCE) {
+              voiceActorsJapanese: voiceActors(language: JAPANESE, sort: RELEVANCE) {
                 id
                 name { full }
                 image { large }
+                language: languageV2
+              }
+              voiceActorsBrazilian: voiceActors(language: PORTUGUESE, sort: RELEVANCE) {
+                id
+                name { full }
+                image { large }
+                language: languageV2
               }
             }
           }
@@ -128,6 +134,12 @@ async function processAnimeBatch(animeIds: number[]): Promise<void> {
           externalLinks { id url site }
           rankings { id rank type context year allTime }
           airingSchedule(notYetAired: true, perPage: 5) { nodes { airingAt episode } }
+          relations {
+            edges {
+              relationType
+              node { id }
+            }
+          }
         }
       }
     `;
@@ -175,42 +187,121 @@ async function processAnimeBatch(animeIds: number[]): Promise<void> {
                 isAdult: anime.isAdult,
             };
 
-            const charactersWithVoiceActors = anime.characters?.edges?.filter((edge: any) => edge.voiceActors && edge.voiceActors.length > 0);
-            if (!charactersWithVoiceActors || charactersWithVoiceActors.length === 0) {
-                logger.warn(`Anime ID ${id} não possui dados de personagens com dublador na API.`);
-            }
+            const staffToCreate = anime.staff?.edges?.map((edge: any) => ({
+                role: edge.role,
+                staff: {
+                    connectOrCreate: {
+                        where: { anilistId: edge.node.id },
+                        create: { anilistId: edge.node.id, name: edge.node.name.full, image: edge.node.image.large }
+                    }
+                }
+            })) || [];
 
-            const staffWithData = anime.staff?.edges;
-            if (!staffWithData || staffWithData.length === 0) {
-                logger.warn(`Anime ID ${id} não possui dados de equipe na API.`);
-            }
+            const relatedAnimeIds = anime.relations?.edges.map((edge: any) => edge.node.id) || [];
+            const existingRelatedAnimes = await prisma.anime.findMany({
+                where: { anilistId: { in: relatedAnimeIds } },
+                select: { anilistId: true }
+            });
+            const existingRelatedAnilistIds = new Set(existingRelatedAnimes.map((a: any) => a.anilistId));
+
+            const relationsToCreate = anime.relations?.edges
+                .filter((edge: any) => existingRelatedAnilistIds.has(edge.node.id))
+                .map((edge: any) => ({
+                    relationType: edge.relationType,
+                    relatedAnime: {
+                        connect: { anilistId: edge.node.id }
+                    }
+                }));
 
             const relationalData = {
                 genres: { create: anime.genres?.map((name: string) => ({ genero: { connectOrCreate: { where: { name }, create: { name } } } })) },
                 tags: { create: anime.tags?.map((tag: any) => ({ tag: { connectOrCreate: { where: { id: tag.id }, create: { id: tag.id, name: tag.name, description: tag.description, category: tag.category, isAdult: tag.isAdult } } } })) },
                 studios: { create: anime.studios?.nodes?.map((studio: any) => ({ studio: { connectOrCreate: { where: { anilistId: studio.id }, create: { anilistId: studio.id, name: studio.name } } } })) },
-                characters: {
-                    create: charactersWithVoiceActors?.map((edge: any) => {
-                        const mainVoiceActor = edge.voiceActors[0];
-                        return {
-                            role: edge.role,
-                            character: { connectOrCreate: { where: { anilistId: edge.node.id }, create: { anilistId: edge.node.id, name: edge.node.name.full, image: edge.node.image.large } } },
-                            dublador: { connectOrCreate: { where: { anilistId: mainVoiceActor.id }, create: { anilistId: mainVoiceActor.id, name: mainVoiceActor.name.full, image: mainVoiceActor.image.large, language: 'JAPANESE' } } }
-                        };
-                    })
-                },
-                staff: { create: staffWithData?.map((edge: any) => ({ role: edge.role, staff: { connectOrCreate: { where: { anilistId: edge.node.id }, create: { anilistId: edge.node.id, name: edge.node.name.full, image: edge.node.image.large } } } })) },
                 streamingLinks: { create: anime.streamingEpisodes?.map((link: any) => ({ url: link.url, site: link.site, thumbnail: link.thumbnail })) },
                 externalLinks: { create: anime.externalLinks?.map((link: any) => ({ url: link.url, site: link.site })) },
                 ranks: { create: anime.rankings?.map((rank: any) => ({ rank: rank.rank, type: rank.type, context: rank.context, year: rank.year, allTime: rank.allTime })) },
                 airingSchedule: { create: anime.airingSchedule?.nodes?.map((schedule: any) => ({ airingAt: new Date(schedule.airingAt * 1000), episode: schedule.episode })) },
+                staff: { create: staffToCreate },
+                sourceRelations: { create: relationsToCreate },
             };
 
-            await prisma.anime.upsert({
-                where: { anilistId: id },
-                update: scalarData,
-                create: { ...scalarData, ...relationalData },
-            });
+            const existingAnime = await prisma.anime.findUnique({ where: { anilistId: id } });
+
+            if (existingAnime) {
+                await prisma.anime.update({
+                    where: { anilistId: id },
+                    data: {
+                        ...scalarData,
+                        genres: { deleteMany: {}, create: relationalData.genres.create },
+                        tags: { deleteMany: {}, create: relationalData.tags.create },
+                        studios: { deleteMany: {}, create: relationalData.studios.create },
+                        staff: { deleteMany: {}, create: relationalData.staff.create },
+                        streamingLinks: { deleteMany: {}, create: relationalData.streamingLinks.create },
+                        externalLinks: { deleteMany: {}, create: relationalData.externalLinks.create },
+                        ranks: { deleteMany: {}, create: relationalData.ranks.create },
+                        airingSchedule: { deleteMany: {}, create: relationalData.airingSchedule.create },
+                        sourceRelations: { deleteMany: {}, create: relationsToCreate },
+                    },
+                });
+            } else {
+                await prisma.anime.create({
+                    data: {
+                        ...scalarData,
+                        ...relationalData,
+                    },
+                });
+            }
+
+            // Handle characters separately
+            if (anime.characters?.edges) {
+                const existingCharLinks = await prisma.animeCharacter.findMany({
+                    where: { anime: { anilistId: id } },
+                    select: { id: true }
+                });
+                if (existingCharLinks.length > 0) {
+                    const idsToDelete = existingCharLinks.map(link => link.id);
+                    await prisma.animeCharacterVoiceActor.deleteMany({
+                        where: { animeCharacterId: { in: idsToDelete } }
+                    });
+                    await prisma.animeCharacter.deleteMany({
+                        where: { id: { in: idsToDelete } }
+                    });
+                }
+
+                for (const edge of anime.characters.edges) {
+                    const personagem = await prisma.personagem.upsert({
+                        where: { anilistId: edge.node.id },
+                        update: { name: edge.node.name.full, image: edge.node.image.large },
+                        create: { anilistId: edge.node.id, name: edge.node.name.full, image: edge.node.image.large },
+                    });
+
+                    const combinedVAs = [...(edge.voiceActorsJapanese || []), ...(edge.voiceActorsBrazilian || [])];
+                    const uniqueVAs = Array.from(new Map(combinedVAs.map(va => [va.id, va])).values());
+
+                    await prisma.animeCharacter.create({
+                        data: {
+                            role: edge.role,
+                            anime: { connect: { anilistId: id } },
+                            character: { connect: { id: personagem.id } },
+                            voiceActors: {
+                                create: uniqueVAs.map((va: any) => ({
+                                    dublador: {
+                                        connectOrCreate: {
+                                            where: { anilistId: va.id },
+                                            create: {
+                                                anilistId: va.id,
+                                                name: va.name.full,
+                                                image: va.image.large,
+                                                language: va.language,
+                                            },
+                                        },
+                                    },
+                                })),
+                            },
+                        },
+                    });
+                }
+            }
 
             logger.info(`✅ Anime [${id}] "${anime.title.romaji}" sincronizado.`);
 

@@ -311,7 +311,7 @@ model Dublador {
   name                 String
   language             String
   image                String?
-  personagens_dublados AnimeCharacter[]
+  personagens_dublados AnimeCharacterVoiceActor[]
 }
 
 model MembroStaff {
@@ -615,15 +615,24 @@ model AnimeOnStudio {
 }
 
 model AnimeCharacter {
+  id          Int        @id @default(autoincrement())
   anime       Anime      @relation(fields: [animeId], references: [id])
   animeId     Int
   character   Personagem @relation(fields: [characterId], references: [id])
   characterId Int
-  dublador    Dublador   @relation(fields: [dubladorId], references: [id])
-  dubladorId  Int
   role        String
+  voiceActors AnimeCharacterVoiceActor[]
 
-  @@id([animeId, characterId, dubladorId])
+  @@unique([animeId, characterId, role])
+}
+
+model AnimeCharacterVoiceActor {
+  animeCharacter   AnimeCharacter @relation(fields: [animeCharacterId], references: [id])
+  animeCharacterId Int
+  dublador         Dublador       @relation(fields: [dubladorId], references: [id])
+  dubladorId       Int
+
+  @@id([animeCharacterId, dubladorId])
 }
 
 model AnimeStaff {
