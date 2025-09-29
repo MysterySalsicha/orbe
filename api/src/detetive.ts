@@ -1,4 +1,4 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, Prisma } from '@prisma/client';
 import { logger } from './logger';
 import axios from 'axios';
 
@@ -46,11 +46,11 @@ export async function runDetetiveDigital() {
     const moviesToValidate = await prisma.filme.findMany({
       where: {
         ingresso_link: null,
-        releaseDate: { 
-          lte: twoMonthsFromNow, // Filmes que lançam em até 2 meses
-          gte: new Date(new Date().setDate(new Date().getDate() - 30)), // Ou que lançaram no último mês
+        data_lancamento_api: {
+          lte: twoMonthsFromNow,
+          gte: new Date(new Date().setDate(new Date().getDate() - 30)),
         },
-      },
+      } as Prisma.FilmeWhereInput,
       select: { id: true, tmdbId: true, title: true, releaseDate: true },
     });
 

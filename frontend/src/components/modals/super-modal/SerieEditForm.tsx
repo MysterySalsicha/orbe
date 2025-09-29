@@ -40,45 +40,45 @@ const SerieEditForm: React.FC<SerieEditFormProps> = ({ serie, onSave, onCancel }
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <label htmlFor="name" className="block text-sm font-medium text-muted-foreground">Nome</label>
+          <label htmlFor="titulo_curado" className="block text-sm font-medium text-muted-foreground">Nome</label>
           <input
             type="text"
-            name="name"
-            id="name"
-            value={formData.name || ''}
+            name="titulo_curado"
+            id="titulo_curado"
+            value={formData.titulo_curado || ''}
             onChange={handleChange}
             className="mt-1 block w-full bg-input border border-border rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
           />
         </div>
         <div>
-          <label htmlFor="originalName" className="block text-sm font-medium text-muted-foreground">Nome Original</label>
+          <label htmlFor="titulo_api" className="block text-sm font-medium text-muted-foreground">Nome Original</label>
           <input
             type="text"
-            name="originalName"
-            id="originalName"
-            value={formData.originalName || ''}
+            name="titulo_api"
+            id="titulo_api"
+            value={formData.titulo_api || ''}
             onChange={handleChange}
             className="mt-1 block w-full bg-input border border-border rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
           />
         </div>
         <div>
-          <label htmlFor="numberOfSeasons" className="block text-sm font-medium text-muted-foreground">Nº de Temporadas</label>
+          <label htmlFor="numero_temporadas" className="block text-sm font-medium text-muted-foreground">Nº de Temporadas</label>
           <input
             type="number"
-            name="numberOfSeasons"
-            id="numberOfSeasons"
-            value={formData.numberOfSeasons || 0}
+            name="numero_temporadas"
+            id="numero_temporadas"
+            value={formData.numero_temporadas || 0}
             onChange={handleChange}
             className="mt-1 block w-full bg-input border border-border rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
           />
         </div>
         <div>
-          <label htmlFor="numberOfEpisodes" className="block text-sm font-medium text-muted-foreground">Nº Total de Episódios</label>
+          <label htmlFor="numero_episodios" className="block text-sm font-medium text-muted-foreground">Nº Total de Episódios</label>
           <input
             type="number"
-            name="numberOfEpisodes"
-            id="numberOfEpisodes"
-            value={formData.numberOfEpisodes || 0}
+            name="numero_episodios"
+            id="numero_episodios"
+            value={formData.numero_episodios || 0}
             onChange={handleChange}
             className="mt-1 block w-full bg-input border border-border rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
           />
@@ -86,12 +86,12 @@ const SerieEditForm: React.FC<SerieEditFormProps> = ({ serie, onSave, onCancel }
       </div>
 
       <div>
-        <label htmlFor="overview" className="block text-sm font-medium text-muted-foreground">Sinopse</label>
+        <label htmlFor="sinopse_curada" className="block text-sm font-medium text-muted-foreground">Sinopse</label>
         <textarea
-          name="overview"
-          id="overview"
+          name="sinopse_curada"
+          id="sinopse_curada"
           rows={5}
-          value={formData.overview || ''}
+          value={formData.sinopse_curada || ''}
           onChange={handleChange}
           className="mt-1 block w-full bg-input border border-border rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
         />

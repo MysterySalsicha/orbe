@@ -41,23 +41,23 @@ const FilmeEditForm: React.FC<FilmeEditFormProps> = ({ filme, onSave, onCancel }
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <label htmlFor="title" className="block text-sm font-medium text-muted-foreground">Título</label>
+          <label htmlFor="titulo_curado" className="block text-sm font-medium text-muted-foreground">Título</label>
           <input
             type="text"
-            name="title"
-            id="title"
-            value={formData.title || ''}
+            name="titulo_curado"
+            id="titulo_curado"
+            value={formData.titulo_curado || ''}
             onChange={handleChange}
             className="mt-1 block w-full bg-input border border-border rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
           />
         </div>
         <div>
-          <label htmlFor="originalTitle" className="block text-sm font-medium text-muted-foreground">Título Original</label>
+          <label htmlFor="titulo_api" className="block text-sm font-medium text-muted-foreground">Título Original</label>
           <input
             type="text"
-            name="originalTitle"
-            id="originalTitle"
-            value={formData.originalTitle || ''}
+            name="titulo_api"
+            id="titulo_api"
+            value={formData.titulo_api || ''}
             onChange={handleChange}
             className="mt-1 block w-full bg-input border border-border rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
           />
@@ -65,24 +65,24 @@ const FilmeEditForm: React.FC<FilmeEditFormProps> = ({ filme, onSave, onCancel }
       </div>
 
       <div>
-        <label htmlFor="overview" className="block text-sm font-medium text-muted-foreground">Sinopse</label>
+        <label htmlFor="sinopse_curada" className="block text-sm font-medium text-muted-foreground">Sinopse</label>
         <textarea
-          name="overview"
-          id="overview"
+          name="sinopse_curada"
+          id="sinopse_curada"
           rows={5}
-          value={formData.overview || ''}
+          value={formData.sinopse_curada || ''}
           onChange={handleChange}
           className="mt-1 block w-full bg-input border border-border rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
         />
       </div>
 
       <div>
-        <label htmlFor="posterPath" className="block text-sm font-medium text-muted-foreground">URL do Pôster</label>
+        <label htmlFor="poster_curado" className="block text-sm font-medium text-muted-foreground">URL do Pôster</label>
         <input
           type="text"
-          name="posterPath"
-          id="posterPath"
-          value={formData.posterPath || ''}
+          name="poster_curado"
+          id="poster_curado"
+          value={formData.poster_curado || ''}
           onChange={handleChange}
           className="mt-1 block w-full bg-input border border-border rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
         />

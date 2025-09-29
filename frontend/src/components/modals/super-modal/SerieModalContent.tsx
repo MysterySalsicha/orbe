@@ -1,10 +1,10 @@
 'use client';
 
 import Image from 'next/image';
-import { Play, Calendar } from 'lucide-react';
+import { Calendar } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import PlatformIcon from '@/components/ui/PlatformIcons';
-import type { Serie, CastMember, CalendarModalData } from '@/types';
+import type { Serie, CastMember, CalendarModalData, Video, Creator, Temporada } from '@/types';
 
 interface SerieModalContentProps {
   serie: Serie; // Recebe o objeto de detalhes completo da API
@@ -19,7 +19,7 @@ const SerieModalContent: React.FC<SerieModalContentProps> = ({ serie, openCalend
   );
   const trailerKey = trailer ? trailer.key : serie.videos?.[0]?.key;
 
-  const getImageUrl = (path: string | null) => {
+  const getImageUrl = (path: string | null | undefined) => {
     if (!path) return '/placeholder-avatar.jpg';
     return path; // A URL completa já vem do mapper
   };
@@ -44,7 +44,7 @@ const SerieModalContent: React.FC<SerieModalContentProps> = ({ serie, openCalend
           </div>
         )}
 
-        <Button variant="muted" onClick={() => openCalendarModal({ midia: serie, type: 'serie' })}>
+        <Button variant="outline" onClick={() => openCalendarModal({ midia: serie, type: 'serie' })}>
           <Calendar className="h-5 w-5 mr-2" />Adicionar ao Calendário
         </Button>
       </div>

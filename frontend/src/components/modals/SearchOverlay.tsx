@@ -1,14 +1,26 @@
 'use client';
 
-import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import { useState, useMemo, useRef } from 'react';
 import { X, Search } from 'lucide-react';
 import { useAppStore } from '@/stores/appStore';
 import MidiaCard from '@/components/media/MidiaCard';
-import type { SearchResultItem, Filme, Serie, Anime, Jogo } from '@/types';
-import { realApi } from '@/data/realApi';
+import type { SearchResultItem } from '@/types';
+
 
 const SearchOverlay: React.FC = () => {
   const { isSearchOpen, closeSearch } = useAppStore();
+
+  type CategoryID = 'todos' | 'filmes' | 'series' | 'animes' | 'jogos';
+
+  const categories: { id: CategoryID; label: string }[] = [
+    { id: 'todos', label: 'Todos' },
+    { id: 'filmes', label: 'Filmes' },
+    { id: 'series', label: 'Séries' },
+    { id: 'animes', label: 'Animes' },
+    { id: 'jogos', label: 'Jogos' },
+  ];
+
+
 
   const handleClose = () => {
     setSearchQuery('');
@@ -20,9 +32,9 @@ const SearchOverlay: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<'todos' | 'filmes' | 'series' | 'animes' | 'jogos'>('todos');
   const [searchResults, setSearchResults] = useState<SearchResultItem[]>([]);
-  const [trendingContent, setTrendingContent] = useState<SearchResultItem[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [focusedIndex, setFocusedIndex] = useState(-1);
+  const [trendingContent] = useState<SearchResultItem[]>([]);
+  const [isLoading] = useState(false);
+  const [focusedIndex] = useState(-1);
   const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
 
   const displayContent = useMemo(() => {
@@ -49,14 +61,7 @@ const SearchOverlay: React.FC = () => {
 
   }, [displayContent, selectedCategory]);
 
-  const allItems = useMemo(() => {
-    const filmesItems: SearchResultItem[] = groupedContent.filmes.length > 0 ? groupedContent.filmes : [];
-    const seriesItems: SearchResultItem[] = groupedContent.series.length > 0 ? groupedContent.series : [];
-    const animesItems: SearchResultItem[] = groupedContent.animes.length > 0 ? groupedContent.animes : [];
-    const jogosItems: SearchResultItem[] = groupedContent.jogos.length > 0 ? groupedContent.jogos : [];
 
-    return filmesItems.concat(seriesItems, animesItems, jogosItems);
-  }, [groupedContent]);
 
   const totalResults = Object.values(groupedContent).reduce((acc, group) => acc + group.length, 0);
 
@@ -110,16 +115,7 @@ const SearchOverlay: React.FC = () => {
                 ))}
               </div>
             </div>
-            <div className="space-y-3">
-              <h3 className="text-sm font-medium orbe-text-secondary">{searchQuery.trim() ? 'Sugestões' : 'Buscas Populares da Semana'}</h3>
-              <div className="flex flex-wrap gap-2">
-                {popularSearches.map((search) => (
-                  <button key={search} onClick={() => handlePopularSearchClick(search)} className="px-3 py-2 bg-muted orbe-text-primary hover:bg-muted/80 rounded-md text-sm transition-colors">
-                    {search}
-                  </button>
-                ))}
-              </div>
-            </div>
+
           </div>
           <div className="space-y-6 max-h-[75vh] overflow-y-auto scrollbar-hide pr-4 -mr-4">
             <div className="flex justify-between items-center">

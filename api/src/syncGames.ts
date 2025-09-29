@@ -1,9 +1,10 @@
-process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
+import * as path from 'path';
+import * as dotenv from 'dotenv';
+dotenv.config({ path: path.resolve(__dirname, '../.env') });
 
 import { PrismaClient } from '@prisma/client';
 import { igdbApi, getIgdbAccessToken } from './clients';
 import { logger } from './logger';
-import { broadcast } from './index';
 
 const prisma = new PrismaClient();
 
@@ -33,13 +34,17 @@ async function igdbApiWithRetry<T>(fn: () => Promise<T>, maxRetries = 5, initial
     throw new Error("Número máximo de tentativas atingido");
 }
 
-async function fetchAndSyncEvents(prisma: PrismaClient): Promise<void> {
-    logger.info('Buscando e sincronizando eventos da IGDB...');
+async function fetchAndSyncEvents(prisma: PrismaClient, startDateStr: string, endDateStr: string): Promise<any[]> {
+    logger.info(`Buscando e sincronizando eventos da IGDB entre ${startDateStr} e ${endDateStr}...`);
+    const startDate = Math.floor(new Date(startDateStr).getTime() / 1000);
+    const endDate = Math.floor(new Date(endDateStr).getTime() / 1000);
+
     const query = `
-        fields name, description, start_time, end_time, url;
-        where start_time > ${Math.floor(Date.now() / 1000) - 60 * 60 * 24 * 30}; // Eventos do último mês
+        fields name, description, start_time, end_time, games;
+        where start_time >= ${startDate} & start_time <= ${endDate};
         limit 50;
     `;
+    logger.info(`Query IGDB para eventos: ${query}`);
     try {
         const response = await igdbApiWithRetry(() => igdbApi.post('/events', query));
         const events = response.data;
@@ -52,7 +57,6 @@ async function fetchAndSyncEvents(prisma: PrismaClient): Promise<void> {
                     description: event.description,
                     start_time: event.start_time ? new Date(event.start_time * 1000) : null,
                     end_time: event.end_time ? new Date(event.end_time * 1000) : null,
-                    url: event.url,
                 },
                 create: {
                     igdbId: event.id,
@@ -60,13 +64,14 @@ async function fetchAndSyncEvents(prisma: PrismaClient): Promise<void> {
                     description: event.description,
                     start_time: event.start_time ? new Date(event.start_time * 1000) : null,
                     end_time: event.end_time ? new Date(event.end_time * 1000) : null,
-                    url: event.url,
                 },
             });
             logger.info(`✅ Evento [${event.id}] "${event.name}" sincronizado.`);
         }
+        return events;
     } catch (error: any) {
-        logger.error(`Erro ao buscar e sincronizar eventos: ${error.message || error}`);
+        logger.error(`Erro ao buscar e sincronizar eventos: ${error.response ? JSON.stringify(error.response.data) : error.message || error}`);
+        return [];
     }
 }
 
@@ -74,7 +79,19 @@ async function processGameBatch(gameIds: number[], prisma: PrismaClient, eventId
     if (gameIds.length === 0) return;
 
     const query = `
-        fields name, summary, cover.url, first_release_date, rating, genres.name, involved_companies.company.name, involved_companies.developer, involved_companies.publisher, platforms.name, themes.name, player_perspectives.name, screenshots.url, artworks.url, websites.url, websites.category, release_dates.date, release_dates.region;
+        fields name, summary, cover.url, first_release_date, rating, 
+               genres.name, genres.id, 
+               involved_companies.company.name, involved_companies.company.id, involved_companies.developer, involved_companies.publisher, 
+               platforms.name, platforms.id, 
+               themes.name, themes.id, 
+               player_perspectives.name, player_perspectives.id, 
+               screenshots.url, screenshots.id, 
+               artworks.url, artworks.id, 
+               websites.url, websites.category, websites.id,
+               videos.name, videos.video_id,
+               game_modes.name, game_modes.slug, game_modes.id,
+               game_engines.name, game_engines.slug, game_engines.id,
+               release_dates.date, release_dates.region;
         where id = (${gameIds.join(',')});
         limit ${gameIds.length};
     `;
@@ -85,7 +102,7 @@ async function processGameBatch(gameIds: number[], prisma: PrismaClient, eventId
 
         for (const game of games) {
             try {
-                const brReleaseDate = game.release_dates?.find((rd: any) => rd.region === 2)?.date; // Região 2 é Brasil
+                const brReleaseDate = game.release_dates?.find((rd: any) => rd.region === 2)?.date;
                 const firstReleaseDate = brReleaseDate ? new Date(brReleaseDate * 1000) : (game.first_release_date ? new Date(game.first_release_date * 1000) : null);
                 const coverUrl = game.cover?.url ? `https:${game.cover.url.replace('t_thumb', 't_cover_big')}` : null;
 
@@ -95,67 +112,39 @@ async function processGameBatch(gameIds: number[], prisma: PrismaClient, eventId
                     cover: coverUrl,
                     firstReleaseDate: firstReleaseDate,
                     rating: game.rating,
-                    eventId: eventId, // Associar ao evento
+                    ...(eventId && { event: { connect: { igdbId: eventId } } })
                 };
 
                 const createData = {
                     ...updateData,
                     igdbId: game.id,
-                    genres: {
-                        create: game.genres?.map((genre: any) => ({
-                            genero: { connectOrCreate: { where: { name: genre.name }, create: { name: genre.name } } }
-                        })) ?? []
-                    },
-                    companies: {
-                        create: game.involved_companies?.map((inv: any) => ({
-                            developer: inv.developer,
-                            publisher: inv.publisher,
-                            company: {
-                                connectOrCreate: {
-                                    where: { name: inv.company.name },
-                                    create: { name: inv.company.name }
-                                }
-                            }
-                        })) ?? []
-                    },
-                    platforms: {
-                        create: game.platforms?.map((platform: any) => ({
-                            plataforma: { connectOrCreate: { where: { name: platform.name }, create: { name: platform.name } } }
-                        })) ?? []
-                    },
-                    themes: {
-                        create: game.themes?.map((theme: any) => ({
-                            theme: { connectOrCreate: { where: { name: theme.name }, create: { name: theme.name } } }
-                        })) ?? []
-                    },
-                    playerPerspectives: {
-                        create: game.player_perspectives?.map((persp: any) => ({
-                            perspective: { connectOrCreate: { where: { name: persp.name }, create: { name: persp.name } } }
-                        })) ?? []
-                    },
-                    screenshots: {
-                        create: game.screenshots?.map((ss: any) => ({ url: `https:${ss.url.replace('t_thumb', 't_screenshot_huge')}` })) ?? []
-                    },
-                    artworks: {
-                        create: game.artworks?.map((art: any) => ({ url: `https:${art.url.replace('t_thumb', 't_1080p')}` })) ?? []
-                    },
-                    websites: {
-                        create: game.websites?.map((web: any) => ({ url: web.url, category: web.category })) ?? []
-                    }
+                    genres: { create: game.genres?.map((genre: any) => ({ genero: { connectOrCreate: { where: { igdbId: genre.id }, create: { igdbId: genre.id, name: genre.name } } } })) ?? [] },
+                    companies: { create: game.involved_companies?.flatMap((inv: any) => {
+                        const roles = [];
+                        if (inv.developer) roles.push('developer');
+                        if (inv.publisher) roles.push('publisher');
+                        return roles.map(role => ({ role: role, company: { connectOrCreate: { where: { igdbId: inv.company.id }, create: { igdbId: inv.company.id, name: inv.company.name } } } }));
+                    }) ?? [] },
+                    platforms: { create: game.platforms?.map((platform: any) => ({ plataforma: { connectOrCreate: { where: { igdbId: platform.id }, create: { igdbId: platform.id, name: platform.name } } } })) ?? [] },
+                    themes: { create: game.themes?.map((theme: any) => ({ theme: { connectOrCreate: { where: { igdbId: theme.id }, create: { igdbId: theme.id, name: theme.name } } } })) ?? [] },
+                    playerPerspectives: { create: game.player_perspectives?.map((persp: any) => ({ perspective: { connectOrCreate: { where: { igdbId: persp.id }, create: { igdbId: persp.id, name: persp.name } } } })) ?? [] },
+                    screenshots: { create: game.screenshots?.map((ss: any) => ({ igdbId: ss.id, url: `https:${ss.url.replace('t_thumb', 't_screenshot_huge')}` })) ?? [] },
+                    artworks: { create: game.artworks?.map((art: any) => ({ igdbId: art.id, url: `https:${art.url.replace('t_thumb', 't_1080p')}` })) ?? [] },
+                    websites: { create: game.websites?.filter((w: any) => w.category != null).map((w: any) => ({ url: w.url, category: w.category, igdbId: w.id })) ?? [] },
+                    videos: { create: game.videos?.map((video: any) => ({ key: video.video_id, name: video.name, site: 'YouTube', type: 'Trailer', official: true })) ?? [] },
+                    gameModes: { create: game.game_modes?.map((mode: any) => ({ gameMode: { connectOrCreate: { where: { id: mode.id }, create: { id: mode.id, name: mode.name, slug: mode.slug } } } })) ?? [] },
+                    gameEngines: { create: game.game_engines?.map((engine: any) => ({ gameEngine: { connectOrCreate: { where: { id: engine.id }, create: { id: engine.id, name: engine.name, slug: engine.slug } } } })) ?? [] },
                 };
 
                 const existingGame = await prisma.jogo.findUnique({ where: { igdbId: game.id } });
-                let savedGame;
 
-                if (existingGame) {
-                    savedGame = await prisma.jogo.update({ where: { igdbId: game.id }, data: updateData });
-                    logger.info(`🔄 Jogo [${game.id}] "${savedGame.name}" atualizado.`);
-                    broadcast({ type: 'UPDATED_ITEM', mediaType: 'jogo', data: savedGame });
-                } else {
-                    savedGame = await prisma.jogo.create({ data: createData });
-                    logger.info(`✅ Jogo [${game.id}] "${savedGame.name}" criado.`);
-                    broadcast({ type: 'NEW_ITEM', mediaType: 'jogo', data: savedGame });
-                }
+                await prisma.jogo.upsert({
+                    where: { igdbId: game.id },
+                    update: updateData,
+                    create: createData,
+                });
+
+                logger.info(`${existingGame ? '🔄' : '✅'} Jogo [${game.id}] "${game.name}" sincronizado.`);
 
             } catch (error) {
                 logger.error(`❌ Erro ao processar o jogo ID ${game.id}. Pulando: ${error}`);
@@ -180,7 +169,7 @@ async function fetchAllGameIdsForPeriod(startDateStr: string, endDateStr: string
         while (hasMore) {
             const response = await igdbApiWithRetry(() => igdbApi.post(
                 '/games',
-                `fields id; where first_release_date >= ${startDate} & first_release_date <= ${endDate}; limit ${limit}; offset ${offset}; sort id asc;`
+                `fields id; where first_release_date >= ${startDate} & first_release_date <= ${endDate} & release_dates.region = 2; limit ${limit}; offset ${offset}; sort id asc;`
             ));
 
             const games = response.data;
@@ -206,60 +195,102 @@ async function fetchAllGameIdsForPeriod(startDateStr: string, endDateStr: string
     }
 }
 
-export async function syncGames() {
-    const prisma = new PrismaClient();
+<<<<<<< HEAD
+export async function syncGames(prisma: PrismaClient, limit?: number) {
     try {
         await getIgdbAccessToken();
-        await fetchAndSyncEvents(prisma);
+        const events = await fetchAndSyncEvents(prisma, process.argv[2], process.argv[3]);
 
-        const events = await prisma.event.findMany({ select: { igdbId: true } });
-        const eventIds = events.map(e => e.igdbId);
+        const processedEventGameIds = new Set<number>();
 
-        // Buscar jogos associados a eventos
-        for (const eventId of eventIds) {
-            logger.info(`Buscando jogos para o evento IGDB ID: ${eventId}...`);
-            const query = `
-                fields game.id;
-                where event = ${eventId};
-                limit 500;
-            `;
-            const response = await igdbApiWithRetry(() => igdbApi.post('/event_logos', query));
-            const gameIds = response.data.map((item: any) => item.game.id);
+        for (const event of events) {
+            if (event.games && event.games.length > 0) {
+                let gameIds = event.games;
+                logger.info(`Evento "${event.name}" (ID: ${event.id}) tem ${gameIds.length} jogos associados.`);
+                
+                if (limit) {
+                    gameIds = gameIds.slice(0, limit);
+                    logger.info(`Limitando a sincronização de jogos do evento a ${limit} itens.`);
+                }
 
-            if (gameIds.length > 0) {
                 const batchSize = 100;
                 for (let i = 0; i < gameIds.length; i += batchSize) {
                     const batch = gameIds.slice(i, i + batchSize);
-                    logger.info(`Processando lote de jogos do evento ${eventId}: ${i + 1}-${Math.min(i + batchSize, gameIds.length)} de ${gameIds.length}`);
-                    await processGameBatch(batch, prisma, eventId);
+                    logger.info(`Processando lote de jogos do evento ${event.id}: ${i + 1}-${Math.min(i + batchSize, gameIds.length)} de ${gameIds.length}`);
+                    await processGameBatch(batch, prisma, event.id);
+                    batch.forEach((id: number) => processedEventGameIds.add(id));
                     await delay(250);
                 }
             }
-            await delay(250);
         }
 
-        // Buscar jogos não associados a eventos específicos (sincronização geral)
-        const threeDaysAgo = new Date();
-        threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
-        const startDate = threeDaysAgo.toISOString().split('T')[0];
-        const today = new Date().toISOString().split('T')[0];
+        const startDateGeneral = process.argv[2];
+        const endDateGeneral = process.argv[3];
 
-        const allGameIds = await fetchAllGameIdsForPeriod(startDate, today);
+        if (!startDateGeneral || !endDateGeneral) {
+            logger.error('Uso: ts-node src/syncGames.ts <startDate> <endDate> [limit]');
+            process.exit(1);
+        }
+
+        let allGameIds = await fetchAllGameIdsForPeriod(startDateGeneral, endDateGeneral);
+        
+        const generalGameIds = allGameIds.filter(id => !processedEventGameIds.has(id));
+        logger.info(`Sincronização geral: ${generalGameIds.length} jogos a processar (excluindo ${processedEventGameIds.size} jogos de eventos).`);
+
+        let finalGeneralIds = generalGameIds;
+        if (limit) {
+            finalGeneralIds = generalGameIds.slice(0, limit);
+            logger.info(`Limitando a sincronização geral de jogos a ${limit} itens (de ${generalGameIds.length}).`);
+        }
+
         const batchSize = 100;
 
-        if (allGameIds.length === 0) {
+        if (finalGeneralIds.length === 0) {
             logger.info('Nenhum jogo geral para atualizar.');
             return;
         }
 
-        for (let i = 0; i < allGameIds.length; i += batchSize) {
-            const batch = allGameIds.slice(i, i + batchSize);
-            logger.info(`Processando lote de jogos gerais: ${i + 1}-${Math.min(i + batchSize, allGameIds.length)} de ${allGameIds.length}`);
+        for (let i = 0; i < finalGeneralIds.length; i += batchSize) {
+            const batch = finalGeneralIds.slice(i, i + batchSize);
+            logger.info(`Processando lote de jogos gerais: ${i + 1}-${Math.min(i + batchSize, finalGeneralIds.length)} de ${finalGeneralIds.length}`);
             await processGameBatch(batch, prisma);
             await delay(250);
         }
         
     } catch (error: any) {
         logger.error(`Erro ao sincronizar jogos: ${error.message || error}`);
+    } finally {
+        await prisma.$disconnect();
     }
+};
+
+const main = async () => {
+    const prisma = new PrismaClient({
+  datasources: {
+    db: {
+      url: process.env.DIRECT_URL,
+    },
+  },
+});
+    const startDate = process.argv[2];
+    const endDate = process.argv[3];
+    const limit = process.argv[4] ? parseInt(process.argv[4]) : undefined;
+
+    if (!startDate || !endDate) {
+        console.error('Uso: ts-node src/syncGames.ts <startDate> <endDate> [limit]');
+        process.exit(1);
+    }
+
+    try {
+        await syncGames(prisma, limit);
+    } catch (error) {
+        logger.error(`Erro fatal na sincronização de jogos: ${error}`);
+        process.exit(1);
+    } finally {
+        await prisma.$disconnect();
+    }
+};
+
+if (require.main === module) {
+    main();
 }

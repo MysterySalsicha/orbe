@@ -406,7 +406,7 @@ model JogoPlayerPerspective {
 
 model Screenshot {
   id     Int     @id @default(autoincrement())
-  igdbId String  @unique
+  igdbId Int     @unique
   url    String
   jogo   Jogo    @relation(fields: [jogoId], references: [id])
   jogoId Int
@@ -414,7 +414,7 @@ model Screenshot {
 
 model Artwork {
   id     Int     @id @default(autoincrement())
-  igdbId String  @unique
+  igdbId Int     @unique
   url    String
   jogo   Jogo    @relation(fields: [jogoId], references: [id])
   jogoId Int
@@ -422,7 +422,7 @@ model Artwork {
 
 model Website {
   id       Int    @id @default(autoincrement())
-  igdbId   Int
+  igdbId   Int?
   category Int
   url      String
   jogo     Jogo   @relation(fields: [jogoId], references: [id])
@@ -500,9 +500,9 @@ model FilmeCast {
   pessoa      Pessoa  @relation(fields: [pessoaId], references: [id])
   pessoaId    Int
   character   String?
-  order       Int?
+  order       Int
 
-  @@id([filmeId, pessoaId])
+  @@id([filmeId, pessoaId, order])
 }
 
 model FilmeCrew {
@@ -510,10 +510,10 @@ model FilmeCrew {
   filmeId    Int
   pessoa     Pessoa @relation(fields: [pessoaId], references: [id])
   pessoaId   Int
-  job        String?
+  job        String
   department String?
 
-  @@id([filmeId, pessoaId]) // Removed 'job' as it is optional
+  @@id([filmeId, pessoaId, job])
 }
 
 model FilmeOnStreamingProvider {
@@ -578,9 +578,9 @@ model SerieCast {
   pessoa      Pessoa  @relation(fields: [pessoaId], references: [id])
   pessoaId    Int
   character   String?
-  order       Int?
+  order       Int
 
-  @@id([serieId, pessoaId])
+  @@id([serieId, pessoaId, order])
 }
 
 model SerieCrew {
@@ -588,10 +588,10 @@ model SerieCrew {
   serieId    Int
   pessoa     Pessoa @relation(fields: [pessoaId], references: [id])
   pessoaId   Int
-  job        String?
+  job        String
   department String?
 
-  @@id([serieId, pessoaId]) // Removed 'job' as it is optional
+  @@id([serieId, pessoaId, job])
 }
 
 // --- JUNÇÕES: ANIMES ---

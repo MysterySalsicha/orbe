@@ -38,36 +38,24 @@ const JogoEditForm: React.FC<JogoEditFormProps> = ({ jogo, onSave, onCancel }) =
       <h3 className="text-lg font-semibold orbe-text-secondary">Modo de Edição - Jogo</h3>
       
       <div>
-        <label htmlFor="name" className="block text-sm font-medium text-muted-foreground">Nome</label>
+        <label htmlFor="titulo_curado" className="block text-sm font-medium text-muted-foreground">Nome</label>
         <input
           type="text"
-          name="name"
-          id="name"
-          value={formData.name || ''}
+          name="titulo_curado"
+          id="titulo_curado"
+          value={formData.titulo_curado || ''}
           onChange={handleChange}
           className="mt-1 block w-full bg-input border border-border rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
         />
       </div>
 
       <div>
-        <label htmlFor="summary" className="block text-sm font-medium text-muted-foreground">Resumo (Summary)</label>
+        <label htmlFor="sinopse_curada" className="block text-sm font-medium text-muted-foreground">Sinopse</label>
         <textarea
-          name="summary"
-          id="summary"
-          rows={4}
-          value={formData.summary || ''}
-          onChange={handleChange}
-          className="mt-1 block w-full bg-input border border-border rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
-        />
-      </div>
-
-      <div>
-        <label htmlFor="storyline" className="block text-sm font-medium text-muted-foreground">Enredo (Storyline)</label>
-        <textarea
-          name="storyline"
-          id="storyline"
-          rows={6}
-          value={formData.storyline || ''}
+          name="sinopse_curada"
+          id="sinopse_curada"
+          rows={10}
+          value={formData.sinopse_curada || ''}
           onChange={handleChange}
           className="mt-1 block w-full bg-input border border-border rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
         />

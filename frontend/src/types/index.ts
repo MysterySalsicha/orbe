@@ -67,6 +67,7 @@ export interface GamePlatform {
 
 export interface Plataforma {
   nome: string;
+  url?: string;
 }
 
 // Interface base para mídia
@@ -78,6 +79,7 @@ export interface Midia {
   poster_url_api: string;
   data_lancamento_curada?: string;
   data_lancamento_api: string;
+  sinopse?: string;
   sinopse_curada?: string;
   sinopse_api: string;
   plataformas_curadas?: Plataforma[];
@@ -85,6 +87,7 @@ export interface Midia {
   generos_curados?: Genre[];
   generos_api: Genre[];
   premiacoes?: Award[];
+  trailer_key?: string;
   trailer_url_curado?: string;
   trailer_url_api?: string;
   avaliacao?: number; // Propriedade adicionada
@@ -92,6 +95,7 @@ export interface Midia {
 
 // Interfaces específicas por tipo de mídia
 export interface Filme extends Midia {
+  homepage?: string;
   duracao: number;
   diretor: string;
   escritor: string;
@@ -111,6 +115,7 @@ export interface Temporada {
 }
 
 export interface Serie extends Midia {
+  homepage?: string;
   numero_temporadas: number;
   numero_episodios: number;
   criadores: Creator[];
@@ -124,6 +129,9 @@ export interface Relation {
 }
 
 export interface Anime extends Serie {
+  titleRomaji?: string;
+  titleEnglish?: string;
+  mal_link?: string;
   fonte: string;
   estudio: string;
   dublagem_info: boolean;

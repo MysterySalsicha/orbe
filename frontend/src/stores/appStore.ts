@@ -1,12 +1,12 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import type { User, Notification, Theme, Filme, Serie, Anime, Jogo, Preferencia } from '@/types';
+import type { User, Notification, Theme, Filme, Serie, Anime, Jogo, UserInteraction } from '@/types';
 
 interface AppState {
   // Estado do usuário
   user: User | null;
   isAuthenticated: boolean;
-  userInteractions: Preferencia[];
+  userInteractions: UserInteraction[];
   
   // Estado do tema
   theme: Theme;
@@ -47,8 +47,8 @@ interface AppState {
   setUser: (user: User | null) => void;
   login: (user: User) => void;
   logout: () => void;
-  setInteractions: (interactions: Preferencia[]) => void;
-  upsertInteraction: (interaction: Preferencia) => void;
+  setInteractions: (interactions: UserInteraction[]) => void;
+  upsertInteraction: (interaction: UserInteraction) => void;
   
   // Ações do tema
   setTheme: (theme: Theme) => void;

@@ -32,7 +32,7 @@ export const mapFilmeToMidia = (filme: any) => {
     homepage: filme.homepage, // Adicionado para o botão Assistir
     trailer_key: filme.videos?.find((v: any) => v.site === 'YouTube' && v.type === 'Trailer')?.key || filme.videos?.[0]?.key || null, // Extrai a chave do trailer
   };
-  logger.info('Filme Mapeado:', mappedFilme);
+  logger.debug('Filme Mapeado:', mappedFilme);
   return mappedFilme;
 };
 

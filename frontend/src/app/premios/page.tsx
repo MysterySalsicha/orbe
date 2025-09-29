@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Filter, Award, Calendar } from 'lucide-react';
+import { Award, Calendar } from 'lucide-react';
 import { realApi } from '@/data/realApi';
 import MidiaCard from '@/components/media/MidiaCard';
 import type { Filme, Serie, Anime, Jogo } from '@/types';

@@ -1,3 +1,4 @@
+import type { Filme, Serie, Anime, Jogo } from '@/types';
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || '/api';
 
 // Função para obter o token do localStorage
@@ -80,7 +81,8 @@ export const apiClient = {
     return response.json();
   },
 
-  put: async (endpoint: string, data: Record<string, unknown>) => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  put: async (endpoint: string, data: any) => {
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
     };
@@ -238,6 +240,10 @@ export const orbeNerdApi = {
   // Notificações
   getNotifications: async () => {
     return apiClient.get('/notifications');
+  },
+
+  markNotificationAsRead: async (id: number) => {
+    return apiClient.put(`/notifications/${id}/read`, {});
   },
 };
 

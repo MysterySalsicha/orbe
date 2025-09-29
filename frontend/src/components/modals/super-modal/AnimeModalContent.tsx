@@ -2,11 +2,11 @@
 
 import { useState } from 'react';
 import Image from 'next/image';
-import { Play, Calendar, ExternalLink } from 'lucide-react';
+import { Calendar, ExternalLink } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
 import PlatformIcon from '@/components/ui/PlatformIcons';
-import type { Anime, CalendarModalData } from '@/types';
+import type { Anime, CalendarModalData, Character, StaffMember } from '@/types';
 
 interface AnimeModalContentProps {
   anime: Anime; // Recebe o objeto de detalhes completo da API
@@ -41,7 +41,7 @@ const AnimeModalContent: React.FC<AnimeModalContentProps> = ({ anime, openCalend
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="muted"><Calendar className="h-5 w-5 mr-2" />Adicionar ao Calendário</Button>
+            <Button variant="outline"><Calendar className="h-5 w-5 mr-2" />Adicionar ao Calendário</Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent>
             <DropdownMenuItem disabled={!anime.data_lancamento_api} onClick={() => openCalendarModal({ midia: anime, type: 'anime' })}>

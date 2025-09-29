@@ -1,12 +1,12 @@
 'use client';
 
-import Image from 'next/image';
-import { Play, Calendar } from 'lucide-react';
+
+import { Calendar } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import PlatformIcon from '@/components/ui/PlatformIcons';
-import type { Jogo, CalendarModalData } from '@/types';
+import type { Jogo, CalendarModalData, Website, Plataforma, Genre } from '@/types';
 
 interface JogoModalContentProps {
   jogo: Jogo; // Recebe o objeto de detalhes completo da API do IGDB
@@ -38,7 +38,7 @@ const JogoModalContent: React.FC<JogoModalContentProps> = ({ jogo, openCalendarM
             ))}
           </div>
         </div>
-        <Button variant="muted" onClick={() => openCalendarModal({ midia: jogo, type: 'jogo' })}>
+        <Button variant="outline" onClick={() => openCalendarModal({ midia: jogo, type: 'jogo' })}>
           <Calendar className="h-5 w-5 mr-2" />Adicionar ao Calendário
         </Button>
       </div>
@@ -100,8 +100,8 @@ const JogoModalContent: React.FC<JogoModalContentProps> = ({ jogo, openCalendarM
             <span className="font-semibold w-24 flex-shrink-0">Gêneros:</span>
             <div className="flex flex-wrap gap-1">
               {jogo.generos_api.map((g: Genre) => (
-                <span key={g} className="bg-muted px-2 py-1 rounded-full text-xs text-muted-foreground">
-                  {g}
+                <span key={g.id} className="bg-muted px-2 py-1 rounded-full text-xs text-muted-foreground">
+                  {g.name}
                 </span>
               ))}
             </div>
