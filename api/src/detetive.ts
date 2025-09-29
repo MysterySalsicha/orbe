@@ -4,6 +4,8 @@ import axios from 'axios';
 
 const prisma = new PrismaClient();
 
+const delay = (ms: number) => new Promise(res => setTimeout(res, ms));
+
 const slugify = (text: string) => {
   return text
     .toString()

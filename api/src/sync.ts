@@ -19,11 +19,11 @@ const main = async () => {
 
   try {
     logger.info(`--- Iniciando sincronização de FILMES ---`);
-    await syncMovies(startDate, endDate);
+    await syncMovies();
     logger.info(`--- Sincronização de FILMES concluída ---`);
 
     logger.info(`--- Iniciando sincronização de SÉRIES ---`);
-    await syncSeries(startDate, endDate);
+    await syncSeries();
     logger.info(`--- Sincronização de SÉRIES concluída ---`);
 
     // logger.info(`--- Iniciando sincronização de ANIMES ---`);
@@ -31,7 +31,7 @@ const main = async () => {
     // logger.info(`--- Sincronização de ANIMES concluída ---`);
 
     logger.info(`--- Iniciando sincronização de JOGOS ---`);
-    await syncGames(startDate, endDate);
+    await syncGames();
     logger.info(`--- Sincronização de JOGOS concluída ---`);
 
     logger.info(`✅ Sincronização de dados completa.`);

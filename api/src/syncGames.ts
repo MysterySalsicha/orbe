@@ -206,7 +206,8 @@ async function fetchAllGameIdsForPeriod(startDateStr: string, endDateStr: string
     }
 }
 
-export async function syncGames(prisma: PrismaClient) {
+export async function syncGames() {
+    const prisma = new PrismaClient();
     try {
         await getIgdbAccessToken();
         await fetchAndSyncEvents(prisma);

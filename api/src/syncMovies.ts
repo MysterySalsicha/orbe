@@ -115,7 +115,8 @@ async function processMovieBatch(movieIds: number[], prisma: PrismaClient): Prom
   }
 }
 
-export async function syncMovies(prisma: PrismaClient) {
+export async function syncMovies() {
+  const prisma = new PrismaClient();
   const threeDaysAgo = new Date();
   threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
   const startDate = threeDaysAgo.toISOString().split('T')[0];

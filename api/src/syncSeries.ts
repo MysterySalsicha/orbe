@@ -113,7 +113,8 @@ async function processSerieBatch(serieIds: number[], prisma: any): Promise<void>
   }
 }
 
-export async function syncSeries(prisma: any) {
+export async function syncSeries() {
+  const prisma = new PrismaClient();
   const threeDaysAgo = new Date();
   threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
   const startDate = threeDaysAgo.toISOString().split('T')[0];
