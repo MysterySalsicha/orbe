@@ -62,23 +62,23 @@ const AnimeEditForm: React.FC<AnimeEditFormProps> = ({ anime, onSave, onCancel }
           />
         </div>
         <div>
-          <label htmlFor="episodes" className="block text-sm font-medium text-muted-foreground">Episódios</label>
+          <label htmlFor="numero_episodios" className="block text-sm font-medium text-muted-foreground">Episódios</label>
           <input
             type="number"
-            name="episodes"
-            id="episodes"
-            value={formData.episodes || 0}
+            name="numero_episodios"
+            id="numero_episodios"
+            value={formData.numero_episodios || 0}
             onChange={handleChange}
             className="mt-1 block w-full bg-input border border-border rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
           />
         </div>
         <div>
-          <label htmlFor="source" className="block text-sm font-medium text-muted-foreground">Fonte</label>
+          <label htmlFor="fonte" className="block text-sm font-medium text-muted-foreground">Fonte</label>
           <input
             type="text"
-            name="source"
-            id="source"
-            value={formData.source || ''}
+            name="fonte"
+            id="fonte"
+            value={formData.fonte || ''}
             onChange={handleChange}
             className="mt-1 block w-full bg-input border border-border rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
           />
@@ -86,12 +86,12 @@ const AnimeEditForm: React.FC<AnimeEditFormProps> = ({ anime, onSave, onCancel }
       </div>
 
       <div>
-        <label htmlFor="description" className="block text-sm font-medium text-muted-foreground">Descrição</label>
+        <label htmlFor="sinopse_curada" className="block text-sm font-medium text-muted-foreground">Descrição</label>
         <textarea
-          name="description"
-          id="description"
+          name="sinopse_curada"
+          id="sinopse_curada"
           rows={5}
-          value={formData.description || ''}
+          value={formData.sinopse_curada || ''}
           onChange={handleChange}
           className="mt-1 block w-full bg-input border border-border rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
         />

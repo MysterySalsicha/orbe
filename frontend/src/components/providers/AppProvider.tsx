@@ -1,3 +1,5 @@
+'use client';
+import React, { useEffect } from 'react';
 import SearchOverlay from '@/components/modals/SearchOverlay';
 import NotificationModal from '@/components/modals/NotificationModal';
 import { useAppStore } from '@/stores/appStore';
@@ -5,6 +7,7 @@ import { useTheme } from '@/hooks/useTheme';
 import { realApi } from '@/data/realApi';
 import orbeNerdApi from '@/lib/api';
 import Header from '@/components/layout/Header';
+import type { Notification } from '@/types';
 
 interface AppProviderProps {
   children: React.ReactNode;
@@ -12,8 +15,6 @@ interface AppProviderProps {
 
 export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
   const { 
-    isSearchOpen, 
-    closeSearch, 
     unreadCount,
     setNotifications,
     addNotification,
@@ -57,7 +58,9 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
               tipo_midia: message.mediaType,
               midia_id: message.data.id,
               foi_visualizada: false,
-              data_criacao: new Date().toISOString(),
+              createdAt: new Date().toISOString(),
+              type: message.type,
+              message: ''
             };
             addNotification(newNotification);
           }

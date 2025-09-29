@@ -1,10 +1,10 @@
 'use client';
 
 import Image from 'next/image';
-import { Play, Calendar, ShoppingCart } from 'lucide-react';
+import { Calendar, ShoppingCart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import PlatformIcon from '@/components/ui/PlatformIcons';
-import type { Filme, CastMember, CalendarModalData } from '@/types';
+import type { Filme, CastMember, CalendarModalData, Video } from '@/types';
 
 interface FilmeModalContentProps {
   filme: Filme; // Recebe o objeto de detalhes completo da API
@@ -21,7 +21,7 @@ const FilmeModalContent: React.FC<FilmeModalContentProps> = ({ filme, openCalend
 
   const hasReleased = filme.data_lancamento_api && new Date(filme.data_lancamento_api) < new Date();
 
-  const getImageUrl = (path: string | null) => {
+  const getImageUrl = (path: string | null | undefined) => {
     if (!path) return '/placeholder-avatar.jpg';
     return path; // A URL completa já vem do mapper
   };
@@ -35,7 +35,7 @@ const FilmeModalContent: React.FC<FilmeModalContentProps> = ({ filme, openCalend
   const primaryPlatform = isOnStreaming ? filme.plataformas_api[0] : null;
 
   const showBuyTicketButton = !isOld && !isOnStreaming;
-  const canBuyTicket = filme.ingresso_link && filme.ingresso_link !== '';
+  const canBuyTicket = !!(filme.ingresso_link && filme.ingresso_link !== '');
 
   return (
     <div className="space-y-6">
@@ -68,7 +68,7 @@ const FilmeModalContent: React.FC<FilmeModalContentProps> = ({ filme, openCalend
         )}
 
         {!hasReleased && (
-          <Button variant="muted" onClick={() => openCalendarModal({ midia: filme, type: 'filme' })}>
+          <Button variant="outline" onClick={() => openCalendarModal({ midia: filme, type: 'filme' })}>
             <Calendar className="h-5 w-5 mr-2" />Adicionar ao Calendário
           </Button>
         )}

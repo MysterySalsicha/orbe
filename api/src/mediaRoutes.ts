@@ -99,10 +99,11 @@ router.put('/filmes/:id', adminMiddleware, async (req, res) => {
     });
 
     // Invalidar o cache para esta mídia
-    const cacheKey = `cache:/api/filmes/${id}/details`;
-    await redisClient.del(cacheKey);
-    logger.info(`Cache invalidado para a chave: ${cacheKey}`);
-
+    if (redisClient) {
+      const cacheKey = `cache:/api/filmes/${id}/details`;
+      await redisClient.del(cacheKey);
+      logger.info(`Cache invalidado para a chave: ${cacheKey}`);
+    }
     res.json(mapFilmeToMidia(updatedFilme));
   } catch (error) {
     logger.error(`Erro ao editar o filme ID ${id}: ${error}`);
@@ -223,9 +224,11 @@ router.put('/series/:id', adminMiddleware, async (req, res) => {
     });
 
     // Invalidar o cache
-    const cacheKey = `cache:/api/series/${id}/details`;
-    await redisClient.del(cacheKey);
-    logger.info(`Cache invalidado para a chave: ${cacheKey}`);
+    if (redisClient) {
+      const cacheKey = `cache:/api/series/${id}/details`;
+      await redisClient.del(cacheKey);
+      logger.info(`Cache invalidado para a chave: ${cacheKey}`);
+    }
 
     res.json(mapSerieToMidia(updatedSerie));
   } catch (error) {
@@ -369,9 +372,11 @@ router.put('/animes/:id', adminMiddleware, async (req, res) => {
     });
 
     // Invalidar o cache
-    const cacheKey = `cache:/api/animes/${id}/details`;
-    await redisClient.del(cacheKey);
-    logger.info(`Cache invalidado para a chave: ${cacheKey}`);
+    if (redisClient) {
+      const cacheKey = `cache:/api/animes/${id}/details`;
+      await redisClient.del(cacheKey);
+      logger.info(`Cache invalidado para a chave: ${cacheKey}`);
+    }
 
     res.json(mapAnimeToMidia(updatedAnime));
   } catch (error) {
@@ -492,9 +497,11 @@ router.put('/jogos/:id', adminMiddleware, async (req, res) => {
     });
 
     // Invalidar o cache
-    const cacheKey = `cache:/api/jogos/${id}/details`;
-    await redisClient.del(cacheKey);
-    logger.info(`Cache invalidado para a chave: ${cacheKey}`);
+    if (redisClient) {
+      const cacheKey = `cache:/api/jogos/${id}/details`;
+      await redisClient.del(cacheKey);
+      logger.info(`Cache invalidado para a chave: ${cacheKey}`);
+    }
 
     res.json(mapJogoToMidia(updatedJogo));
   } catch (error) {

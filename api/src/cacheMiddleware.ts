@@ -7,6 +7,11 @@ const cacheMiddleware = (duration: number) => async (req: Request, res: Response
   const key = `cache:${req.originalUrl}`;
 
   try {
+    if (!redisClient) {
+      logger.warn('Redis client não está disponível. Pulando cache.');
+      return next();
+    }
+
     const cachedResponse = await redisClient.get(key);
 
     if (cachedResponse) {
@@ -23,9 +28,13 @@ const cacheMiddleware = (duration: number) => async (req: Request, res: Response
     const originalSend = res.send.bind(res);
     res.send = (body: any): Response<any> => {
       try {
-        // Salvar a resposta no Redis com o tempo de expiração (TTL)
-        redisClient.set(key, body, 'EX', duration);
-        logger.info(`Resposta para a chave ${key} armazenada no cache por ${duration} segundos.`);
+        if (redisClient) {
+          // Salvar a resposta no Redis com o tempo de expiração (TTL)
+          redisClient.set(key, body, 'EX', duration);
+          logger.info(`Resposta para a chave ${key} armazenada no cache por ${duration} segundos.`);
+        } else {
+          logger.warn('Redis client não está disponível. Não foi possível salvar no cache.');
+        }
       } catch (err) {
         logger.error(`Erro ao salvar no cache: ${err}`);
       }

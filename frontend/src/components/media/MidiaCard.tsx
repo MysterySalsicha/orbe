@@ -38,10 +38,11 @@ const MidiaCard = React.forwardRef<HTMLDivElement, MidiaCardProps>((
   const isFilme = type === 'filme' && 'em_prevenda' in midia;
 
   // Efeito para buscar e definir o tempo real do próximo episódio
+  const proximoEpisodio = isAnime ? (midia as Anime).proximo_episodio : undefined;
   useEffect(() => {
     if (isAnime) {
       // Define um valor inicial (potencialmente do cache) para exibição imediata
-      const initialAiringTime = (midia as Anime).proximo_episodio;
+      const initialAiringTime = proximoEpisodio;
       if (initialAiringTime) {
         setNextAiringTime(initialAiringTime);
       }
@@ -60,7 +61,7 @@ const MidiaCard = React.forwardRef<HTMLDivElement, MidiaCardProps>((
 
       fetchNextEpisode();
     }
-  }, [isAnime, midia.id, isAnime ? (midia as Anime).proximo_episodio : undefined]);
+  }, [isAnime, midia, proximoEpisodio]);
 
   // Efeito para calcular o countdown sempre que o nextAiringTime mudar
   useEffect(() => {
@@ -200,7 +201,7 @@ const MidiaCard = React.forwardRef<HTMLDivElement, MidiaCardProps>((
   // Função para lidar com clique longo (mobile)
   const [pressTimer, setPressTimer] = useState<NodeJS.Timeout | null>(null);
   
-  const handlePressStart = (e: React.MouseEvent | React.TouchEvent) => {
+  const handlePressStart = () => {
     const timer = setTimeout(() => {
       setIsMenuOpen(true);
     }, 500); // 500ms para ativar o menu
@@ -256,7 +257,7 @@ const MidiaCard = React.forwardRef<HTMLDivElement, MidiaCardProps>((
             loading="lazy"
             className="object-cover object-center transition-transform duration-300 group-hover:scale-105 w-full h-full"
             draggable={false}
-            onDragStart={(e) => e.preventDefault()}
+            onDragStart={(event: React.DragEvent<HTMLImageElement>) => event.preventDefault()}
           />
 
           {/* Ícones Sobrepostos */}

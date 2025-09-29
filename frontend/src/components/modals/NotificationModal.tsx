@@ -1,10 +1,10 @@
 'use client';
 
 import { useState } from 'react';
-import { X, Bell, Check, Trash2, Settings, Calendar, Star, Play } from 'lucide-react';
+import { X, Bell, Check, Calendar, Star } from 'lucide-react';
 import { useAppStore } from '@/stores/appStore';
 import { motion, PanInfo } from 'framer-motion';
-import type { Notification } from '@/types';
+
 
 const NotificationModal: React.FC = () => {
   const {

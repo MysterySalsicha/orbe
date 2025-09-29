@@ -1,12 +1,14 @@
 import axios from 'axios';
 import https from 'https';
 import { MovieDb } from 'moviedb-promise';
+import { logger } from './logger';
 
 const insecureAgent = new https.Agent({
   rejectUnauthorized: false,
 });
 
 const tmdbApiKey = process.env.TMDB_API_KEY;
+logger.info(`TMDB_API_KEY carregada: ${tmdbApiKey ? tmdbApiKey.substring(0, 5) + '...' + tmdbApiKey.substring(tmdbApiKey.length - 5) : 'Não definida'}`);
 const igdbClientId = process.env.IGDB_CLIENT_ID;
 const igdbClientSecret = process.env.IGDB_CLIENT_SECRET;
 
@@ -36,6 +38,7 @@ let igdbAccessToken: string | null = null;
 let tmdbMovieGenres: Map<number, string> | null = null;
 
 const getIgdbAccessToken = async () => {
+  logger.info(`Tentando obter token IGDB com Client ID: ${igdbClientId ? igdbClientId.substring(0, 5) + '...' + igdbClientId.substring(igdbClientId.length - 5) : 'Não definido'} e Client Secret: ${igdbClientSecret ? igdbClientSecret.substring(0, 5) + '...' + igdbClientSecret.substring(igdbClientSecret.length - 5) : 'Não definido'}`);
   try {
     const response = await axios.post(
       `https://id.twitch.tv/oauth2/token?client_id=${igdbClientId}&client_secret=${igdbClientSecret}&grant_type=client_credentials`,
@@ -44,9 +47,10 @@ const getIgdbAccessToken = async () => {
     );
     igdbAccessToken = response.data.access_token;
     igdbApi.defaults.headers['Authorization'] = `Bearer ${igdbAccessToken}`;
+    logger.info('Token IGDB obtido com sucesso.');
     return igdbAccessToken;
   } catch (error) {
-    console.error('Erro ao obter token de acesso do IGDB:', error);
+    logger.error('Erro ao obter token de acesso do IGDB:', error instanceof Error ? error.message : error);
     return null;
   }
 };

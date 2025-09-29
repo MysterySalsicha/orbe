@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
-import { Filter, Grid, List, Calendar, Star, TrendingUp } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Filter, Grid, Calendar, Star, TrendingUp } from 'lucide-react';
 import { realApi } from '@/data/realApi';
 import MidiaCard from '@/components/media/MidiaCard';
 import type { Filme } from '@/types';

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Filter, Gamepad2, Cpu, Star } from 'lucide-react';
+import { Filter, Gamepad2, Star } from 'lucide-react';
 import { realApi } from '@/data/realApi';
 import MidiaCard from '@/components/media/MidiaCard';
 import type { Jogo } from '@/types';

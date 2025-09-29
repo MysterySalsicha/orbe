@@ -1,5 +1,5 @@
 import orbeNerdApi from '@/lib/api';
-import type { Filme, Serie, Anime, Jogo, Notification } from '@/types';
+import type { Filme, Serie, Anime, Jogo, SearchResultItem } from '@/types';
 
 type ApiResponseItem = {
   id: number;
@@ -25,15 +25,7 @@ type ApiResponseItem = {
   tipo?: string;
 };
 
-type ApiNotification = {
-  id: number;
-  titulo: string;
-  tipo: string;
-  lida: boolean;
-  data_criacao: string;
-  midia_id: number;
-  tipo_midia: string;
-};
+
 
 // API real substituindo os dados mockados
 export const realApi = {
@@ -49,14 +41,6 @@ export const realApi = {
       const response = await orbeNerdApi.getFilmes(params);
       
       const mappedResults = response.results.map((filme: Filme) => ({
-        id: filme.id,
-        titulo_api: filme.titulo_api,
-        titulo_curado: filme.titulo_curado,
-        poster_url_api: filme.poster_url_api,
-        poster_curado: filme.poster_curado,
-        data_lancamento_api: filme.data_lancamento_api,
-        data_lancamento_curada: filme.data_lancamento_curada,
-        sinopse_api: filme.sinopse_api,
         ...filme 
       }));
 
@@ -79,14 +63,6 @@ export const realApi = {
       const response = await orbeNerdApi.getSeries(params);
       
       const mappedResults = response.results.map((serie: Serie) => ({
-        id: serie.id,
-        titulo_api: serie.titulo_api,
-        titulo_curado: serie.titulo_curado,
-        poster_url_api: serie.poster_url_api,
-        poster_curado: serie.poster_curado,
-        data_lancamento_api: serie.data_lancamento_api,
-        data_lancamento_curada: serie.data_lancamento_curada,
-        sinopse_api: serie.sinopse_api,
         ...serie
       }));
 
@@ -109,14 +85,6 @@ export const realApi = {
       const response = await orbeNerdApi.getAnimes(params);
       
       const mappedResults = response.results.map((anime: Anime) => ({
-        id: anime.id,
-        titulo_api: anime.titulo_api,
-        titulo_curado: anime.titulo_curado,
-        poster_url_api: anime.poster_url_api,
-        poster_curado: anime.poster_curado,
-        data_lancamento_api: anime.data_lancamento_api,
-        data_lancamento_curada: anime.data_lancamento_curada,
-        sinopse_api: anime.sinopse_api,
         ...anime
       }));
 
@@ -139,14 +107,6 @@ export const realApi = {
       const response = await orbeNerdApi.getJogos(params);
       
       const mappedResults = response.results.map((jogo: Jogo) => ({
-          id: jogo.id,
-          titulo_api: jogo.titulo_api,
-          titulo_curado: jogo.titulo_curado,
-          poster_url_api: jogo.poster_url_api,
-          poster_curado: jogo.poster_curado,
-          data_lancamento_api: jogo.data_lancamento_api,
-          data_lancamento_curada: jogo.data_lancamento_curada,
-          sinopse_api: jogo.sinopse_api,
           ...jogo
       }));
 
@@ -175,7 +135,7 @@ export const realApi = {
   updateJogo: orbeNerdApi.updateJogo,
   search: async (query: string, category?: string, page: number = 1) => {
     try {
-      const response = await orbeNerdApi.search(query, type, page);
+      const response = await orbeNerdApi.search(query, category, page);
       
       if (!response || !Array.isArray(response.results)) {
         return { filmes: [], series: [], animes: [], jogos: [], total: 0 };
@@ -186,10 +146,10 @@ export const realApi = {
       const mappedResults = response.results.map((item: SearchResultItem) => item);
 
       return {
-        filmes: mappedResults.filter((item: SearchResultItem) => item.tipo === 'filme'),
-        series: mappedResults.filter((item: SearchResultItem) => item.tipo === 'serie'),
-        animes: mappedResults.filter((item: SearchResultItem) => item.tipo === 'anime'),
-        jogos: mappedResults.filter((item: SearchResultItem) => item.tipo === 'jogo'),
+        filmes: mappedResults.filter((item: SearchResultItem) => item.type === 'filme'),
+        series: mappedResults.filter((item: SearchResultItem) => item.type === 'serie'),
+        animes: mappedResults.filter((item: SearchResultItem) => item.type === 'anime'),
+        jogos: mappedResults.filter((item: SearchResultItem) => item.type === 'jogo'),
         total: response.total_results || mappedResults.length
       };
     } catch (error) {

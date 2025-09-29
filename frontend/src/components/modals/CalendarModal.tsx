@@ -8,7 +8,7 @@ import type { Filme, Serie, Anime, Jogo } from '@/types';
 interface CalendarModalProps {
   isOpen: boolean;
   midia: Filme | Serie | Anime | Jogo | null;
-  type: string;
+  type: string | null;
   onClose: () => void;
   onAddEvent: (eventType: 'release' | 'ticket', details?: { date?: string; time?: string; location?: string; recurring?: boolean }) => void;
 }

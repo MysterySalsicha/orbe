@@ -2,27 +2,12 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import Image from 'next/image';
-import {
-  X,
-  Edit,
-  Calendar,
-  Clock,
-  Star,
-  Tv,
-  BookOpen,
-  Gamepad2,
-  Heart,
-  Bookmark,
-  Check,
-  EyeOff,
-  Send,
-  ExternalLink
-} from 'lucide-react';
+import { X, Edit, Calendar, Clock, Star, Tv, BookOpen, Gamepad2, Heart, Bookmark, Check, EyeOff, ExternalLink } from 'lucide-react';
 import { useAppStore } from '@/stores/appStore';
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Textarea } from '@/components/ui/textarea';
-import { Button } from '@/components/ui/button';
+
+
 import { apiClient } from '@/lib/api';
 import AwardIcon from '@/components/ui/AwardIcons';
 import PlatformIcon from '@/components/ui/PlatformIcons';
@@ -35,14 +20,12 @@ import FilmeEditForm from './super-modal/FilmeEditForm';
 import SerieEditForm from './super-modal/SerieEditForm';
 import AnimeEditForm from './super-modal/AnimeEditForm';
 import JogoEditForm from './super-modal/JogoEditForm';
-import type { Filme, Serie, Jogo, Anime, Character, CastMember, StaffMember, Plataforma, Comentario } from '@/types';
+import type { Filme, Serie, Jogo, Anime, Plataforma } from '@/types';
 
 const SuperModal: React.FC = () => {
   const { isSuperModalOpen, superModalData, closeSuperModal, isAuthenticated, user, openCalendarModal, closeCalendarModal, isCalendarModalOpen } = useAppStore();
   
-  const [personagens, setPersonagens] = useState<Character[]>([]);
-  const [comentarios, setComentarios] = useState<Comentario[]>([]);
-  const [newComment, setNewComment] = useState('');
+  
   const [isEditMode, setIsEditMode] = useState(false);
   const [details, setDetails] = useState<Filme | Serie | Anime | Jogo | null>(null);
   const [isLoadingDetails, setIsLoadingDetails] = useState(true);
@@ -72,21 +55,7 @@ const SuperModal: React.FC = () => {
     }
   }, [isSuperModalOpen, midia, loadAdditionalData]);
 
-  const handlePostComment = async () => {
-    if (!newComment.trim() || !midia) return;
-    const commentToAdd: Comentario = {
-      id: Date.now(), // Usando timestamp como ID para mock
-      usuario: {
-        id: user?.id || 0,
-        nome: user?.nome || 'Você',
-        avatar_url: user?.avatar || '/placeholder-avatar.jpg'
-      },
-      texto: newComment.trim(),
-      data_criacao: new Date().toISOString(),
-    };
-    setComentarios((prev) => [commentToAdd, ...prev]);
-    setNewComment('');
-  };
+  
 
   const handleClose = useCallback(() => { window.history.back(); }, []);
 
@@ -124,6 +93,13 @@ const SuperModal: React.FC = () => {
   const handleCancel = () => {
     setIsEditMode(false);
   };
+
+  const [userInteraction, setUserInteraction] = useState({
+    favorited: false,
+    wantToWatch: false,
+    watched: false,
+    notInterested: false,
+  });
 
   const handleInteraction = (action: keyof typeof userInteraction) => {
     setUserInteraction((prev) => ({ ...prev, [action]: !prev[action] }));
