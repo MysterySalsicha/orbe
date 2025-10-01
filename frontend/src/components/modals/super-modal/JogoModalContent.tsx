@@ -87,8 +87,8 @@ const JogoModalContent: React.FC<JogoModalContentProps> = ({ jogo, openCalendarM
           <div className="flex items-center gap-2">
             <span className="font-semibold w-24 flex-shrink-0">Plataformas:</span>
             <div className="flex flex-wrap gap-1">
-              {jogo.plataformas_api.map((p: Plataforma) => (
-                <span key={p.nome} className="bg-muted px-2 py-1 rounded-full text-xs text-muted-foreground">
+              {jogo.plataformas_api.map((p: Plataforma, index: number) => (
+                <span key={`plataforma-${index}`} className="bg-muted px-2 py-1 rounded-full text-xs text-muted-foreground">
                   {p.nome}
                 </span>
               ))}
@@ -99,8 +99,8 @@ const JogoModalContent: React.FC<JogoModalContentProps> = ({ jogo, openCalendarM
           <div className="flex items-center gap-2">
             <span className="font-semibold w-24 flex-shrink-0">Gêneros:</span>
             <div className="flex flex-wrap gap-1">
-              {jogo.generos_api.map((g: Genre) => (
-                <span key={g.id} className="bg-muted px-2 py-1 rounded-full text-xs text-muted-foreground">
+              {jogo.generos_api.map((g: Genre, index: number) => (
+                <span key={`genero-${index}`} className="bg-muted px-2 py-1 rounded-full text-xs text-muted-foreground">
                   {g.name}
                 </span>
               ))}
@@ -111,8 +111,8 @@ const JogoModalContent: React.FC<JogoModalContentProps> = ({ jogo, openCalendarM
           <div className="flex items-center gap-2">
             <span className="font-semibold w-24 flex-shrink-0">Temas:</span>
             <div className="flex flex-wrap gap-1">
-              {jogo.temas.map((t: string) => (
-                <span key={t} className="bg-muted px-2 py-1 rounded-full text-xs text-muted-foreground">
+              {jogo.temas.map((t: string, index: number) => (
+                <span key={`tema-${index}`} className="bg-muted px-2 py-1 rounded-full text-xs text-muted-foreground">
                   {t}
                 </span>
               ))}
