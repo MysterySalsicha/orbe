@@ -34,6 +34,7 @@ async function clearDatabase() {
     await prisma.serieCreator.deleteMany({});
     await prisma.video.deleteMany({});
     await prisma.animeOnStudio.deleteMany({});
+    await prisma.animeCharacterVoiceActor.deleteMany({});
     await prisma.animeCharacter.deleteMany({});
     await prisma.animeStaff.deleteMany({});
     await prisma.animeStreamingLink.deleteMany({});

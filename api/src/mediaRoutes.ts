@@ -332,7 +332,7 @@ router.get('/animes/:id/details', cacheMiddleware(TWELVE_HOURS), async (req, res
       include: {
         genres: { include: { genero: true } },
         studios: { include: { studio: true } },
-        characters: { include: { character: true, dublador: true } },
+        characters: { include: { character: true, voiceActors: { include: { dublador: true } } } },
         staff: { include: { staff: true } },
         streamingLinks: true,
         sourceRelations: { 

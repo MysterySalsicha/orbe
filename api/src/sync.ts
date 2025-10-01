@@ -24,23 +24,43 @@ const main = async () => {
   logger.info(`Iniciando sincronização de dados de ${startDate} a ${endDate}...`);
 
   try {
-    logger.info(`--- Iniciando sincronização de FILMES ---`);
+    logger.info(`
+
+------------- FILMES ----------
+`);
     await syncMovies(prisma, startDate, endDate, limit);
     logger.info(`--- Sincronização de FILMES concluída ---`);
 
-    logger.info(`--- Iniciando sincronização de SÉRIES ---`);
+    logger.info(`
+
+------------- SÉRIES ----------
+`);
     await syncSeries(prisma, startDate, endDate, limit);
     logger.info(`--- Sincronização de SÉRIES concluída ---`);
 
-    logger.info(`--- Iniciando sincronização de ANIMES ---`);
-    await syncAnimes(2025, ['WINTER', 'SPRING', 'SUMMER', 'FALL'], limit);
+    logger.info(`
+
+------------- ANIMES ----------
+`);
+    const startYear = new Date(startDate).getFullYear();
+    const endYear = new Date(endDate).getFullYear();
+    for (let year = startYear; year <= endYear; year++) {
+        logger.info(`Sincronizando animes para o ano ${year}...`);
+        await syncAnimes(year, ['WINTER', 'SPRING', 'SUMMER', 'FALL'], limit);
+    }
     logger.info(`--- Sincronização de ANIMES concluída ---`);
 
-    logger.info(`--- Iniciando sincronização de JOGOS ---`);
-    await syncGames(prisma, startDate, endDate, limit);
+    logger.info(`
+
+------------- JOGOS ----------
+`);
+    await syncGames(prisma, limit);
     logger.info(`--- Sincronização de JOGOS concluída ---`);
 
-    logger.info(`Sincronização de todos os dados concluída com sucesso!`);
+    logger.info(`
+
+✅ Sincronização de dados completa.
+`);
   } catch (error) {
     logger.error(`Erro fatal na sincronização: ${error}`);
     process.exit(1);

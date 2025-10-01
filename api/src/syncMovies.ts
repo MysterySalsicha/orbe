@@ -183,7 +183,7 @@ async function processMovieBatch(movieIds: number[], prisma: PrismaClient): Prom
   }
 }
 
-<<<<<<< HEAD
+
 export async function syncMovies(prisma: PrismaClient, startDate: string, endDate: string, limit?: number) {
   let currentStartDate = new Date(startDate);
   const finalEndDate = new Date(endDate);

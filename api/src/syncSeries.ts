@@ -168,7 +168,7 @@ async function processSerieBatch(serieIds: number[], prisma: any): Promise<void>
   }
 }
 
-<<<<<<< HEAD
+
 export async function syncSeries(prisma: PrismaClient, startDate: string, endDate: string, limit?: number) {
   let currentStartDate = new Date(startDate);
   const finalEndDate = new Date(endDate);

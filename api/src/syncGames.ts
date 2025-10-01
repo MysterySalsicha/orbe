@@ -195,7 +195,7 @@ async function fetchAllGameIdsForPeriod(startDateStr: string, endDateStr: string
     }
 }
 
-<<<<<<< HEAD
+
 export async function syncGames(prisma: PrismaClient, limit?: number) {
     try {
         await getIgdbAccessToken();
