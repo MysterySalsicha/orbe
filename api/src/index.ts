@@ -158,7 +158,4 @@ app.get('/profile', async (req, res) => {
 });
 
 
-const PORT = process.env.PORT || 3001;
-server.listen(PORT, () => {
-  logger.info(`🚀 Servidor HTTP e WebSocket rodando na porta ${PORT}`);
-});
+export default app;
