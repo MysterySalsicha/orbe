@@ -27,14 +27,19 @@ export const removeToken = (): void => {
 // Cliente HTTP centralizado
 export const apiClient = {
   get: async (endpoint: string, params?: Record<string, string | number | boolean | undefined | null>) => {
-    const url = new URL(`${API_BASE_URL}${endpoint}`);
+    let urlString = `${API_BASE_URL}${endpoint}`;
     
     if (params) {
+      const searchParams = new URLSearchParams();
       Object.keys(params).forEach(key => {
         if (params[key] !== undefined && params[key] !== null) {
-          url.searchParams.append(key, params[key].toString());
+          searchParams.append(key, params[key]!.toString());
         }
       });
+      const queryString = searchParams.toString();
+      if (queryString) {
+        urlString += `?${queryString}`;
+      }
     }
 
     const headers: Record<string, string> = {
@@ -46,7 +51,7 @@ export const apiClient = {
       headers['Authorization'] = `Bearer ${token}`;
     }
 
-    const response = await fetch(url.toString(), {
+    const response = await fetch(urlString, {
       method: 'GET',
       headers,
     });
