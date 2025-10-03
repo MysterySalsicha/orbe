@@ -3,6 +3,7 @@
 import Image from 'next/image';
 import { Calendar, ShoppingCart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { format, parseISO } from 'date-fns';
 import PlatformIcon from '@/components/ui/PlatformIcons';
 import type { Filme, CastMember, CalendarModalData, Video } from '@/types';
 
@@ -19,55 +20,46 @@ const FilmeModalContent: React.FC<FilmeModalContentProps> = ({ filme, openCalend
   );
   const trailerKey = trailer ? trailer.key : filme.videos?.[0]?.key;
 
-  const hasReleased = filme.data_lancamento_api && new Date(filme.data_lancamento_api) < new Date();
-
   const getImageUrl = (path: string | null | undefined) => {
     if (!path) return '/placeholder-avatar.jpg';
     return path; // A URL completa já vem do mapper
   };
 
-  // --- Lógica dos Botões de Ação ---
-  const twoMonthsAgo = new Date();
-  twoMonthsAgo.setMonth(twoMonthsAgo.getMonth() - 2);
-  const isOld = filme.data_lancamento_api && new Date(filme.data_lancamento_api) < twoMonthsAgo;
+  // --- Lógica do Botão "Comprar Ingresso" ---
+  const today = new Date();
+  const ninetyDaysAgo = new Date();
+  ninetyDaysAgo.setDate(today.getDate() - 90);
+  
+  let isMovieInTheaters = false;
+  if (filme.data_lancamento_api) {
+    const releaseDate = parseISO(filme.data_lancamento_api);
+    isMovieInTheaters = 
+      filme.status === 'Released' && 
+      releaseDate <= today && 
+      releaseDate >= ninetyDaysAgo;
+  }
 
-  const isOnStreaming = filme.plataformas_api && filme.plataformas_api.length > 0;
-  const primaryPlatform = isOnStreaming ? filme.plataformas_api[0] : null;
-
-  const showBuyTicketButton = !isOld && !isOnStreaming;
-  const canBuyTicket = !!(filme.ingresso_link && filme.ingresso_link !== '');
+  const canBuyTicket = !!(filme.ingresso_link && filme.ingresso_link.trim() !== '');
 
   return (
     <div className="space-y-6">
       {/* Botões de Ação */}
       <div className="flex flex-wrap items-center gap-4 mb-6">
-        {isOnStreaming && primaryPlatform && (
-          <div className='space-y-2'>
-            <p className='text-sm text-muted-foreground'>Disponível em:</p>
+        {isMovieInTheaters && (
+          canBuyTicket ? (
             <Button asChild>
-              <a href={filme.homepage || '#'} target="_blank" rel="noopener noreferrer">
-                <PlatformIcon platform={primaryPlatform.nome} className="h-5 w-5 mr-2" />
-                Assistir na {primaryPlatform.nome}
-              </a>
-            </Button>
-          </div>
-        )}
-
-        {showBuyTicketButton && (
-          <Button disabled={!canBuyTicket} asChild={canBuyTicket}>
-            {canBuyTicket ? (
               <a href={filme.ingresso_link} target="_blank" rel="noopener noreferrer">
                 <ShoppingCart className="h-5 w-5 mr-2" />Comprar Ingresso
               </a>
-            ) : (
-              <span>
-                <ShoppingCart className="h-5 w-5 mr-2" />Comprar ingresso indisponível
-              </span>
-            )}
-          </Button>
+            </Button>
+          ) : (
+            <Button disabled>
+              <ShoppingCart className="h-5 w-5 mr-2" />Comprar ingresso indisponível
+            </Button>
+          )
         )}
 
-        {!hasReleased && (
+        {filme.data_lancamento_api && new Date(filme.data_lancamento_api) > today && (
           <Button variant="outline" onClick={() => openCalendarModal({ midia: filme, type: 'filme' })}>
             <Calendar className="h-5 w-5 mr-2" />Adicionar ao Calendário
           </Button>

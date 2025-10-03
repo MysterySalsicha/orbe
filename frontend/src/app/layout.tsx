@@ -64,7 +64,7 @@ export default function RootLayout({
         className={`${inter.variable} font-sans antialiased`}
       >
         <AppProvider>
-          <div className="min-h-screen bg-background text-foreground">
+          <div className="min-h-screen bg-background text-foreground transition-colors duration-500">
             <Header />
             <main className="pt-16 min-h-screen">
               {children}

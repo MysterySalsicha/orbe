@@ -1,195 +1,166 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { 
-  MoreVertical, 
-  Heart, 
-  Bookmark, 
-  Star, 
-  Check, 
-  EyeOff,
-  Trophy,
-  ShoppingCart,
-  Award
+import {
+  MoreVertical,
+  Heart,
+  Bookmark,
+  Star,
+  Check,
+  EyeOff
 } from 'lucide-react';
 import PlatformIcon from '@/components/ui/PlatformIcons';
-import { format, parseISO, differenceInDays, differenceInHours, differenceInMinutes } from 'date-fns';
+import { format, parseISO } from 'date-fns';
 import Image from 'next/image';
 import { ptBR } from 'date-fns/locale';
 import { useAppStore } from '@/stores/appStore';
-import { realApi } from '@/data/realApi';
-import type { MidiaCardProps, UserAction, Anime } from '@/types';
+import {
+  getStreamingProviders,
+  getGamePlatforms,
+  getAnimeDubStatus,
+  formatRating
+} from '@/lib/media-helpers';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import type { MidiaCardProps, UserAction, Anime, Jogo } from '@/types';
 
-const MidiaCard = React.forwardRef<HTMLDivElement, MidiaCardProps>((
-{
-  midia,
-  type,
-  userInteractions = [],
-  onInteraction,
-  isFocused,
-}, ref) => {
-  const { openSuperModal, openRatingModal } = useAppStore();
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [countdown, setCountdown] = useState<string>('');
-  const [hasNewEpisode, setHasNewEpisode] = useState(false);
-  const [nextAiringTime, setNextAiringTime] = useState<string | null>(null);
+// Hook para o cronômetro
+const useCountdown = (targetDate: string | undefined) => {
+  const [timeLeft, setTimeLeft] = useState('');
 
-  const isAnime = type === 'anime';
-  const isFilme = type === 'filme' && 'em_prevenda' in midia;
-
-  // Efeito para buscar e definir o tempo real do próximo episódio
-  const proximoEpisodio = isAnime ? (midia as Anime).proximo_episodio : undefined;
   useEffect(() => {
-    if (isAnime) {
-      // Define um valor inicial (potencialmente do cache) para exibição imediata
-      const initialAiringTime = proximoEpisodio;
-      if (initialAiringTime) {
-        setNextAiringTime(initialAiringTime);
-      }
+    if (!targetDate) return;
 
-      // Busca o dado em tempo real
-      const fetchNextEpisode = async () => {
-        try {
-          const nextEpisodeData = await realApi.getAnimeNextEpisode(midia.id);
-          if (nextEpisodeData && nextEpisodeData.airingAt) {
-            setNextAiringTime(nextEpisodeData.airingAt);
-          }
-        } catch (error) {
-          console.error('Erro ao buscar próximo episódio em tempo real:', error);
-        }
-      };
-
-      fetchNextEpisode();
-    }
-  }, [isAnime, midia, proximoEpisodio]);
-
-  // Efeito para calcular o countdown sempre que o nextAiringTime mudar
-  useEffect(() => {
-    if (!isAnime || !nextAiringTime) {
-      setCountdown('');
-      return;
-    }
-
-    const updateCountdown = () => {
+    const interval = setInterval(() => {
       const now = new Date();
-      const nextEpisodeDate = parseISO(nextAiringTime);
-      
-      if (nextEpisodeDate > now) {
-        const days = differenceInDays(nextEpisodeDate, now);
-        const hours = differenceInHours(nextEpisodeDate, now) % 24;
-        const minutes = differenceInMinutes(nextEpisodeDate, now) % 60;
-        
-        if (days > 0) {
-          setCountdown(`${days}d, ${hours}h e ${minutes}m`);
-        } else if (hours > 0) {
-          setCountdown(`${hours}h e ${minutes}m`);
-        } else {
-          setCountdown(`${minutes}m`);
-        }
-        setHasNewEpisode(false);
-      } else {
-        setCountdown('Disponível agora!');
-        setHasNewEpisode(true);
-      }
-    };
+      const target = new Date(targetDate);
+      const difference = target.getTime() - now.getTime();
 
-    updateCountdown();
-    const interval = setInterval(updateCountdown, 60000); // Atualiza a cada minuto
+      if (difference <= 0) {
+        setTimeLeft('Já disponível');
+        clearInterval(interval);
+        return;
+      }
+
+      const days = Math.floor(difference / (1000 * 60 * 60 * 24));
+      const hours = Math.floor((difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+      const minutes = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60));
+      const seconds = Math.floor((difference % (1000 * 60)) / 1000);
+
+      if (days > 0) {
+        setTimeLeft(`${days}d ${hours}h`);
+      } else {
+        setTimeLeft(`${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`);
+      }
+    }, 1000);
 
     return () => clearInterval(interval);
-  }, [isAnime, nextAiringTime]);
+  }, [targetDate]);
 
-  // Verifica interações do usuário
+  return timeLeft;
+};
+
+const blockedTags = ["Hentai", "Ecchi", "Yaoi", "Yuri", "Adult"];
+
+const MidiaCard = React.forwardRef<HTMLDivElement, MidiaCardProps>((
+  {
+    midia,
+    type,
+    userInteractions = [],
+    onInteraction,
+    isFocused,
+  }, ref) => {
+  const { openSuperModal, openRatingModal } = useAppStore();
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+
+  // Processar dados com helpers
+  const rating = formatRating(midia, type);
+  const genres = midia.generos_api?.map(g => g.name).filter(Boolean) ?? [];
+  const providers = getStreamingProviders(midia);
+  const platforms = type === 'jogo' ? getGamePlatforms(midia as Jogo) : [];
+  const dubStatus = type === 'anime' ? getAnimeDubStatus(midia as Anime) : null;
+
+  const isAnime = type === 'anime';
+  const nextAiringEpisode = isAnime ? (midia as Anime).nextAiringEpisode : null;
+  const countdown = useCountdown(nextAiringEpisode?.airingAt);
+
   const userInteraction = userInteractions.find(
     interaction => interaction.midia_id === midia.id && interaction.tipo_midia === type
   );
 
-  // Formata data de lançamento
+  const isAdultContent = isAnime && (midia as any).isAdult === true;
+
+  // Lógica corrigida para decidir se mostra o cronômetro
+  const showCountdown = (() => {
+    if (!isAnime || !nextAiringEpisode) {
+      return false;
+    }
+    const startDateString = (midia as Anime).data_lancamento_api;
+    if (startDateString && typeof startDateString === 'string') {
+      try {
+        const startDate = parseISO(startDateString);
+        return startDate <= new Date();
+      } catch (e) {
+        return false; // Retorna falso se a data for inválida
+      }
+    }
+    // Lida com o formato de objeto de data legado, se ainda existir
+    if (startDateString && typeof startDateString === 'object' && 'year' in startDateString) {
+        const dateObj = startDateString as { year: number, month: number, day: number };
+        const startDate = new Date(dateObj.year, dateObj.month - 1, dateObj.day);
+        return startDate <= new Date();
+    }
+    return false;
+  })();
+
   const formatReleaseDate = () => {
     const date = midia.data_lancamento_curada || midia.data_lancamento_api;
-    if (!date) return 'Data não informada';
-    
+    if (!date) return 'A ser anunciado';
     try {
-      return format(parseISO(date), 'dd/MM/yyyy', { locale: ptBR });
+      if (typeof date === 'object' && date !== null && 'year' in date) {
+        const dateObj = date as { year: number, month: number, day: number };
+        return `${String(dateObj.day).padStart(2, '0')}/${String(dateObj.month).padStart(2, '0')}/${String(dateObj.year).slice(-2)}`;
+      }
+      return format(parseISO(date as string), 'dd/MM/yy', { locale: ptBR });
     } catch {
       return 'Data inválida';
     }
   };
 
-  // Verifica se a data de lançamento já passou (para validar "Já Assisti/Joguei")
   const hasReleased = () => {
     const date = midia.data_lancamento_curada || midia.data_lancamento_api;
     if (!date) return false;
-    
     try {
-      const releaseDate = parseISO(date);
-      return releaseDate <= new Date();
+      if (typeof date === 'object' && date !== null && 'year' in date) {
+        const dateObj = date as { year: number, month: number, day: number };
+        return new Date(dateObj.year, dateObj.month - 1, dateObj.day) <= new Date();
+      }
+      return parseISO(date as string) <= new Date();
     } catch {
       return false;
     }
   };
 
-  // Ações do menu
   const menuActions = [
-    {
-      icon: Heart,
-      label: 'Favoritar',
-      action: 'favoritar' as UserAction,
-      active: userInteraction?.status === 'favorito'
-    },
-    {
-      icon: Bookmark,
-      label: 'Quero Assistir',
-      action: 'quero_assistir' as UserAction,
-      active: userInteraction?.status === 'quero_assistir'
-    },
-    ...(type === 'anime' || type === 'serie' ? [{
-      icon: Star,
-      label: 'Acompanhando',
-      action: 'acompanhando' as UserAction,
-      active: userInteraction?.status === 'acompanhando'
-    }] : []),
-    {
-      icon: Check,
-      label: type === 'jogo' ? 'Já Joguei' : 'Já Assisti',
-      action: (type === 'jogo' ? 'ja_joguei' : 'ja_assisti') as UserAction,
-      active: userInteraction?.status === 'assistido',
-      disabled: !hasReleased() // Desabilita se ainda não foi lançado
-    },
-    {
-      icon: EyeOff,
-      label: 'Não me Interessa',
-      action: 'nao_me_interessa' as UserAction,
-      active: userInteraction?.status === 'oculto'
-    }
+    { icon: Heart, label: 'Favoritar', action: 'favoritar' as UserAction, active: userInteraction?.status === 'favorito' },
+    { icon: Bookmark, label: 'Quero Assistir', action: 'quero_assistir' as UserAction, active: userInteraction?.status === 'quero_assistir' },
+    ...(type === 'anime' || type === 'serie' ? [{ icon: Star, label: 'Acompanhando', action: 'acompanhando' as UserAction, active: userInteraction?.status === 'acompanhando' }] : []),
+    { icon: Check, label: type === 'jogo' ? 'Já Joguei' : 'Já Assisti', action: (type === 'jogo' ? 'ja_joguei' : 'ja_assisti') as UserAction, active: userInteraction?.status === 'assistido', disabled: !hasReleased() },
+    { icon: EyeOff, label: 'Não me Interessa', action: 'nao_me_interessa' as UserAction, active: userInteraction?.status === 'oculto' }
   ];
 
   const handleCardClick = () => {
-    console.log(`MidiaCard clicked: ID=${midia.id}, Title="${midia.titulo_curado || midia.titulo_api}"`);
-    // Remove ícone de "Novo" quando clica no card
-    if (hasNewEpisode && userInteraction?.status === 'acompanhando') {
-      setHasNewEpisode(false);
-    }
-    
     openSuperModal(midia, type);
     setIsMenuOpen(false);
   };
 
   const handleMenuAction = (action: UserAction, event: React.MouseEvent) => {
     event.stopPropagation();
-    
-    // Validação especial para "Já Assisti/Joguei"
-    if ((action === 'ja_assisti' || action === 'ja_joguei') && !hasReleased()) {
-      return; // Não faz nada se ainda não foi lançado
-    }
-    
-    // Se for "Já Assisti/Joguei", abre o modal de avaliação
+    if ((action === 'ja_assisti' || action === 'ja_joguei') && !hasReleased()) return;
     if (action === 'ja_assisti' || action === 'ja_joguei') {
       openRatingModal(midia, type, action);
     } else {
       onInteraction?.(action, midia);
     }
-    
     setIsMenuOpen(false);
   };
 
@@ -198,234 +169,108 @@ const MidiaCard = React.forwardRef<HTMLDivElement, MidiaCardProps>((
     setIsMenuOpen(!isMenuOpen);
   };
 
-  // Função para lidar com clique longo (mobile)
-  const [pressTimer, setPressTimer] = useState<NodeJS.Timeout | null>(null);
-  
-  const handlePressStart = () => {
-    const timer = setTimeout(() => {
-      setIsMenuOpen(true);
-    }, 500); // 500ms para ativar o menu
-    setPressTimer(timer);
-  };
-
-  const handlePressEnd = () => {
-    if (pressTimer) {
-      clearTimeout(pressTimer);
-      setPressTimer(null);
-    }
-  };
-
-  // Determina o número do episódio atual para animes
-  const getEpisodeInfo = () => {
-    if (!isAnime) return null;
-    
-    // Se a data de lançamento já passou, mostra episódio atual
-    if (hasReleased()) {
-      return (midia as Anime).numero_episodio_atual;
-    }
-    
-    return null;
-  };
-
   return (
-    <div className="relative group" ref={ref}>
-      {/* Card Principal */}
-      <div 
-        className={`relative bg-card rounded-lg overflow-hidden shadow-md hover:shadow-lg transition-all duration-300 cursor-pointer hover:scale-105 w-[200px] ${isFocused ? 'ring-2 ring-primary ring-offset-2 ring-offset-background' : ''}`}
-        data-clickable-card
-        onClick={handleCardClick}
-        onMouseDown={handlePressStart}
-        onMouseUp={handlePressEnd}
-        onMouseLeave={handlePressEnd}
-        onTouchStart={handlePressStart}
-        onTouchEnd={handlePressEnd}
-      >
-        {/* Container da Imagem */}
-        <div className="relative w-[200px] h-[300px] overflow-hidden">
-          <Image
-            src={
-              (midia.poster_curado && midia.poster_curado.trim() !== '')
-                ? midia.poster_curado
-                : (midia.poster_url_api && midia.poster_url_api.trim() !== '')
-                  ? midia.poster_url_api
-                  : '/placeholder.svg'
-            }
-            alt={midia.titulo_curado || midia.titulo_api || 'Imagem da Mídia'}
-            width={200}
-            height={300}
-            unoptimized={midia.poster_url_api?.includes('igdb.com') || midia.poster_url_api?.includes('anilist.co')}
-            loading="lazy"
-            className="object-cover object-center transition-transform duration-300 group-hover:scale-105 w-full h-full"
-            draggable={false}
-            onDragStart={(event: React.DragEvent<HTMLImageElement>) => event.preventDefault()}
-          />
-
-          {/* Ícones Sobrepostos */}
-          <div className="absolute top-2 left-2 flex flex-col space-y-1">
-            {/* Ícones de Prêmios */}
-            {midia.premiacoes?.map((award, index) => (
-              <div key={index} className="relative">
-                {award.status === 'vencedor' ? (
-                  <div className="bg-yellow-500 text-white p-1 rounded-full shadow-lg" title={`Vencedor ${award.nome} ${award.ano}`}>
-                    <Trophy className="h-3 w-3" />
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <div className="relative group" ref={ref}>
+            <div
+              className={`relative bg-card rounded-lg overflow-hidden shadow-md hover:shadow-lg transition-all duration-300 cursor-pointer hover:scale-105 w-[200px] ${isFocused ? 'ring-2 ring-primary ring-offset-2 ring-offset-background' : ''} transition-colors`}
+              onClick={handleCardClick}
+            >
+              <div className="relative w-[200px] h-[300px] overflow-hidden">
+                <Image
+                  src={midia.poster_url_api || '/placeholder.svg'}
+                  alt={midia.titulo_api || 'Imagem da Mídia'}
+                  width={200}
+                  height={300}
+                  unoptimized
+                  loading="lazy"
+                  className={`object-cover object-center transition-all duration-300 group-hover:scale-105 w-full h-full ${isAdultContent ? 'blur-md hover:blur-none' : ''}`}
+                />
+                <div className="absolute top-2 right-2">
+                  <button
+                    onClick={handleMenuToggle}
+                    className="bg-black/50 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300 hover:bg-black/70"
+                  >
+                    <MoreVertical className="h-4 w-4" />
+                  </button>
+                  {isMenuOpen && (
+                    <div className="absolute right-0 mt-1 w-48 bg-popover border border-border rounded-md shadow-lg py-1 z-50">
+                      {menuActions.map((menuAction) => (
+                        <button
+                          key={menuAction.action}
+                          onClick={(e) => !menuAction.disabled && handleMenuAction(menuAction.action, e)}
+                          disabled={menuAction.disabled}
+                          className={`flex items-center w-full px-3 py-2 text-sm transition-colors ${menuAction.disabled ? 'text-muted-foreground cursor-not-allowed opacity-50' : 'hover:bg-muted'} ${menuAction.active ? 'text-primary' : 'text-foreground'}`}
+                        >
+                          <menuAction.icon className="h-4 w-4 mr-2" />
+                          {menuAction.label}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+              <div className="p-3">
+                <div className="flex justify-between items-start">
+                  <h3 className="font-bold text-base truncate pr-2">{midia.titulo_curado || midia.titulo_api}</h3>
+                  {rating && (
+                    <div className="flex items-center gap-1 text-sm shrink-0">
+                      <span>⭐</span>
+                      <span>{rating}</span>
+                    </div>
+                  )}
+                </div>
+                
+                {showCountdown && nextAiringEpisode ? (
+                  <div className="text-xs text-yellow-600 dark:text-blue-400 font-semibold">
+                    <span>Ep. {nextAiringEpisode.episode}: </span>
+                    <span>{countdown}</span>
                   </div>
                 ) : (
-                  <div className="bg-gray-400 text-white p-1 rounded-full shadow-lg" title={`Indicado ${award.nome} ${award.ano}`}>
-                    <Award className="h-3 w-3" />
+                  <div className="flex justify-between items-center text-xs text-gray-400">
+                    {genres[0] && 
+                        <span className="bg-yellow-200 text-yellow-800 dark:bg-blue-900 dark:text-blue-200 px-2 py-0.5 rounded-full font-semibold truncate transition-colors">
+                            {genres[0]}
+                        </span>
+                    }
+                    <p>{formatReleaseDate()}</p>
                   </div>
                 )}
-                <span className="absolute -bottom-1 -right-1 bg-black text-white text-xs px-1 rounded">
-                  {award.ano}
-                </span>
-              </div>
-            ))}
 
-            {/* Ícone de Novo Episódio */}
-            {hasNewEpisode && userInteraction?.status === 'acompanhando' && (
-              <div className="bg-red-500 text-white px-2 py-1 rounded-full text-xs font-bold shadow-lg animate-pulse">
-                NOVO
-              </div>
-            )}
-          </div>
+                {dubStatus && (
+                  <div className={`text-xs font-semibold px-2 py-0.5 rounded-full self-start mt-1 ${dubStatus === 'Dublado' ? 'bg-yellow-200 text-yellow-800 dark:bg-blue-900 dark:text-blue-200' : 'bg-gray-200 text-gray-800 dark:bg-gray-700 dark:text-gray-300'} transition-colors`}>
+                    {dubStatus}
+                  </div>
+                )}
 
-          {/* Ícone de Pré-venda (abaixo do pôster) */}
-          {isFilme && midia.em_prevenda && (
-            <div className="absolute bottom-2 left-2">
-              <div className="bg-green-500 text-white p-2 rounded-full shadow-lg" title="Em pré-venda">
-                <ShoppingCart className="h-4 w-4" />
+                <div className="flex flex-col gap-2 pt-2 min-h-[32px]">
+                  {(type === 'jogo' ? platforms : providers).slice(0, 2).map(name => (
+                    <div key={name} className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                      <PlatformIcon platform={name} size={14} />
+                      <span>{name}</span>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
-          )}
-
-          {/* Menu de Ações (3 pontinhos) */}
-          <div className="absolute top-2 right-2">
-            <button
-              onClick={handleMenuToggle}
-              className="bg-black/50 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300 hover:bg-black/70"
-            >
-              <MoreVertical className="h-4 w-4" />
-            </button>
-
-            {/* Dropdown Menu */}
             {isMenuOpen && (
-              <div className="absolute right-0 mt-1 w-48 bg-popover border border-border rounded-md shadow-lg py-1 z-50">
-                {menuActions.map((menuAction) => {
-                  const IconComponent = menuAction.icon;
-                  const isDisabled = menuAction.disabled;
-                  
-                  return (
-                    <button
-                      key={menuAction.action}
-                      onClick={(e) => !isDisabled && handleMenuAction(menuAction.action, e)}
-                      disabled={isDisabled}
-                      className={`flex items-center w-full px-3 py-2 text-sm transition-colors ${
-                        isDisabled 
-                          ? 'text-muted-foreground cursor-not-allowed opacity-50' 
-                          : 'hover:bg-muted'
-                      } ${
-                        menuAction.active ? 'text-primary' : 'text-foreground'
-                      }`}
-                    >
-                      <IconComponent className="h-4 w-4 mr-2" />
-                      {menuAction.label}
-                    </button>
-                  );
-                })}
-              </div>
+              <div
+                className="fixed inset-0 z-40"
+                onClick={() => setIsMenuOpen(false)}
+              />
             )}
           </div>
-        </div>
-
-        {/* Informações do Card */}
-        <div className="p-3 space-y-2">
-          {/* Título */}
-          <h3 className="font-semibold text-sm line-clamp-2 leading-tight text-center">
-            {midia.titulo_curado || midia.titulo_api}
-          </h3>
-
-          {/* Data/Episódio com lógica especial para animes */}
-          <div className="text-xs text-muted-foreground text-center">
-            {isAnime && hasReleased() && countdown ? (
-              <div>
-                <span className="font-bold">Episódio {getEpisodeInfo()}:</span>
-                <div className="text-primary font-medium mt-1 animate-pulse">
-                  {countdown}
-                </div>
-              </div>
-            ) : (
-              <div>
-                <span className="font-bold">Lançamento:</span> {formatReleaseDate()}
-              </div>
-            )}
-          </div>
-
-          {/* Plataformas */}
-          {(midia.plataformas_curadas || midia.plataformas_api)?.length > 0 && (
-            <div className="text-xs text-muted-foreground text-center">
-              <div className="font-bold mb-1">Plataformas:</div>
-              <div className="flex items-center justify-center flex-wrap gap-1">
-                {(midia.plataformas_curadas || midia.plataformas_api)?.slice(0, 3).map((platform, index) => (
-                  <div key={index} className="flex items-center space-x-1 bg-muted px-2 py-1 rounded">
-                    <PlatformIcon 
-                      platform={platform.nome} 
-                      className="h-3 w-3" 
-                      size={12}
-                    />
-                    <span className="text-xs">{platform.nome}</span>
-                  </div>
-                ))}
-                {(midia.plataformas_curadas || midia.plataformas_api)?.length > 3 && (
-                  <span className="text-xs bg-muted px-2 py-1 rounded">
-                    +{(midia.plataformas_curadas || midia.plataformas_api)?.length - 3}
-                  </span>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* Indicador de Status do Usuário */}
-          {userInteraction && (
-            <div className="flex items-center justify-center space-x-1 text-xs">
-              {userInteraction.status === 'favorito' && (
-                <div className="flex items-center text-red-500">
-                  <Heart className="h-3 w-3 mr-1 fill-current" />
-                  <span>Favorito</span>
-                </div>
-              )}
-              {userInteraction.status === 'quero_assistir' && (
-                <div className="flex items-center text-blue-500">
-                  <Bookmark className="h-3 w-3 mr-1 fill-current" />
-                  <span>Quero Assistir</span>
-                </div>
-              )}
-              {userInteraction.status === 'acompanhando' && (
-                <div className="flex items-center text-yellow-500">
-                  <Star className="h-3 w-3 mr-1 fill-current" />
-                  <span>Acompanhando</span>
-                </div>
-              )}
-              {userInteraction.status === 'assistido' && (
-                <div className="flex items-center text-green-500">
-                  <Check className="h-3 w-3 mr-1" />
-                  <span>{type === 'jogo' ? 'Jogado' : 'Assistido'}</span>
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Overlay para fechar menu */}
-      {isMenuOpen && (
-        <div
-          className="fixed inset-0 z-40"
-          onClick={() => setIsMenuOpen(false)}
-        />
-      )}
-    </div>
+        </TooltipTrigger>
+        <TooltipContent side="bottom">
+          <p>{midia.titulo_curado || midia.titulo_api}</p>
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
   );
 });
 
-export default MidiaCard;
-
 MidiaCard.displayName = 'MidiaCard';
+
+export default MidiaCard;

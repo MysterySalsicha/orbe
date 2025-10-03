@@ -6,44 +6,51 @@ import cacheMiddleware from './cacheMiddleware';
 import adminMiddleware from './adminMiddleware';
 import redisClient from './redisClient';
 
+
 const prisma = new PrismaClient();
 const router = Router();
 
 const TWELVE_HOURS = 43200;
 const TWENTY_FOUR_HOURS = 86400;
+const MIN_VOTE_COUNT = 50;
+const MIN_POPULARITY = 20;
 
 // Rota para Filmes
 router.get('/filmes', cacheMiddleware(TWELVE_HOURS), async (req, res) => {
   const { filtro, genero, ano, status } = req.query;
   try {
-    const where: Prisma.FilmeWhereInput = {};
+    const allConditions: Prisma.FilmeWhereInput[] = [
+      {
+        OR: [
+          { voteCount: { gt: MIN_VOTE_COUNT } },
+          { popularity: { gt: MIN_POPULARITY } },
+        ],
+      }
+    ];
 
     if (genero && genero !== 'todos') {
-      where.genres = {
-        some: { genero: { name: genero as string } },
-      };
+      allConditions.push({ genres: { some: { genero: { name: genero as string } } } });
     }
 
     if (status && status !== 'todos') {
-      where.status = status as string;
+      allConditions.push({ status: status as string });
     }
 
     if (ano && ano !== 'todos') {
       const year = parseInt(ano as string);
       const startDate = new Date(year, 0, 1);
       const endDate = new Date(year, 11, 31, 23, 59, 59);
-      where.releaseDate = {
-        gte: startDate,
-        lte: endDate,
-      };
+      allConditions.push({ releaseDate: { gte: startDate, lte: endDate } });
     }
 
     const now = new Date();
     if (filtro === 'em_cartaz') {
-      where.releaseDate = { lte: now };
+      allConditions.push({ releaseDate: { lte: now } });
     } else if (filtro === 'em_breve') {
-      where.releaseDate = { gte: now };
+      allConditions.push({ releaseDate: { gte: now } });
     }
+
+    const where: Prisma.FilmeWhereInput = { AND: allConditions };
 
     const orderBy: Prisma.FilmeOrderByWithRelationInput = filtro === 'populares' ? { popularity: 'desc' } : { title: 'asc' };
 
@@ -272,9 +279,11 @@ router.get('/series/filtros', async (req, res) => {
   }
 });
 
+const blockedTags = ["Hentai", "Ecchi", "Yaoi", "Yuri", "Adult"];
+
 // Rota para Animes
 router.get('/animes', cacheMiddleware(TWELVE_HOURS), async (req, res) => {
-  const { filtro, genero, ano, formato, fonte, status } = req.query;
+  const { filtro, genero, ano, formato, fonte, status, safeSearch } = req.query;
   try {
     const where: Prisma.AnimeWhereInput = {};
 
@@ -296,6 +305,18 @@ router.get('/animes', cacheMiddleware(TWELVE_HOURS), async (req, res) => {
       where.seasonYear = parseInt(ano as string);
     }
 
+    if (safeSearch === 'true') {
+      where.tags = {
+        none: {
+          tag: {
+            name: {
+              in: blockedTags,
+            },
+          },
+        },
+      };
+    }
+
     const orderBy: Prisma.AnimeOrderByWithRelationInput = filtro === 'populares' ? { popularity: 'desc' } : { titleRomaji: 'asc' };
 
     const animes = await prisma.anime.findMany({
@@ -312,7 +333,8 @@ router.get('/animes', cacheMiddleware(TWELVE_HOURS), async (req, res) => {
             relatedAnime: { select: { anilistId: true, titleRomaji: true } },
             sourceAnime: { select: { anilistId: true, titleRomaji: true } }
           }
-        }
+        },
+        tags: { include: { tag: true } }
       },
       orderBy,
     });
@@ -631,5 +653,295 @@ router.get('/premios', cacheMiddleware(TWENTY_FOUR_HOURS), async (req, res) => {
     res.status(500).json({ error: 'Erro ao buscar premiações.' });
   }
 });
+
+// Rota para Filmes por Ano
+router.get('/filmes/by-year', async (req, res) => {
+  const { year } = req.query;
+  if (!year || isNaN(parseInt(year as string))) {
+    return res.status(400).json({ error: 'Ano inválido fornecido.' });
+  }
+  const parsedYear = parseInt(year as string);
+  const startDate = new Date(parsedYear, 0, 1);
+  const endDate = new Date(parsedYear, 11, 31, 23, 59, 59);
+
+  try {
+    const currentYear = new Date().getFullYear();
+    let relevanceFilter: Prisma.FilmeWhereInput = {};
+
+    if (parsedYear > currentYear) {
+      relevanceFilter = { popularity: { gt: 2 } };
+    } else {
+      relevanceFilter = {
+        OR: [
+          { voteCount: { gt: 25 } },
+          { popularity: { gt: 10 } },
+        ],
+      };
+    }
+
+    const filmes = await prisma.filme.findMany({
+      where: {
+        AND: [
+          {
+            releaseDate: {
+              gte: startDate,
+              lte: endDate,
+            },
+          },
+          relevanceFilter,
+        ],
+      },
+      orderBy: {
+        releaseDate: 'asc',
+      },
+      include: {
+        genres: { include: { genero: true } },
+        streamingProviders: { include: { provider: true } },
+      },
+    });
+    res.json(filmes.map(mapFilmeToMidia));
+  } catch (error) {
+    logger.error(`Erro ao buscar filmes por ano: ${error}`);
+    res.status(500).json({ error: 'Erro ao buscar filmes por ano.' });
+  }
+});
+
+// Rota para Séries por Ano
+router.get('/series/by-year', async (req, res) => {
+  const { year } = req.query;
+  if (!year || isNaN(parseInt(year as string))) {
+    return res.status(400).json({ error: 'Ano inválido fornecido.' });
+  }
+  const parsedYear = parseInt(year as string);
+  const startDate = new Date(parsedYear, 0, 1);
+  const endDate = new Date(parsedYear, 11, 31, 23, 59, 59);
+
+  try {
+    const currentYear = new Date().getFullYear();
+    let relevanceFilter: Prisma.SerieWhereInput = {};
+
+    if (parsedYear > currentYear) {
+      relevanceFilter = { popularity: { gt: 2 } };
+    } else {
+      relevanceFilter = {
+        OR: [
+          { voteCount: { gt: 25 } },
+          { popularity: { gt: 10 } },
+        ],
+      };
+    }
+
+    const series = await prisma.serie.findMany({
+      where: {
+        AND: [
+          {
+            firstAirDate: {
+              gte: startDate,
+              lte: endDate,
+            },
+          },
+          relevanceFilter,
+        ],
+      },
+      orderBy: {
+        firstAirDate: 'asc',
+      },
+      include: {
+        genres: { include: { genero: true } },
+        streamingProviders: { include: { provider: true } },
+      },
+    });
+    res.json(series.map(mapSerieToMidia));
+  } catch (error) {
+    logger.error(`Erro ao buscar séries por ano: ${error}`);
+    res.status(500).json({ error: 'Erro ao buscar séries por ano.' });
+  }
+});
+
+// Rota para Jogos por Ano
+router.get('/jogos/by-year', async (req, res) => {
+  const { year } = req.query;
+  if (!year || isNaN(parseInt(year as string))) {
+    return res.status(400).json({ error: 'Ano inválido fornecido.' });
+  }
+  const parsedYear = parseInt(year as string);
+  const startDate = new Date(parsedYear, 0, 1);
+  const endDate = new Date(parsedYear, 11, 31, 23, 59, 59);
+
+  try {
+    const jogos = await prisma.jogo.findMany({
+      where: {
+        firstReleaseDate: {
+          gte: startDate,
+          lte: endDate,
+        },
+      },
+      orderBy: {
+        firstReleaseDate: 'asc',
+      },
+      include: {
+        platforms: { include: { plataforma: true } }
+      }
+    });
+    res.json(jogos.map(mapJogoToMidia));
+  } catch (error) {
+    logger.error(`Erro ao buscar jogos por ano: ${error}`);
+    res.status(500).json({ error: 'Erro ao buscar jogos por ano.' });
+  }
+});
+
+// Rota para Animes da Semana
+router.get('/animes/weekly-schedule', async (req, res) => {
+  try {
+    const now = new Date();
+    const dayOfWeek = now.getDay(); // 0 (Dom) - 6 (Sáb)
+    const startDate = new Date(now);
+    startDate.setDate(now.getDate() - dayOfWeek);
+    startDate.setHours(0, 0, 0, 0);
+
+    const endDate = new Date(startDate);
+    endDate.setDate(startDate.getDate() + 6);
+    endDate.setHours(23, 59, 59, 999);
+
+    const schedule = await prisma.airingSchedule.findMany({
+      where: {
+        airingAt: {
+          gte: startDate,
+          lte: endDate,
+        },
+      },
+      include: {
+        anime: true,
+      },
+      orderBy: {
+        airingAt: 'asc',
+      },
+    });
+
+    const groupedByDay = schedule.reduce((acc, item) => {
+      const day = item.airingAt.getDay();
+      if (!acc[day]) {
+        acc[day] = [];
+      }
+      acc[day].push(mapAnimeToMidia(item.anime));
+      return acc;
+    }, {} as Record<number, any[]>);
+
+    res.json(groupedByDay);
+  } catch (error) {
+    logger.error(`Erro ao buscar cronograma semanal de animes: ${error}`);
+    res.status(500).json({ error: 'Erro ao buscar cronograma semanal de animes.' });
+  }
+});
+
+// Helper function to get date range for a season
+const getSeasonDateRange = (year: number, season: string): { startDate: Date, endDate: Date } => {
+  let startDate: Date;
+  let endDate: Date;
+
+  switch (season.toUpperCase()) {
+    case 'WINTER':
+      startDate = new Date(Date.UTC(year, 0, 1)); // Jan 1
+      endDate = new Date(Date.UTC(year, 2, 31, 23, 59, 59, 999)); // Mar 31
+      break;
+    case 'SPRING':
+      startDate = new Date(Date.UTC(year, 3, 1)); // Apr 1
+      endDate = new Date(Date.UTC(year, 5, 30, 23, 59, 59, 999)); // Jun 30
+      break;
+    case 'SUMMER':
+      startDate = new Date(Date.UTC(year, 6, 1)); // Jul 1
+      endDate = new Date(Date.UTC(year, 8, 30, 23, 59, 59, 999)); // Sep 30
+      break;
+    case 'FALL':
+      startDate = new Date(Date.UTC(year, 9, 1)); // Oct 1
+      endDate = new Date(Date.UTC(year, 11, 31, 23, 59, 59, 999)); // Dec 31
+      break;
+    default:
+      // Return a range that will yield no results for invalid seasons
+      startDate = new Date(0);
+      endDate = new Date(0);
+      break;
+  }
+  return { startDate, endDate };
+};
+
+// Rota para Animes por Temporada e Ano
+router.get('/animes/by-season', async (req, res) => {
+  const { year, season } = req.query;
+
+  if (!year || !season || typeof year !== 'string' || typeof season !== 'string') {
+    return res.status(400).json({ error: "Os parâmetros 'year' e 'season' são obrigatórios." });
+  }
+
+  try {
+    const parsedYear = parseInt(year, 10);
+    if (isNaN(parsedYear)) {
+      return res.status(400).json({ error: "O parâmetro 'year' deve ser um número." });
+    }
+
+    const { startDate, endDate } = getSeasonDateRange(parsedYear, season);
+
+    const airingSchedules = await prisma.airingSchedule.findMany({
+      where: {
+        airingAt: {
+          gte: startDate,
+          lte: endDate,
+        },
+        anime: {
+          isAdult: false,
+          format: {
+            in: ['TV', 'MOVIE', 'ONA', 'SPECIAL'],
+          },
+        },
+      },
+      include: {
+        anime: {
+          include: {
+            airingSchedule: true,
+            genres: { include: { genero: true } },
+            studios: { include: { studio: true } },
+            characters: { 
+              include: { 
+                character: true, 
+                voiceActors: { include: { dublador: true } } 
+              } 
+            }
+          }
+        }
+      },
+      orderBy: {
+        airingAt: 'asc',
+      },
+    });
+
+    const animesMap = new Map<number, any>();
+    airingSchedules.forEach(schedule => {
+      if (schedule.anime && !animesMap.has(schedule.anime.anilistId)) {
+        animesMap.set(schedule.anime.anilistId, schedule.anime);
+      }
+    });
+
+    const uniqueAnimes = Array.from(animesMap.values());
+
+    const animesWithNextEpisode = uniqueAnimes.map(anime => {
+      const now = new Date();
+      const nextAiring = anime.airingSchedule
+        .filter((s: any) => s.airingAt > now)
+        .sort((a: any, b: any) => a.airingAt.getTime() - b.airingAt.getTime())[0];
+
+      return {
+        ...mapAnimeToMidia(anime),
+        nextAiringEpisode: nextAiring ? { airingAt: nextAiring.airingAt, episode: nextAiring.episode } : null,
+      };
+    });
+
+    res.status(200).json(animesWithNextEpisode);
+  } catch (error) {
+    logger.error(`Erro ao buscar animes por temporada: ${error}`);
+    res.status(500).json({ error: 'Erro ao buscar animes por temporada.' });
+  }
+});
+
+
 
 export default router;

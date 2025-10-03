@@ -1,5 +1,7 @@
 import type { Filme, Serie, Anime, Jogo } from '@/types';
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || '/api';
+const API_BASE_URL = process.env.NODE_ENV === 'development' 
+  ? '/api' 
+  : (process.env.NEXT_PUBLIC_API_URL || '/api');
 
 // Função para obter o token do localStorage
 const getToken = (): string | null => {

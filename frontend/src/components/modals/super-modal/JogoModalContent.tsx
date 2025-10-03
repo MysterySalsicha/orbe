@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import PlatformIcon from '@/components/ui/PlatformIcons';
+import { getGameStores } from '@/lib/media-helpers';
 import type { Jogo, CalendarModalData, Website, Plataforma, Genre } from '@/types';
 
 interface JogoModalContentProps {
@@ -16,28 +17,31 @@ interface JogoModalContentProps {
 const JogoModalContent: React.FC<JogoModalContentProps> = ({ jogo, openCalendarModal }) => {
 
   const trailerKey = jogo.trailer_key;
-
-  const storeIds: { [key: number]: string } = {
-    13: 'Steam',
-    16: 'Epic Games',
-    17: 'GOG',
-    // Adicionar outros IDs de loja aqui, ex: PlayStation, Xbox, se disponíveis
-  };
+  const gameStores = getGameStores(jogo);
 
   return (
     <div className="space-y-6">
       {/* Botões de Ação */}
       <div className="flex flex-wrap items-center gap-4 mb-6">
-        <div className='space-y-2'>
-          <p className='text-sm text-muted-foreground'>Disponível para compra:</p>
-          <div className="flex flex-wrap gap-3">
-            {jogo.websites?.filter((site: Website) => storeIds[site.category]).map((site: Website) => (
-              <a key={site.url} href={site.url} target="_blank" rel="noopener noreferrer" title={`Comprar na ${storeIds[site.category]}`}>
-                <PlatformIcon platform={storeIds[site.category]} className="h-8 w-8 hover:scale-110 transition-transform" />
-              </a>
-            ))}
+        {gameStores.length > 0 && (
+          <div className='space-y-2'>
+            <h3 className="text-lg font-semibold orbe-text-secondary">Disponível em:</h3>
+            <div className="flex flex-wrap gap-4 mt-2">
+              {gameStores.map((store) => (
+                <a 
+                  key={store.name} 
+                  href={store.url} 
+                  target="_blank" 
+                  rel="noopener noreferrer" 
+                  className="flex items-center gap-2 bg-muted hover:bg-muted/80 text-foreground font-semibold px-4 py-2 rounded-lg transition-colors"
+                >
+                  <PlatformIcon platform={store.icon} className="h-5 w-5" />
+                  <span>{store.name}</span>
+                </a>
+              ))}
+            </div>
           </div>
-        </div>
+        )}
         <Button variant="outline" onClick={() => openCalendarModal({ midia: jogo, type: 'jogo' })}>
           <Calendar className="h-5 w-5 mr-2" />Adicionar ao Calendário
         </Button>

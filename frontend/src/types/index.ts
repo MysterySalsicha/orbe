@@ -140,8 +140,20 @@ export interface Anime extends Serie {
   proximo_episodio?: string;
   numero_episodio_atual?: number;
   eventos_recorrentes_calendario?: boolean;
-  tags?: string[];
+  tags_api?: string[];
   relations?: Relation[];
+  airingSchedule?: any[];
+  format?: string;
+  isAdult?: boolean;
+  nextAiringEpisode?: {
+    airingAt: string;
+    episode: number;
+  } | null;
+  startDate?: {
+      year: number;
+      month: number;
+      day: number;
+  };
 }
 
 export interface Jogo extends Midia {

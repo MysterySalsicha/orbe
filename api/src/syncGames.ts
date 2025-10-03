@@ -104,7 +104,7 @@ async function processGameBatch(gameIds: number[], prisma: PrismaClient, eventId
             try {
                 const brReleaseDate = game.release_dates?.find((rd: any) => rd.region === 2)?.date;
                 const firstReleaseDate = brReleaseDate ? new Date(brReleaseDate * 1000) : (game.first_release_date ? new Date(game.first_release_date * 1000) : null);
-                const coverUrl = game.cover?.url ? `https:${game.cover.url.replace('t_thumb', 't_cover_big')}` : null;
+                const coverUrl = game.cover?.url ? `https:${game.cover.url.replace('t_thumb', 't_cover_big')}`.replace('https://images.igdb.com/igdb/image/upload', '/api/images/igdb') : null;
 
                 const updateData = {
                     name: game.name,
@@ -128,8 +128,8 @@ async function processGameBatch(gameIds: number[], prisma: PrismaClient, eventId
                     platforms: { create: game.platforms?.map((platform: any) => ({ plataforma: { connectOrCreate: { where: { igdbId: platform.id }, create: { igdbId: platform.id, name: platform.name } } } })) ?? [] },
                     themes: { create: game.themes?.map((theme: any) => ({ theme: { connectOrCreate: { where: { igdbId: theme.id }, create: { igdbId: theme.id, name: theme.name } } } })) ?? [] },
                     playerPerspectives: { create: game.player_perspectives?.map((persp: any) => ({ perspective: { connectOrCreate: { where: { igdbId: persp.id }, create: { igdbId: persp.id, name: persp.name } } } })) ?? [] },
-                    screenshots: { create: game.screenshots?.map((ss: any) => ({ igdbId: ss.id, url: `https:${ss.url.replace('t_thumb', 't_screenshot_huge')}` })) ?? [] },
-                    artworks: { create: game.artworks?.map((art: any) => ({ igdbId: art.id, url: `https:${art.url.replace('t_thumb', 't_1080p')}` })) ?? [] },
+                    screenshots: { create: game.screenshots?.map((ss: any) => ({ igdbId: ss.id, url: `https:${ss.url.replace('t_thumb', 't_screenshot_huge')}`.replace('https://images.igdb.com/igdb/image/upload', '/api/images/igdb') })) ?? [] },
+                    artworks: { create: game.artworks?.map((art: any) => ({ igdbId: art.id, url: `https:${art.url.replace('t_thumb', 't_1080p')}`.replace('https://images.igdb.com/igdb/image/upload', '/api/images/igdb') })) ?? [] },
                     websites: { create: game.websites?.filter((w: any) => w.category != null).map((w: any) => ({ url: w.url, category: w.category, igdbId: w.id })) ?? [] },
                     videos: { create: game.videos?.map((video: any) => ({ key: video.video_id, name: video.name, site: 'YouTube', type: 'Trailer', official: true })) ?? [] },
                     gameModes: { create: game.game_modes?.map((mode: any) => ({ gameMode: { connectOrCreate: { where: { id: mode.id }, create: { id: mode.id, name: mode.name, slug: mode.slug } } } })) ?? [] },

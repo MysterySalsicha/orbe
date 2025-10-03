@@ -32,7 +32,6 @@ export const mapFilmeToMidia = (filme: any) => {
     homepage: filme.homepage, // Adicionado para o botão Assistir
     trailer_key: filme.videos?.find((v: any) => v.site === 'YouTube' && v.type === 'Trailer')?.key || filme.videos?.[0]?.key || null, // Extrai a chave do trailer
   };
-  logger.debug('Filme Mapeado:', mappedFilme);
   return mappedFilme;
 };
 
@@ -74,6 +73,7 @@ export const mapAnimeToMidia = (anime: any) => {
     mal_link: anime.malId ? `https://myanimelist.net/anime/${anime.malId}` : null,
     trailer_key: anime.videos?.find((v: any) => v.site === 'YouTube')?.key,
     generos_api: anime.genres?.map((g: any) => g.genero.name) ?? [],
+    tags_api: anime.tags?.map((t: any) => t.tag.name) ?? [],
     plataformas_api: anime.streamingLinks?.map((l: any) => ({ nome: l.site })) ?? [],
     proximo_episodio: nextAiringEpisode ? new Date(nextAiringEpisode.airingAt * 1000).toISOString() : null,
     numero_episodio_atual: nextAiringEpisode ? nextAiringEpisode.episode : null,
@@ -97,6 +97,9 @@ export const mapAnimeToMidia = (anime: any) => {
         node: { id: rel.sourceAnime.anilistId, title: { romaji: rel.sourceAnime.titleRomaji } }
       })) ?? []),
     ],
+    airingSchedule: anime.airingSchedule, // Adicionado para o carrossel de animes
+    format: anime.format, // Adicionado para filtro de formato
+    isAdult: anime.isAdult, // Adicionado para filtro de conteúdo adulto
   };
 };
 

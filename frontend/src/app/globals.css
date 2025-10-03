@@ -394,3 +394,12 @@ body {
   }
 }
 
+.blocked-poster {
+  filter: blur(8px);
+  transition: filter 0.3s ease;
+}
+
+.blocked-poster:hover {
+  filter: blur(0);
+}
+

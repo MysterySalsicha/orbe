@@ -170,7 +170,7 @@ const SuperModal: React.FC = () => {
   return (
     <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm overflow-y-auto" onKeyDown={(e) => { if (e.key === 'Escape') handleClose(); }}>
       <div className="container mx-auto px-4 py-8">
-        <div className="bg-background rounded-lg shadow-xl max-w-4xl mx-auto super-modal-content">
+        <div className="bg-background rounded-lg shadow-xl max-w-4xl mx-auto super-modal-content transition-colors">
           <div className="relative p-6 pb-0">
             <div className="absolute top-4 right-4 z-10 flex gap-2">
               {user?.role === 'admin' && (
@@ -188,11 +188,11 @@ const SuperModal: React.FC = () => {
                 <div className="w-48 h-72 bg-muted rounded-lg overflow-hidden">
                   <Image src={midia.poster_curado || midia.poster_url_api || '/placeholder-poster.jpg'} alt={midia.titulo_curado || midia.titulo_api || 'Imagem da Mídia'} width={192} height={288} className="w-full h-full object-cover" />
                 </div>
-                {type === 'anime' && (midia as Anime).tags && ((midia as Anime).tags?.length ?? 0) > 0 && (
+                {type === 'anime' && (midia as Anime).tags_api && ((midia as Anime).tags_api?.length ?? 0) > 0 && (
                   <div className="mt-4">
                     <h4 className="font-semibold text-sm mb-2 orbe-text-secondary">Tags</h4>
                     <div className="flex flex-wrap gap-2 text-xs">
-                      {(midia as Anime).tags!.map((tag: string, index: number) => (
+                      {(midia as Anime).tags_api!.map((tag: string, index: number) => (
                         <span key={index} className="bg-muted px-2 py-1 rounded-full text-muted-foreground">{tag}</span>
                       ))}
                     </div>
