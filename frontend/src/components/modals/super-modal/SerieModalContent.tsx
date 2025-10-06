@@ -15,6 +15,10 @@ interface SerieModalContentProps {
 
 const SerieModalContent: React.FC<SerieModalContentProps> = ({ serie, openCalendarModal }) => {
 
+  if (!serie) {
+    return <div>Carregando...</div>;
+  }
+
   const [emblaRef] = useEmblaCarousel({ align: 'start', dragFree: true });
 
   // Encontra o trailer oficial na lista de vídeos
