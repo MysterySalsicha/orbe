@@ -74,14 +74,7 @@ const FilmeModalContent: React.FC<FilmeModalContentProps> = ({ filme, openCalend
         </div>
       )}
 
-      {(filme.diretor || filme.escritor || filme.generos_api || filme.duracao) && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-          {filme.duracao && <div><span className="font-semibold orbe-text-secondary">Duração:</span> <span className="text-muted-foreground">{filme.duracao}</span></div>}
-          {filme.diretor && <div><span className="font-semibold orbe-text-secondary">Direção:</span> <span className="text-muted-foreground">{filme.diretor}</span></div>}
-          {filme.escritor && <div><span className="font-semibold orbe-text-secondary">Roteiro:</span> <span className="text-muted-foreground">{filme.escritor}</span></div>}
-          {filme.generos_api && filme.generos_api.length > 0 && <div className="md:col-span-2"><span className="font-semibold orbe-text-secondary">Gêneros:</span> <span className="text-muted-foreground">{filme.generos_api.join(', ')}</span></div>}
-        </div>
-      )}
+
 
       {/* Trailer */}
       {trailerKey && (

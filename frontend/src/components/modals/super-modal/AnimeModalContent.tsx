@@ -7,17 +7,56 @@ import { Button } from '@/components/ui/button';
 import PlatformIcon from '@/components/ui/PlatformIcons';
 import type { Anime, CalendarModalData, Character, StaffMember, Video } from '@/types';
 import { getStreamingProviders } from '@/lib/media-helpers';
+import useEmblaCarousel from 'embla-carousel-react';
 
 interface AnimeModalContentProps {
   anime: Anime; // Recebe o objeto de detalhes completo da API
   openCalendarModal: (data: CalendarModalData) => void;
 }
 
+const CharacterCard = ({ character }: { character: Character }) => {
+  const [selectedDubbing, setSelectedDubbing] = useState<'jp' | 'pt'>('jp');
+  const hasPtBrDub = !!character.dubladores?.pt;
+
+  return (
+    <div className="flex-shrink-0 text-center w-32 space-y-2 p-2">
+      <div className="w-24 h-24 bg-muted rounded-full mb-1 overflow-hidden mx-auto">
+        {character.foto_url && (<Image src={character.foto_url} alt={character.nome} width={96} height={96} className="w-full h-full object-cover" unoptimized={true} />)}
+      </div>
+      <p className="text-sm font-medium text-foreground line-clamp-2 h-10">{character.nome}</p>
+      
+      {character.dubladores && (character.dubladores.jp || character.dubladores.pt) && (
+        <div className="space-y-1">
+            <div className="flex bg-muted rounded-lg p-1 mx-auto w-fit">
+                {character.dubladores.jp && (
+                    <button onClick={() => setSelectedDubbing('jp')} className={`px-2 py-0.5 rounded text-xs transition-colors ${selectedDubbing === 'jp' ? 'bg-primary text-primary-foreground' : 'text-foreground hover:bg-muted/80'}`}>
+                        JP
+                    </button>
+                )}
+                {hasPtBrDub && (
+                    <button onClick={() => setSelectedDubbing('pt')} className={`px-2 py-0.5 rounded text-xs transition-colors ${selectedDubbing === 'pt' ? 'bg-primary text-primary-foreground' : 'text-foreground hover:bg-muted/80'}`}>
+                        PT-BR
+                    </button>
+                )}
+            </div>
+            {character.dubladores?.[selectedDubbing] && (
+                <div className="h-28">
+                    <div className="w-16 h-16 bg-muted rounded-full mb-1 overflow-hidden mx-auto">
+                        {character.dubladores[selectedDubbing]?.foto_url && (<Image src={character.dubladores[selectedDubbing]!.foto_url!} alt={character.dubladores[selectedDubbing]!.nome} width={64} height={64} className="w-full h-full object-cover" unoptimized={true} />)}
+                    </div>
+                    <p className="text-xs text-muted-foreground line-clamp-2 h-8">{character.dubladores[selectedDubbing]!.nome}</p>
+                </div>
+            )}
+        </div>
+      )}
+    </div>
+  );
+};
+
 const AnimeModalContent: React.FC<AnimeModalContentProps> = ({ anime, openCalendarModal }) => {
   const [isSynopsisExpanded, setIsSynopsisExpanded] = useState(false);
-  const [selectedDubbing, setSelectedDubbing] = useState<'jp' | 'pt'>('jp');
-
-  const hasPtBrDub = anime.personagens?.some((p: Character) => p.dubladores?.pt);
+  const [staffCarouselRef] = useEmblaCarousel({ align: 'start', dragFree: true });
+  const [characterCarouselRef] = useEmblaCarousel({ align: 'start', dragFree: true });
 
   const providers = getStreamingProviders(anime);
   const releaseDate = new Date(anime.data_lancamento_api);
@@ -81,14 +120,6 @@ const AnimeModalContent: React.FC<AnimeModalContentProps> = ({ anime, openCalend
         )}
       </div>
 
-      {/* Detalhes Adicionais */}
-      <div className="space-y-3 pt-4 border-t border-border text-sm">
-        {anime.fonte && <div className="flex items-center gap-2"><span className="font-semibold w-24 flex-shrink-0">Fonte:</span><span className="text-muted-foreground">{anime.fonte}</span></div>}
-        {anime.estudio && <div className="flex items-center gap-2"><span className="font-semibold w-24 flex-shrink-0">Estúdio(s):</span><span className="text-muted-foreground">{anime.estudio}</span></div>}
-        {anime.dublagem_info && <div className="flex items-center gap-2"><span className="font-semibold w-24 flex-shrink-0">Dublagem:</span><span className="text-muted-foreground">{anime.dublagem_info ? 'Sim' : 'Não'}</span></div>}
-        {anime.mal_link && <div className="flex items-center gap-2"><span className="font-semibold w-24 flex-shrink-0">Link Externo:</span><a href={anime.mal_link} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-blue-400 hover:text-blue-300">MyAnimeList <ExternalLink className="h-4 w-4" /></a></div>}
-      </div>
-
       {/* Sinopse */}
       {anime.sinopse && (
         <div>
@@ -122,16 +153,18 @@ const AnimeModalContent: React.FC<AnimeModalContentProps> = ({ anime, openCalend
       {anime.staff && anime.staff.length > 0 && (
         <div>
           <h3 className="text-lg font-semibold orbe-text-secondary mb-3">Equipe de Produção</h3>
-          <div className="flex space-x-4 overflow-x-auto scrollbar-hide pb-2">
-            {anime.staff.map((membro: StaffMember) => (
-              <div key={membro.id} className="flex-shrink-0 text-center w-24">
-                <div className="w-20 h-20 bg-muted rounded-full mb-2 overflow-hidden mx-auto">
-                  {membro.foto_url && (<Image src={membro.foto_url} alt={membro.nome} width={80} height={80} className="w-full h-full object-cover" unoptimized={true} />)}
+          <div className="overflow-hidden" ref={staffCarouselRef}>
+            <div className="flex space-x-4">
+              {anime.staff.map((membro: StaffMember) => (
+                <div key={membro.id} className="flex-shrink-0 text-center w-24">
+                  <div className="w-20 h-20 bg-muted rounded-full mb-2 overflow-hidden mx-auto">
+                    {membro.foto_url && (<Image src={membro.foto_url} alt={membro.nome} width={80} height={80} className="w-full h-full object-cover" unoptimized={true} />)}
+                  </div>
+                  <p className="text-xs font-medium text-foreground line-clamp-1">{membro.nome}</p>
+                  <p className="text-xs text-muted-foreground line-clamp-1">{membro.funcao}</p>
                 </div>
-                <p className="text-xs font-medium text-foreground line-clamp-1">{membro.nome}</p>
-                <p className="text-xs text-muted-foreground line-clamp-1">{membro.funcao}</p>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         </div>
       )}
@@ -139,36 +172,13 @@ const AnimeModalContent: React.FC<AnimeModalContentProps> = ({ anime, openCalend
       {/* Personagens com Seletor de Dublagem */}
       {anime.personagens && anime.personagens.length > 0 && (
         <div>
-          <div className="flex justify-between items-center mb-3">
-            <h3 className="text-lg font-semibold orbe-text-secondary">Personagens e Dubladores</h3>
-            <div className="flex bg-muted rounded-lg p-1">
-              <button onClick={() => setSelectedDubbing('jp')} className={`px-3 py-1 rounded text-sm transition-colors ${selectedDubbing === 'jp' ? 'bg-primary text-primary-foreground' : 'text-foreground hover:bg-muted/80'}`}>
-                JP
-              </button>
-              {hasPtBrDub && (
-                <button onClick={() => setSelectedDubbing('pt')} className={`px-3 py-1 rounded text-sm transition-colors ${selectedDubbing === 'pt' ? 'bg-primary text-primary-foreground' : 'text-foreground hover:bg-muted/80'}`}>
-                  PT-BR
-                </button>
-              )}
+          <h3 className="text-lg font-semibold orbe-text-secondary mb-3">Personagens e Dubladores</h3>
+          <div className="overflow-hidden" ref={characterCarouselRef}>
+            <div className="flex">
+              {anime.personagens.map((p: Character) => (
+                <CharacterCard key={p.id} character={p} />
+              ))}
             </div>
-          </div>
-          <div className="flex space-x-4 overflow-x-auto scrollbar-hide pb-2">
-            {anime.personagens.map((p: Character) => (
-              <div key={p.id} className="flex-shrink-0 text-center w-28 space-y-2">
-                <div className="w-24 h-24 bg-muted rounded-full mb-1 overflow-hidden mx-auto">
-                  {p.foto_url && (<Image src={p.foto_url} alt={p.nome} width={96} height={96} className="w-full h-full object-cover" unoptimized={true} />)}
-                </div>
-                <p className="text-sm font-medium text-foreground line-clamp-2">{p.nome}</p>
-                {p.dubladores?.[selectedDubbing] && (
-                  <>
-                    <div className="w-16 h-16 bg-muted rounded-full mb-1 overflow-hidden mx-auto">
-                      {p.dubladores[selectedDubbing].foto_url && (<Image src={p.dubladores[selectedDubbing].foto_url} alt={p.dubladores[selectedDubbing].nome} width={64} height={64} className="w-full h-full object-cover" unoptimized={true} />)}
-                    </div>
-                    <p className="text-xs text-muted-foreground line-clamp-2">{p.dubladores[selectedDubbing].nome}</p>
-                  </>
-                )}
-              </div>
-            ))}
           </div>
         </div>
       )}

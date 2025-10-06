@@ -77,63 +77,7 @@ const JogoModalContent: React.FC<JogoModalContentProps> = ({ jogo, openCalendarM
         </div>
       )}
 
-      {/* Detalhes Adicionais */}
-      <div className="space-y-3 pt-4 border-t border-border text-sm">
-        {jogo.desenvolvedores && jogo.desenvolvedores.length > 0 && (
-          <div className="flex items-center gap-2">
-            <span className="font-semibold w-24 flex-shrink-0">Desenvolvedor(es):</span>
-            <span className="text-muted-foreground">{jogo.desenvolvedores.join(', ')}</span>
-          </div>
-        )}
-        {jogo.publicadoras && jogo.publicadoras.length > 0 && (
-          <div className="flex items-center gap-2">
-            <span className="font-semibold w-24 flex-shrink-0">Publicador(es):</span>
-            <span className="text-muted-foreground">{jogo.publicadoras.join(', ')}</span>
-          </div>
-        )}
-        {jogo.plataformas_api && jogo.plataformas_api.length > 0 && (
-          <div className="flex items-center gap-2">
-            <span className="font-semibold w-24 flex-shrink-0">Plataformas:</span>
-            <div className="flex flex-wrap gap-1">
-              {jogo.plataformas_api.map((p: Plataforma, index: number) => (
-                <span key={`plataforma-${index}`} className="bg-muted px-2 py-1 rounded-full text-xs text-muted-foreground">
-                  {p.nome}
-                </span>
-              ))}
-            </div>
-          </div>
-        )}
-        {jogo.generos_api && jogo.generos_api.length > 0 && (
-          <div className="flex items-center gap-2">
-            <span className="font-semibold w-24 flex-shrink-0">Gêneros:</span>
-            <div className="flex flex-wrap gap-1">
-              {jogo.generos_api.map((g: Genre, index: number) => (
-                <span key={`genero-${index}`} className="bg-muted px-2 py-1 rounded-full text-xs text-muted-foreground">
-                  {g.name}
-                </span>
-              ))}
-            </div>
-          </div>
-        )}
-        {jogo.temas && jogo.temas.length > 0 && (
-          <div className="flex items-center gap-2">
-            <span className="font-semibold w-24 flex-shrink-0">Temas:</span>
-            <div className="flex flex-wrap gap-1">
-              {jogo.temas.map((t: string, index: number) => (
-                <span key={`tema-${index}`} className="bg-muted px-2 py-1 rounded-full text-xs text-muted-foreground">
-                  {t}
-                </span>
-              ))}
-            </div>
-          </div>
-        )}
-        {jogo.data_lancamento_api && (
-          <div className="flex items-center gap-2">
-            <span className="font-semibold w-24 flex-shrink-0">Lançamento:</span>
-            <span className="text-muted-foreground">{format(parseISO(jogo.data_lancamento_api), 'dd/MM/yyyy', { locale: ptBR })}</span>
-          </div>
-        )}
-      </div>
+
     </div>
   );
 };

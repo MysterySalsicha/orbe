@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import PlatformIcon from '@/components/ui/PlatformIcons';
 import type { Serie, CastMember, CalendarModalData, Video, Creator, Temporada } from '@/types';
 import { getStreamingProviders } from '@/lib/media-helpers';
+import useEmblaCarousel from 'embla-carousel-react';
 
 interface SerieModalContentProps {
   serie: Serie; // Recebe o objeto de detalhes completo da API
@@ -13,6 +14,8 @@ interface SerieModalContentProps {
 }
 
 const SerieModalContent: React.FC<SerieModalContentProps> = ({ serie, openCalendarModal }) => {
+
+  const [emblaRef] = useEmblaCarousel({ align: 'start', dragFree: true });
 
   // Encontra o trailer oficial na lista de vídeos
   const trailer = serie.videos?.find(
@@ -66,13 +69,6 @@ const SerieModalContent: React.FC<SerieModalContentProps> = ({ serie, openCalend
         </div>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-        {serie.numero_temporadas && <div><span className="font-semibold orbe-text-secondary">Temporadas:</span> <span className="text-muted-foreground">{serie.numero_temporadas}</span></div>}
-        {serie.numero_episodios && <div><span className="font-semibold orbe-text-secondary">Episódios:</span> <span className="text-muted-foreground">{serie.numero_episodios}</span></div>}
-        {serie.criadores && serie.criadores.length > 0 && <div><span className="font-semibold orbe-text-secondary">Criador(es):</span> <span className="text-muted-foreground">{serie.criadores.map((c: Creator) => c.nome).join(', ')}</span></div>}
-        {serie.generos_api && serie.generos_api.length > 0 && <div className="md:col-span-3"><span className="font-semibold orbe-text-secondary">Gêneros:</span> <span className="text-muted-foreground">{serie.generos_api.map(g => g.name).join(', ')}</span></div>}
-      </div>
-
       {/* Trailer */}
       {trailerKey && (
         <div>
@@ -95,16 +91,18 @@ const SerieModalContent: React.FC<SerieModalContentProps> = ({ serie, openCalend
       {serie.elenco && serie.elenco.length > 0 && (
         <div>
           <h3 className="text-lg font-semibold orbe-text-secondary mb-3">Elenco Principal</h3>
-          <div className="flex space-x-4 overflow-x-auto scrollbar-hide pb-2">
-            {serie.elenco.slice(0, 15).map((ator: CastMember) => (
-              <div key={ator.nome} className="flex-shrink-0 text-center w-24">
-                <div className="w-20 h-20 bg-muted rounded-full mb-2 overflow-hidden mx-auto">
-                  <Image src={getImageUrl(ator.foto_url)} alt={ator.nome} width={80} height={80} className="w-full h-full object-cover" unoptimized={true} />
+          <div className="overflow-hidden" ref={emblaRef}>
+            <div className="flex space-x-4">
+              {serie.elenco.slice(0, 15).map((ator: CastMember) => (
+                <div key={ator.nome} className="flex-shrink-0 text-center w-24">
+                  <div className="w-20 h-20 bg-muted rounded-full mb-2 overflow-hidden mx-auto">
+                    <Image src={getImageUrl(ator.foto_url)} alt={ator.nome} width={80} height={80} className="w-full h-full object-cover" unoptimized={true} />
+                  </div>
+                  <p className="text-xs font-medium text-foreground line-clamp-1">{ator.nome}</p>
+                  <p className="text-xs text-muted-foreground line-clamp-1">{ator.personagem}</p>
                 </div>
-                <p className="text-xs font-medium text-foreground line-clamp-1">{ator.nome}</p>
-                <p className="text-xs text-muted-foreground line-clamp-1">{ator.personagem}</p>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         </div>
       )}
