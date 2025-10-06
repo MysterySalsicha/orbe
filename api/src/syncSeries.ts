@@ -46,6 +46,7 @@ async function fetchSeriesIdsForPeriod(startDate: string, endDate: string): Prom
           page,
           region: 'BR',
           sort_by: 'first_air_date.asc',
+          without_genres: '16',
         },
       });
 
