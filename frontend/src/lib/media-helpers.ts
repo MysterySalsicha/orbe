@@ -20,19 +20,42 @@ export const normalizeProviderName = (name: string): string => {
 /**
  * Extrai uma lista única e normalizada de provedores de streaming de um item de mídia.
  * @param item O objeto de mídia (filme, série ou anime).
- * @returns Uma lista de nomes de provedores.
+ * @returns Uma lista de objetos de provedor com nome e ícone.
  */
-export const getStreamingProviders = (item: Midia): string[] => {
-  const providers = item.plataformas_api?.map(p => normalizeProviderName(p.nome)) ?? [];
-  return [...new Set(providers)]; // Retorna apenas nomes únicos
+export const getStreamingProviders = (item: Midia): { name: string; icon: string }[] => {
+  const providerNames = item.plataformas_api?.map(p => normalizeProviderName(p.nome)) ?? [];
+  const uniqueProviderNames = [...new Set(providerNames)];
+  
+  const providers = uniqueProviderNames.map(name => ({
+      name: name,
+      icon: name.toLowerCase().replace('+', 'plus').replace(/ /g, '-')
+  }));
+
+  // Lógica para "Nos Cinemas"
+  if ('duracao' in item && providers.length === 0) { // 'duracao' sugere que é um Filme
+    try {
+      const releaseDate = new Date(item.data_lancamento_api);
+      const today = new Date();
+      const sixtyDaysAgo = new Date();
+      sixtyDaysAgo.setDate(today.getDate() - 60);
+
+      if (releaseDate > sixtyDaysAgo && releaseDate <= today) {
+        return [{ name: 'Nos Cinemas', icon: 'cinema' }];
+      }
+    } catch (e) {
+      // Ignora datas de lançamento inválidas
+    }
+  }
+
+  return providers;
 };
 
 /**
  * Extrai uma lista única e padronizada de plataformas de um jogo.
  * @param item O objeto de jogo.
- * @returns Uma lista de nomes de plataformas.
+ * @returns Uma lista de objetos de plataforma com nome e ícone.
  */
-export const getGamePlatforms = (item: Jogo): string[] => {
+export const getGamePlatforms = (item: Jogo): { name: string; icon: string }[] => {
   const platformNames = item.plataformas_jogo?.map(p => p.nome) ?? [];
   const normalized = new Set<string>();
 
@@ -51,19 +74,31 @@ export const getGamePlatforms = (item: Jogo): string[] => {
     }
   });
 
-  return Array.from(normalized);
+  return Array.from(normalized).map(name => ({
+    name: name,
+    icon: name.toLowerCase().replace(/ /g, '-')
+  }));
 };
 
 /**
  * Verifica se um anime possui dublagem em português.
+ * A lógica foi robustecida para iterar sobre todos os personagens.
  * @param item O objeto de anime.
  * @returns "Dublado" ou "Legendado".
  */
 export const getAnimeDubStatus = (item: Anime): 'Dublado' | 'Legendado' => {
-  const hasDub = item.personagens?.some(character => 
-    character.dubladores?.pt
-  );
-  return hasDub ? 'Dublado' : 'Legendado';
+  if (!item.personagens || item.personagens.length === 0) {
+    return 'Legendado';
+  }
+
+  for (const character of item.personagens) {
+    // A propriedade `pt` indica a presença de dublador brasileiro.
+    if (character.dubladores?.pt) {
+      return 'Dublado';
+    }
+  }
+
+  return 'Legendado';
 };
 
 /**
@@ -73,16 +108,9 @@ export const getAnimeDubStatus = (item: Anime): 'Dublado' | 'Legendado' => {
  * @returns A nota formatada ou null se não houver nota.
  */
 export const formatRating = (item: Midia, type: 'filme' | 'serie' | 'anime' | 'jogo'): string | null => {
-  if (type === 'filme' || type === 'serie') {
-    const voteAverage = (item as any).voteAverage;
-    if (typeof voteAverage === 'number') {
-      return voteAverage.toFixed(1);
-    }
-  } else if (type === 'anime') {
-    const averageScore = (item as any).averageScore;
-    if (typeof averageScore === 'number') {
-      return (averageScore / 10).toFixed(1);
-    }
+  const rating = item.avaliacao; // Usando a propriedade 'avaliacao' da interface Midia
+  if (typeof rating === 'number') {
+    return (rating / 10).toFixed(1);
   }
   return null;
 };

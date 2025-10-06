@@ -212,44 +212,48 @@ const MidiaCard = React.forwardRef<HTMLDivElement, MidiaCardProps>((
                   )}
                 </div>
               </div>
-              <div className="p-3">
-                <div className="flex justify-between items-start">
-                  <h3 className="font-bold text-base truncate pr-2">{midia.titulo_curado || midia.titulo_api}</h3>
+              <div className="p-3 flex flex-col h-[calc(100% - 300px)]">
+                {/* Título e Avaliação */}
+                <div className="flex justify-between items-start mb-1">
+                  <h3 className="font-bold text-base truncate pr-2 flex-grow">{midia.titulo_curado || midia.titulo_api}</h3>
                   {rating && (
                     <div className="flex items-center gap-1 text-sm shrink-0">
-                      <span>⭐</span>
-                      <span>{rating}</span>
+                      <Star className="h-4 w-4 text-yellow-400" />
+                      <span className="font-bold">{rating}</span>
                     </div>
                   )}
                 </div>
-                
-                {showCountdown && nextAiringEpisode ? (
-                  <div className="text-xs text-yellow-600 dark:text-blue-400 font-semibold">
-                    <span>Ep. {nextAiringEpisode.episode}: </span>
-                    <span>{countdown}</span>
-                  </div>
-                ) : (
-                  <div className="flex justify-between items-center text-xs text-gray-400">
-                    {genres[0] && 
-                        <span className="bg-yellow-200 text-yellow-800 dark:bg-blue-900 dark:text-blue-200 px-2 py-0.5 rounded-full font-semibold truncate transition-colors">
-                            {genres[0]}
-                        </span>
-                    }
-                    <p>{formatReleaseDate()}</p>
-                  </div>
+
+                {/* Data de Lançamento */}
+                {type !== 'anime' && (
+                  <p className="text-xs text-gray-400 mb-2">
+                    Lançamento: {formatReleaseDate()}
+                  </p>
                 )}
 
-                {dubStatus && (
-                  <div className={`text-xs font-semibold px-2 py-0.5 rounded-full self-start mt-1 ${dubStatus === 'Dublado' ? 'bg-yellow-200 text-yellow-800 dark:bg-blue-900 dark:text-blue-200' : 'bg-gray-200 text-gray-800 dark:bg-gray-700 dark:text-gray-300'} transition-colors`}>
-                    {dubStatus}
-                  </div>
-                )}
+                {/* Gêneros e Status de Dublagem */}
+                <div className="flex flex-wrap items-center gap-1 mb-2">
+                  {genres.slice(0, 2).map(genre => (
+                    <span key={genre} className="bg-yellow-200 text-yellow-800 dark:bg-blue-900 dark:text-blue-200 px-2 py-0.5 rounded-full text-xs font-semibold truncate transition-colors">
+                      {genre}
+                    </span>
+                  ))}
+                  {dubStatus && (
+                    <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${dubStatus === 'Dublado' ? 'bg-green-200 text-green-800 dark:bg-green-900 dark:text-green-200' : 'bg-gray-200 text-gray-800 dark:bg-gray-700 dark:text-gray-300'} transition-colors`}>
+                      {dubStatus}
+                    </span>
+                  )}
+                </div>
 
-                <div className="flex flex-col gap-2 pt-2 min-h-[32px]">
-                  {(type === 'jogo' ? platforms : providers).slice(0, 2).map(name => (
-                    <div key={name} className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                      <PlatformIcon platform={name} size={14} />
-                      <span>{name}</span>
+                {/* Spacer to push providers to the bottom */}
+                <div className="flex-grow" />
+
+                {/* Provedores/Plataformas */}
+                <div className="flex flex-col gap-1 pt-1 min-h-[32px]">
+                  {(type === 'jogo' ? platforms : providers).slice(0, 2).map(p => (
+                    <div key={p.name} className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                      <PlatformIcon platform={p.icon} size={14} />
+                      <span>{p.name}</span>
                     </div>
                   ))}
                 </div>
