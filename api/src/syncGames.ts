@@ -97,7 +97,11 @@ async function processGameBatch(gameIds: number[], prisma: PrismaClient, eventId
     `;
 
     try {
-        const response = await igdbApiWithRetry(() => igdbApi.post('/games', query));
+        const response = await igdbApiWithRetry(() => igdbApi.post('/games', query, {
+            headers: {
+                'Accept-Language': 'pt-BR'
+            }
+        }));
         const games = response.data;
 
         for (const game of games) {
