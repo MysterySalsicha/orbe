@@ -110,13 +110,7 @@ async function processAnimeBatch(animeIds: number[]): Promise<void> {
             edges {
               role
               node { id name { full } image { large } }
-              voiceActorsJapanese: voiceActors(language: JAPANESE, sort: RELEVANCE) {
-                id
-                name { full }
-                image { large }
-                language: languageV2
-              }
-              voiceActorsBrazilian: voiceActors(language: PORTUGUESE, sort: RELEVANCE) {
+              voiceActors(sort: RELEVANCE) {
                 id
                 name { full }
                 image { large }
@@ -275,7 +269,11 @@ async function processAnimeBatch(animeIds: number[]): Promise<void> {
                         create: { anilistId: edge.node.id, name: edge.node.name.full, image: edge.node.image.large },
                     });
 
-                    const combinedVAs = [...(edge.voiceActorsJapanese || []), ...(edge.voiceActorsBrazilian || [])];
+                    const allVoiceActors = edge.voiceActors || [];
+                    const voiceActorsJapanese = allVoiceActors.filter((va: any) => va.language === 'JAPANESE');
+                    const voiceActorsBrazilian = allVoiceActors.filter((va: any) => va.language === 'PORTUGUESE');
+
+                    const combinedVAs = [...voiceActorsJapanese, ...voiceActorsBrazilian];
                     const uniqueVAs = Array.from(new Map(combinedVAs.map(va => [va.id, va])).values());
 
                     await prisma.animeCharacter.create({

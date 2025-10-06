@@ -1,0 +1,6 @@
+feat(frontend): refatora MidiaCard e helpers
+
+- Refatora a lógica de `getAnimeDubStatus` para maior robustez.
+- Adiciona a lógica de "Nos Cinemas" em `getStreamingProviders` para filmes recentes sem provedores de streaming.
+- Refatora completamente o rodapé do `MidiaCard` para exibir todas as informações de forma clara e organizada, incluindo título, avaliação, data de lançamento, gêneros, status de dublagem e plataformas/provedores.
+- A nova estrutura do rodapé do card melhora a legibilidade e a apresentação visual das informações da mídia.
