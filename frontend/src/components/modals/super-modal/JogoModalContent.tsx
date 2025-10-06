@@ -18,6 +18,8 @@ const JogoModalContent: React.FC<JogoModalContentProps> = ({ jogo, openCalendarM
 
   const trailerKey = jogo.trailer_key;
   const gameStores = getGameStores(jogo);
+  const releaseDate = new Date(jogo.data_lancamento_api);
+  const showCalendarButton = releaseDate > new Date();
 
   return (
     <div className="space-y-6">
@@ -42,9 +44,11 @@ const JogoModalContent: React.FC<JogoModalContentProps> = ({ jogo, openCalendarM
             </div>
           </div>
         )}
-        <Button variant="outline" onClick={() => openCalendarModal({ midia: jogo, type: 'jogo' })}>
-          <Calendar className="h-5 w-5 mr-2" />Adicionar ao Calendário
-        </Button>
+        {showCalendarButton && (
+          <Button variant="outline" onClick={() => openCalendarModal({ midia: jogo, type: 'jogo' })}>
+            <Calendar className="h-5 w-5 mr-2" />Adicionar ao Calendário
+          </Button>
+        )}
       </div>
 
       {/* Sinopse */}

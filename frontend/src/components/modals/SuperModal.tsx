@@ -168,7 +168,7 @@ const SuperModal: React.FC = () => {
   if (!isSuperModalOpen || !midia || !type) return null;
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm overflow-y-auto" onKeyDown={(e) => { if (e.key === 'Escape') handleClose(); }}>
+    <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm overflow-y-auto" onKeyDown={(e) => { if (e.key === 'Escape') handleClose(); }} onClick={(e) => { if (e.target === e.currentTarget) handleClose(); }}>
       <div className="container mx-auto px-4 py-8">
         <div className="bg-background rounded-lg shadow-xl max-w-4xl mx-auto super-modal-content transition-colors">
           <div className="relative p-6 pb-0">

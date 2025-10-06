@@ -5,6 +5,7 @@ import { Calendar } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import PlatformIcon from '@/components/ui/PlatformIcons';
 import type { Serie, CastMember, CalendarModalData, Video, Creator, Temporada } from '@/types';
+import { getStreamingProviders } from '@/lib/media-helpers';
 
 interface SerieModalContentProps {
   serie: Serie; // Recebe o objeto de detalhes completo da API
@@ -24,29 +25,37 @@ const SerieModalContent: React.FC<SerieModalContentProps> = ({ serie, openCalend
     return path; // A URL completa já vem do mapper
   };
 
-  // --- Lógica dos Botões de Ação ---
-  const isOnStreaming = serie.plataformas_api && serie.plataformas_api.length > 0;
-  const primaryPlatform = isOnStreaming ? serie.plataformas_api[0] : null;
+  const providers = getStreamingProviders(serie);
+  const releaseDate = new Date(serie.data_lancamento_api);
+  const showCalendarButton = releaseDate > new Date();
 
   return (
     <div className="space-y-6">
       {/* Botões de Ação */}
       <div className="flex flex-wrap items-center gap-4 mb-6">
-        {isOnStreaming && primaryPlatform && (
-          <div className='space-y-2'>
-            <p className='text-sm text-muted-foreground'>Disponível em:</p>
-            <Button asChild>
-              <a href={serie.homepage || '#'} target="_blank" rel="noopener noreferrer">
-                <PlatformIcon platform={primaryPlatform.nome} className="h-5 w-5 mr-2" />
-                Assistir na {primaryPlatform.nome}
-              </a>
-            </Button>
-          </div>
-        )}
+        <div className='space-y-2'>
+          <p className='text-sm text-muted-foreground'>Disponível em:</p>
+          {providers.length > 0 ? (
+            <div className="flex flex-wrap gap-2">
+              {providers.map(provider => (
+                <Button asChild key={provider.name}>
+                  <a href={serie.homepage || '#'} target="_blank" rel="noopener noreferrer">
+                    <PlatformIcon platform={provider.icon} className="h-5 w-5 mr-2" />
+                    {provider.name}
+                  </a>
+                </Button>
+              ))}
+            </div>
+          ) : (
+            <Button disabled>Indisponível</Button>
+          )}
+        </div>
 
-        <Button variant="outline" onClick={() => openCalendarModal({ midia: serie, type: 'serie' })}>
-          <Calendar className="h-5 w-5 mr-2" />Adicionar ao Calendário
-        </Button>
+        {showCalendarButton && (
+          <Button variant="outline" onClick={() => openCalendarModal({ midia: serie, type: 'serie' })}>
+            <Calendar className="h-5 w-5 mr-2" />Adicionar ao Calendário
+          </Button>
+        )}
       </div>
 
       {/* Sinopse */}
@@ -61,7 +70,7 @@ const SerieModalContent: React.FC<SerieModalContentProps> = ({ serie, openCalend
         {serie.numero_temporadas && <div><span className="font-semibold orbe-text-secondary">Temporadas:</span> <span className="text-muted-foreground">{serie.numero_temporadas}</span></div>}
         {serie.numero_episodios && <div><span className="font-semibold orbe-text-secondary">Episódios:</span> <span className="text-muted-foreground">{serie.numero_episodios}</span></div>}
         {serie.criadores && serie.criadores.length > 0 && <div><span className="font-semibold orbe-text-secondary">Criador(es):</span> <span className="text-muted-foreground">{serie.criadores.map((c: Creator) => c.nome).join(', ')}</span></div>}
-        {serie.generos_api && serie.generos_api.length > 0 && <div className="md:col-span-3"><span className="font-semibold orbe-text-secondary">Gêneros:</span> <span className="text-muted-foreground">{serie.generos_api.join(', ')}</span></div>}
+        {serie.generos_api && serie.generos_api.length > 0 && <div className="md:col-span-3"><span className="font-semibold orbe-text-secondary">Gêneros:</span> <span className="text-muted-foreground">{serie.generos_api.map(g => g.name).join(', ')}</span></div>}
       </div>
 
       {/* Trailer */}

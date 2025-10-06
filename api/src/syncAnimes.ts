@@ -346,14 +346,21 @@ export async function syncAnimes(year: number, seasons: string[], limit?: number
 }
 
 const main = async () => {
-  const year = 2025; // Hardcoded year for individual sync, can be made dynamic if needed
+  const startYear = 2023;
+  const endYear = 2026;
   const seasons = ['WINTER', 'SPRING', 'SUMMER', 'FALL']; // All seasons for individual sync
   const limit = process.argv[3] ? parseInt(process.argv[3]) : undefined;
-  try {
-    await syncAnimes(year, seasons, limit);
-  } catch (error) {
-    logger.error(`Erro fatal na sincronização de animes: ${error}`);
-    process.exit(1);
+  
+  for (let year = startYear; year <= endYear; year++) {
+    try {
+      logger.info(`--- Iniciando sincronização para o ano ${year} ---`);
+      await syncAnimes(year, seasons, limit);
+      logger.info(`--- Sincronização para o ano ${year} concluída com sucesso ---`);
+    } catch (error) {
+      logger.error(`--- Erro fatal na sincronização de animes para o ano ${year}: ${error} ---`);
+      // Decide whether to continue with the next year or stop.
+      // For now, let's continue.
+    }
   }
 };
 

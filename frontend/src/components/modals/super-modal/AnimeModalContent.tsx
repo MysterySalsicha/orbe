@@ -3,10 +3,10 @@
 import { useState } from 'react';
 import Image from 'next/image';
 import { Calendar, ExternalLink } from 'lucide-react';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
 import PlatformIcon from '@/components/ui/PlatformIcons';
-import type { Anime, CalendarModalData, Character, StaffMember } from '@/types';
+import type { Anime, CalendarModalData, Character, StaffMember, Video } from '@/types';
+import { getStreamingProviders } from '@/lib/media-helpers';
 
 interface AnimeModalContentProps {
   anime: Anime; // Recebe o objeto de detalhes completo da API
@@ -19,44 +19,73 @@ const AnimeModalContent: React.FC<AnimeModalContentProps> = ({ anime, openCalend
 
   const hasPtBrDub = anime.personagens?.some((p: Character) => p.dubladores?.pt);
 
-  // --- Lógica dos Botões de Ação ---
-  const isOnStreaming = anime.plataformas_api && anime.plataformas_api.length > 0;
-  const primaryPlatform = isOnStreaming ? anime.plataformas_api[0] : null;
+  const providers = getStreamingProviders(anime);
+  const releaseDate = new Date(anime.data_lancamento_api);
+  const showCalendarButton = releaseDate > new Date() || !!anime.nextAiringEpisode;
+
+  const getTrailerKey = () => {
+    const officialTrailer = anime.videos?.find(v => v.type === 'Trailer' && v.official);
+    if (officialTrailer) return officialTrailer.key;
+
+    const anyTrailer = anime.videos?.find(v => v.type === 'Trailer');
+    if (anyTrailer) return anyTrailer.key;
+
+    if (anime.videos && anime.videos.length > 0) return anime.videos[0].key;
+    
+    const youtubeLink = (anime as any).externalLinks?.find((l: { site: string; }) => l.site.toLowerCase() === 'youtube');
+    if (youtubeLink) {
+        try {
+            const url = new URL(youtubeLink.url);
+            if (url.hostname === 'www.youtube.com' || url.hostname === 'youtube.com' || url.hostname === 'youtu.be') {
+                return url.searchParams.get('v') || url.pathname.split('/').pop();
+            }
+        } catch (e) {
+            // Invalid URL
+        }
+    }
+
+    return null;
+  };
+
+  const trailerKey = getTrailerKey();
 
   return (
     <div className="space-y-6">
       {/* Botões de Ação */}
       <div className="flex flex-wrap items-center gap-4 mb-6">
-        {isOnStreaming && primaryPlatform && (
+        {providers.length > 0 ? (
           <div className='space-y-2'>
             <p className='text-sm text-muted-foreground'>Disponível em:</p>
-            <Button asChild>
-              <a href={primaryPlatform.url || '#'} target="_blank" rel="noopener noreferrer">
-                <PlatformIcon platform={primaryPlatform.nome} className="h-5 w-5 mr-2" />
-                Assistir na {primaryPlatform.nome}
-              </a>
-            </Button>
+            <div className="flex flex-wrap gap-2">
+              {providers.map(provider => (
+                <Button asChild key={provider.name}>
+                  <a href={anime.siteUrl || anime.homepage || '#'} target="_blank" rel="noopener noreferrer">
+                    <PlatformIcon platform={provider.icon} className="h-5 w-5 mr-2" />
+                    Assistir em {provider.name}
+                  </a>
+                </Button>
+              ))}
+            </div>
+          </div>
+        ) : (
+          <div className='space-y-2'>
+            <p className='text-sm text-muted-foreground'>Disponível em:</p>
+            <Button disabled>Indisponível</Button>
           </div>
         )}
 
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline"><Calendar className="h-5 w-5 mr-2" />Adicionar ao Calendário</Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent>
-            <DropdownMenuItem disabled={!anime.data_lancamento_api} onClick={() => openCalendarModal({ midia: anime, type: 'anime' })}>
-              Adicionar evento de estreia
-            </DropdownMenuItem>
-            {/* A lógica para próximo episódio precisa ser adicionada ao mapper se necessário */}
-          </DropdownMenuContent>
-        </DropdownMenu>
+        {showCalendarButton && (
+          <Button variant="outline" onClick={() => openCalendarModal({ midia: anime, type: 'anime' })}>
+            <Calendar className="h-5 w-5 mr-2" />Adicionar ao Calendário
+          </Button>
+        )}
       </div>
 
       {/* Detalhes Adicionais */}
       <div className="space-y-3 pt-4 border-t border-border text-sm">
         {anime.fonte && <div className="flex items-center gap-2"><span className="font-semibold w-24 flex-shrink-0">Fonte:</span><span className="text-muted-foreground">{anime.fonte}</span></div>}
         {anime.estudio && <div className="flex items-center gap-2"><span className="font-semibold w-24 flex-shrink-0">Estúdio(s):</span><span className="text-muted-foreground">{anime.estudio}</span></div>}
-        {anime.dublagem_info && <div className="flex items-center gap-2"><span className="font-semibold w-24 flex-shrink-0">Dublagem:</span><span className="text-muted-foreground">{anime.dublagem_info}</span></div>}
+        {anime.dublagem_info && <div className="flex items-center gap-2"><span className="font-semibold w-24 flex-shrink-0">Dublagem:</span><span className="text-muted-foreground">{anime.dublagem_info ? 'Sim' : 'Não'}</span></div>}
         {anime.mal_link && <div className="flex items-center gap-2"><span className="font-semibold w-24 flex-shrink-0">Link Externo:</span><a href={anime.mal_link} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-blue-400 hover:text-blue-300">MyAnimeList <ExternalLink className="h-4 w-4" /></a></div>}
       </div>
 
@@ -72,12 +101,12 @@ const AnimeModalContent: React.FC<AnimeModalContentProps> = ({ anime, openCalend
       )}
 
       {/* Trailer */}
-      {anime.trailer_key && (
+      {trailerKey && (
         <div>
           <h3 className="text-lg font-semibold orbe-text-secondary mb-2">Trailer</h3>
           <div className="relative aspect-video w-full rounded-lg overflow-hidden">
             <iframe
-              src={`https://www.youtube.com/embed/${anime.trailer_key}`}
+              src={`https://www.youtube.com/embed/${trailerKey}`}
               title="YouTube video player"
               frameBorder="0"
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
