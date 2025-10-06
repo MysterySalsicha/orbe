@@ -174,40 +174,40 @@ const AnimeCarousel: React.FC<AnimeCarouselProps> = ({ initialData }) => {
 
   return (
     <div>
-      <div className="flex justify-between items-center mb-4 px-4">
-        <div className="flex items-center gap-4">
-            <h2 
-              className="text-2xl font-bold h-8 cursor-pointer"
-              onClick={() => emblaApi?.scrollTo(startIndex)}
-            >
-              {currentTitle || 'Carregando...'}
-            </h2>
+      <div className="flex flex-col md:flex-row md:justify-between md:items-center mb-4 px-4">
+        <h2 
+          className="text-2xl font-bold h-8 cursor-pointer"
+          onClick={() => emblaApi?.scrollTo(startIndex)}
+        >
+          {currentTitle || 'Carregando...'}
+        </h2>
+        <div className="flex justify-between items-center w-full mt-2 md:mt-0 md:w-auto md:gap-4">
             <div className="flex items-center gap-2">
                 <button onClick={() => navigateSeason('prev')} className="bg-yellow-500 dark:bg-blue-500 text-white p-2 rounded-full transition-colors hover:bg-yellow-600 dark:hover:bg-blue-600"><ChevronLeft/></button>
                 <button onClick={() => navigateSeason('next')} className="bg-yellow-500 dark:bg-blue-500 text-white p-2 rounded-full transition-colors hover:bg-yellow-600 dark:hover:bg-blue-600"><ChevronRight/></button>
             </div>
+            {initialData.length > 0 && (
+              <button 
+                  onClick={() => setViewMode(prev => prev === 'launch' ? 'weekly' : 'launch')}
+                  className="flex items-center gap-2 bg-yellow-500 dark:bg-blue-500 text-white font-bold py-2 px-4 rounded-full transition-colors hover:bg-yellow-600 dark:hover:bg-blue-600"
+              >
+                  {viewMode === 'launch' ? <CalendarDays size={20} /> : <ListOrdered size={20} />}
+                  <span className="hidden sm:inline">{viewMode === 'launch' ? 'Ver Agenda' : 'Ver Lançamentos'}</span>
+              </button>
+            )}
         </div>
-        {initialData.length > 0 && (
-          <button 
-              onClick={() => setViewMode(prev => prev === 'launch' ? 'weekly' : 'launch')}
-              className="flex items-center gap-2 bg-yellow-500 dark:bg-blue-500 text-white font-bold py-2 px-4 rounded-full transition-colors hover:bg-yellow-600 dark:hover:bg-blue-600"
-          >
-              {viewMode === 'launch' ? <CalendarDays size={20} /> : <ListOrdered size={20} />}
-              {viewMode === 'launch' ? 'Ver Agenda da Semana' : 'Ver Ordem de Lançamento'}
-          </button>
-        )}
       </div>
       
       <div className="overflow-hidden" ref={emblaRef}>
-        <div className="flex -ml-4">
+        <div className="flex -ml-6">
           {carouselItems.length === 0
             ? Array.from({ length: 10 }).map((_, index) => (
-                <div key={index} className="relative min-w-0 flex-shrink-0 basis-1/2 sm:basis-1/3 md:basis-1/4 lg:basis-1/5 xl:basis-1/6 pl-4">
+                <div key={index} className="relative min-w-0 flex-shrink-0 basis-1/2 sm:basis-1/3 md:basis-1/4 lg:basis-1/5 xl:basis-1/6 pl-6">
                   <MidiaCardSkeleton />
                 </div>
               ))
             : carouselItems.map((item, index) => (
-                <div key={index} className="relative min-w-0 flex-shrink-0 basis-1/2 sm:basis-1/3 md:basis-1/4 lg:basis-1/5 xl:basis-1/6 pl-4">
+                <div key={index} className="relative min-w-0 flex-shrink-0 basis-1/2 sm:basis-1/3 md:basis-1/4 lg:basis-1/5 xl:basis-1/6 pl-6">
                   {item.type === 'separator' 
                     ? <DaySeparatorCard dayName={item.dayName} /> 
                     : <MidiaCard midia={item.data} type="anime" />}

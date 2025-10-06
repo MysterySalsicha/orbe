@@ -75,13 +75,13 @@
 > as solicitações de dados iniciadas pelo usuário (carregar páginas,
 > abrir modais, pesquisar).
 >
-> o **WebSocket:** Será implementado especificamente para o **sistema**
+> o WebSocket: Será implementado especificamente para o **sistema**
 > **de** **notificações** **em** **tempo** **real**, permitindo que o
 > backend "avise" o frontend instantaneamente quando houver novidades.
 >
 > o **Diagrama** **de** **Arquitetura** **Simplificado:**
 >
-> ▪ Frontend (Next.js no Vercel) ↔️ Backend (FastAPI no Render) ↔️ Banco
+> ▪ Frontend (Next.js no Vercel) ↔️ Backend (Node.js/Express no Vercel) ↔️ Banco
 > de Dados (PostgreSQL) & Cache (Redis)
 >
 > ▪ Frontend ↕️ Backend via **WebSocket** (para notificações em tempo

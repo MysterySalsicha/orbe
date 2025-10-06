@@ -120,25 +120,27 @@ const Carousel: React.FC<CarouselProps> = ({ mediaType, initialData, startIndex,
 
   return (
     <div className={className}>
-      <div className="flex justify-between items-center mb-4 px-4">
+      <div className="flex flex-col md:flex-row md:justify-between md:items-center mb-4 px-4">
         <h2 className="text-2xl font-bold h-8 cursor-pointer" onClick={() => emblaApi?.scrollTo(startIndex)}>
           {currentTitle || 'Carregando...'}
         </h2>
-        <div className="flex items-center gap-2">
+        <div className="flex justify-end items-center w-full md:w-auto mt-2 md:mt-0">
+          <div className="flex items-center gap-2">
             <button onClick={() => navigateByMonth('prev')} className="bg-yellow-500 dark:bg-blue-500 text-white p-2 rounded-full transition-colors hover:bg-yellow-600 dark:hover:bg-blue-600"><ChevronLeft/></button>
             <button onClick={() => navigateByMonth('next')} className="bg-yellow-500 dark:bg-blue-500 text-white p-2 rounded-full transition-colors hover:bg-yellow-600 dark:hover:bg-blue-600"><ChevronRight/></button>
+          </div>
         </div>
       </div>
       <div className="overflow-hidden" ref={emblaRef}>
-        <div className="flex -ml-4">
+        <div className="flex -ml-6">
           {mediaItems.length === 0
             ? Array.from({ length: 10 }).map((_, index) => 
-                <div key={index} className="relative min-w-0 flex-shrink-0 basis-1/2 sm:basis-1/3 md:basis-1/4 lg:basis-1/5 xl:basis-1/6 pl-4">
+                <div key={index} className="relative min-w-0 flex-shrink-0 basis-1/2 sm:basis-1/3 md:basis-1/4 lg:basis-1/5 xl:basis-1/6 pl-6">
                   <MidiaCardSkeleton />
                 </div>
               )
             : mediaItems.map(item => (
-                <div key={`${item.id}-${mediaType}`} className="relative min-w-0 flex-shrink-0 basis-1/2 sm:basis-1/3 md:basis-1/4 lg:basis-1/5 xl:basis-1/6 pl-4">
+                <div key={`${item.id}-${mediaType}`} className="relative min-w-0 flex-shrink-0 basis-1/2 sm:basis-1/3 md:basis-1/4 lg:basis-1/5 xl:basis-1/6 pl-6">
                   <MidiaCard midia={item as Filme | Serie | Anime | Jogo} type={mediaType.slice(0, -1) as TipoMidia} />
                 </div>
             ))
