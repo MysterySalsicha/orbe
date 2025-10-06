@@ -2,13 +2,14 @@
 
 import React, { useCallback, useEffect, useState, useRef } from 'react';
 import useEmblaCarousel from 'embla-carousel-react';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Filter } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
 import MidiaCard from '../media/MidiaCard';
 import MidiaCardSkeleton from '../media/MidiaCardSkeleton';
 import type { Midia, TipoMidia, Filme, Serie, Anime, Jogo } from '@/types';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 interface CarouselProps {
   mediaType: 'filmes' | 'series' | 'jogos';
@@ -20,6 +21,7 @@ interface CarouselProps {
 const Carousel: React.FC<CarouselProps> = ({ mediaType, initialData, startIndex, className }) => {
   const [mediaItems, setMediaItems] = useState<Midia[]>(initialData);
   const [currentTitle, setCurrentTitle] = useState('');
+  const [selectedGenre, setSelectedGenre] = useState<string | null>(null);
   
   const loadedYears = useRef<Set<number>>(new Set(initialData.map(item => new Date(item.data_lancamento_api).getFullYear())));
   const fetchingYears = useRef(new Set<number>());
@@ -118,6 +120,12 @@ const Carousel: React.FC<CarouselProps> = ({ mediaType, initialData, startIndex,
     if (targetIndex !== -1) emblaApi.scrollTo(targetIndex);
   };
 
+  const genres = Array.from(new Set(mediaItems.flatMap(item => item.generos_api?.map(g => g.name) || [])));
+
+  const filteredItems = selectedGenre
+    ? mediaItems.filter(item => item.generos_api?.some(g => g.name === selectedGenre))
+    : mediaItems;
+
   return (
     <div className={className}>
       <div className="flex flex-col md:flex-row md:justify-between md:items-center mb-4 px-4">
@@ -126,6 +134,21 @@ const Carousel: React.FC<CarouselProps> = ({ mediaType, initialData, startIndex,
         </h2>
         <div className="flex justify-end items-center w-full md:w-auto mt-2 md:mt-0">
           <div className="flex items-center gap-2">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button className="bg-yellow-500 dark:bg-blue-500 text-white p-2 rounded-full transition-colors hover:bg-yellow-600 dark:hover:bg-blue-600">
+                  <Filter />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent>
+                <DropdownMenuItem onSelect={() => setSelectedGenre(null)}>Todos os Gêneros</DropdownMenuItem>
+                {genres.map(genre => (
+                  <DropdownMenuItem key={genre} onSelect={() => setSelectedGenre(genre)}>
+                    {genre}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
             <button onClick={() => navigateByMonth('prev')} className="bg-yellow-500 dark:bg-blue-500 text-white p-2 rounded-full transition-colors hover:bg-yellow-600 dark:hover:bg-blue-600"><ChevronLeft/></button>
             <button onClick={() => navigateByMonth('next')} className="bg-yellow-500 dark:bg-blue-500 text-white p-2 rounded-full transition-colors hover:bg-yellow-600 dark:hover:bg-blue-600"><ChevronRight/></button>
           </div>
@@ -133,13 +156,13 @@ const Carousel: React.FC<CarouselProps> = ({ mediaType, initialData, startIndex,
       </div>
       <div className="overflow-hidden" ref={emblaRef}>
         <div className="flex -ml-6">
-          {mediaItems.length === 0
+          {filteredItems.length === 0
             ? Array.from({ length: 10 }).map((_, index) => 
                 <div key={index} className="relative min-w-0 flex-shrink-0 basis-1/2 sm:basis-1/3 md:basis-1/4 lg:basis-1/5 xl:basis-1/6 pl-6">
                   <MidiaCardSkeleton />
                 </div>
               )
-            : mediaItems.map(item => (
+            : filteredItems.map(item => (
                 <div key={`${item.id}-${mediaType}`} className="relative min-w-0 flex-shrink-0 basis-1/2 sm:basis-1/3 md:basis-1/4 lg:basis-1/5 xl:basis-1/6 pl-6">
                   <MidiaCard midia={item as Filme | Serie | Anime | Jogo} type={mediaType.slice(0, -1) as TipoMidia} />
                 </div>

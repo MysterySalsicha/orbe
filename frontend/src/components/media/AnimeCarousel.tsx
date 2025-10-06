@@ -2,13 +2,13 @@
 
 import React, { useEffect, useState, useCallback } from 'react';
 import useEmblaCarousel from 'embla-carousel-react';
-import { ChevronLeft, ChevronRight, CalendarDays, ListOrdered } from 'lucide-react';
+import { ChevronLeft, ChevronRight, CalendarDays, ListOrdered, Filter } from 'lucide-react';
 
 import MidiaCard from './MidiaCard';
 import MidiaCardSkeleton from './MidiaCardSkeleton';
 import DaySeparatorCard from './DaySeparatorCard';
 import { Anime } from '@/types';
-
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 type CarouselItem = 
   | { type: 'media'; data: Anime }
@@ -58,6 +58,7 @@ const AnimeCarousel: React.FC<AnimeCarouselProps> = ({ initialData }) => {
   const [currentTitle, setCurrentTitle] = useState('');
   const [startIndex, setStartIndex] = useState(0);
   const [viewMode, setViewMode] = useState<ViewMode>('launch');
+  const [selectedGenre, setSelectedGenre] = useState<string | null>(null);
 
   const [emblaRef, emblaApi] = useEmblaCarousel({ align: 'center', skipSnaps: true });
 
@@ -84,13 +85,19 @@ const AnimeCarousel: React.FC<AnimeCarouselProps> = ({ initialData }) => {
     return () => { emblaApi.off('settle', onSettle); };
   }, [emblaApi, currentSeason, currentYear]);
 
+  const genres = Array.from(new Set(fetchedAnimes.flatMap(anime => anime.generos_api?.map(g => g.name) || [])));
+
+  const filteredAnimes = selectedGenre
+    ? fetchedAnimes.filter(anime => anime.generos_api?.some(g => g.name === selectedGenre))
+    : fetchedAnimes;
+
   useEffect(() => {
     let newCarouselItems: CarouselItem[] = [];
     let newStartIndex = 0;
 
     if (viewMode === 'launch') {
         const { startDate: seasonStartDate } = getSeasonDateRange(currentYear, currentSeason);
-        const sortedAnimes = [...fetchedAnimes].sort((a, b) => {
+        const sortedAnimes = [...filteredAnimes].sort((a, b) => {
             const aIsContinuation = a.nextAiringEpisode && a.startDate && new Date(a.startDate.year, a.startDate.month - 1, a.startDate.day) < seasonStartDate;
             const bIsContinuation = b.nextAiringEpisode && b.startDate && new Date(b.startDate.year, b.startDate.month - 1, b.startDate.day) < seasonStartDate;
             const aIsFinished = !a.nextAiringEpisode;
@@ -107,7 +114,7 @@ const AnimeCarousel: React.FC<AnimeCarouselProps> = ({ initialData }) => {
         newStartIndex = 0;
     } else { // weekly mode
         const animesByDay: Record<number, Anime[]> = { 0: [], 1: [], 2: [], 3: [], 4: [], 5: [], 6: [] };
-        fetchedAnimes.forEach(anime => {
+        filteredAnimes.forEach(anime => {
             if (anime.nextAiringEpisode) {
                 const localAiringDate = new Date(anime.nextAiringEpisode.airingAt);
                 const dayIndex = localAiringDate.getDay();
@@ -134,7 +141,7 @@ const AnimeCarousel: React.FC<AnimeCarouselProps> = ({ initialData }) => {
     setCarouselItems(newCarouselItems);
     setStartIndex(newStartIndex);
 
-  }, [fetchedAnimes, viewMode, currentYear, currentSeason]);
+  }, [fetchedAnimes, selectedGenre, viewMode, currentYear, currentSeason]);
 
   useEffect(() => {
     if (emblaApi) {
@@ -183,6 +190,21 @@ const AnimeCarousel: React.FC<AnimeCarouselProps> = ({ initialData }) => {
         </h2>
         <div className="flex justify-between items-center w-full mt-2 md:mt-0 md:w-auto md:gap-4">
             <div className="flex items-center gap-2">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button className="bg-yellow-500 dark:bg-blue-500 text-white p-2 rounded-full transition-colors hover:bg-yellow-600 dark:hover:bg-blue-600">
+                      <Filter />
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent>
+                    <DropdownMenuItem onSelect={() => setSelectedGenre(null)}>Todos os Gêneros</DropdownMenuItem>
+                    {genres.map(genre => (
+                      <DropdownMenuItem key={genre} onSelect={() => setSelectedGenre(genre)}>
+                        {genre}
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
                 <button onClick={() => navigateSeason('prev')} className="bg-yellow-500 dark:bg-blue-500 text-white p-2 rounded-full transition-colors hover:bg-yellow-600 dark:hover:bg-blue-600"><ChevronLeft/></button>
                 <button onClick={() => navigateSeason('next')} className="bg-yellow-500 dark:bg-blue-500 text-white p-2 rounded-full transition-colors hover:bg-yellow-600 dark:hover:bg-blue-600"><ChevronRight/></button>
             </div>
