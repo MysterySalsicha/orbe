@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { format, parseISO } from 'date-fns';
 import PlatformIcon from '@/components/ui/PlatformIcons';
 import type { Filme, CastMember, CalendarModalData, Video } from '@/types';
+import useEmblaCarousel from 'embla-carousel-react';
 
 interface FilmeModalContentProps {
   filme: Filme; // Recebe o objeto de detalhes completo da API
@@ -13,6 +14,8 @@ interface FilmeModalContentProps {
 }
 
 const FilmeModalContent: React.FC<FilmeModalContentProps> = ({ filme, openCalendarModal }) => {
+
+  const [emblaRef] = useEmblaCarousel({ align: 'start', dragFree: true });
 
   // Encontra o trailer oficial na lista de vídeos
   const trailer = filme.videos?.find(
@@ -32,11 +35,15 @@ const FilmeModalContent: React.FC<FilmeModalContentProps> = ({ filme, openCalend
   
   let isMovieInTheaters = false;
   if (filme.data_lancamento_api) {
-    const releaseDate = parseISO(filme.data_lancamento_api);
-    isMovieInTheaters = 
-      filme.status === 'Released' && 
-      releaseDate <= today && 
-      releaseDate >= ninetyDaysAgo;
+    try {
+        const releaseDate = parseISO(filme.data_lancamento_api);
+        isMovieInTheaters = 
+          filme.status === 'Released' && 
+          releaseDate <= today && 
+          releaseDate >= ninetyDaysAgo;
+    } catch (e) {
+        isMovieInTheaters = false;
+    }
   }
 
   const canBuyTicket = !!(filme.ingresso_link && filme.ingresso_link.trim() !== '');
@@ -74,8 +81,6 @@ const FilmeModalContent: React.FC<FilmeModalContentProps> = ({ filme, openCalend
         </div>
       )}
 
-
-
       {/* Trailer */}
       {trailerKey && (
         <div>
@@ -98,16 +103,18 @@ const FilmeModalContent: React.FC<FilmeModalContentProps> = ({ filme, openCalend
       {filme.elenco && filme.elenco.length > 0 && (
         <div>
           <h3 className="text-lg font-semibold orbe-text-secondary mb-3">Elenco</h3>
-          <div className="flex space-x-4 overflow-x-auto scrollbar-hide pb-2">
-            {filme.elenco.slice(0, 15).map((ator: CastMember) => (
-              <div key={ator.nome} className="flex-shrink-0 text-center w-24">
-                <div className="w-20 h-20 bg-muted rounded-full mb-2 overflow-hidden mx-auto">
-                  <Image src={getImageUrl(ator.foto_url)} alt={ator.nome} width={80} height={80} className="w-full h-full object-cover" unoptimized={true} />
+          <div className="overflow-hidden" ref={emblaRef}>
+            <div className="flex space-x-4">
+              {filme.elenco.slice(0, 15).map((ator: CastMember) => (
+                <div key={ator.nome} className="flex-shrink-0 text-center w-24">
+                  <div className="w-20 h-20 bg-muted rounded-full mb-2 overflow-hidden mx-auto">
+                    <Image src={getImageUrl(ator.foto_url)} alt={ator.nome} width={80} height={80} className="w-full h-full object-cover" unoptimized={true} />
+                  </div>
+                  <p className="text-xs font-medium text-foreground line-clamp-1">{ator.nome}</p>
+                  <p className="text-xs text-muted-foreground line-clamp-1">{ator.personagem}</p>
                 </div>
-                <p className="text-xs font-medium text-foreground line-clamp-1">{ator.nome}</p>
-                <p className="text-xs text-muted-foreground line-clamp-1">{ator.personagem}</p>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         </div>
       )}
