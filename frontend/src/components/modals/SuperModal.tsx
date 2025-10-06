@@ -19,6 +19,7 @@ import JogoModalContent from './super-modal/JogoModalContent';
 import FilmeEditForm from './super-modal/FilmeEditForm';
 import SerieEditForm from './super-modal/SerieEditForm';
 import AnimeEditForm from './super-modal/AnimeEditForm';
+import AnimeInfoBlock from './super-modal/AnimeInfoBlock';
 import SerieInfoBlock from './super-modal/SerieInfoBlock';
 import FilmeInfoBlock from './super-modal/FilmeInfoBlock';
 import JogoEditForm from './super-modal/JogoEditForm';
@@ -216,6 +217,8 @@ const SuperModal: React.FC = () => {
                   <FilmeInfoBlock filme={details as Filme} />
                 ) : type === 'serie' ? (
                   <SerieInfoBlock serie={details as Serie} />
+                ) : type === 'anime' ? (
+                  <AnimeInfoBlock anime={details as Anime} />
                 ) : (
                   <>
                     <div>
@@ -225,9 +228,6 @@ const SuperModal: React.FC = () => {
                     <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm text-muted-foreground">
                       <div className="flex items-center gap-1 col-span-2"><Calendar className="h-4 w-4" />Lançamento: {midia.data_lancamento_curada || midia.data_lancamento_api ? format(parseISO(midia.data_lancamento_curada || midia.data_lancamento_api), 'dd/MM/yyyy', { locale: ptBR }) : 'N/A'}</div>
                       {midia.avaliacao && (<div className="flex items-center gap-1"><Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />{midia.avaliacao}</div>)}
-                      {type === 'anime' && (midia as Anime).fonte && (<div className="flex items-center gap-1"><span className="font-semibold orbe-text-secondary">Fonte:</span> {(midia as Anime).fonte}</div>)}
-                      {type === 'anime' && (midia as Anime).estudio && (<div className="flex items-center gap-1"><span className="font-semibold orbe-text-secondary">Estúdio:</span> {(midia as Anime).estudio}</div>)}
-                      {type === 'anime' && (midia as Anime).numero_episodios && (<div className="flex items-center gap-1"><BookOpen className="h-4 w-4" /><span className="font-semibold orbe-text-secondary mr-1">Episódios:</span> {(midia as Anime).numero_episodios}</div>)}
                       {type === 'jogo' && (midia as Jogo).desenvolvedores && (midia as Jogo).desenvolvedores.length > 0 && (<div className="flex items-center gap-1 col-span-2"><span className="font-semibold orbe-text-secondary">Desenvolvedor(es):</span> {(midia as Jogo).desenvolvedores.join(', ')}</div>)}
                       {type === 'jogo' && (midia as Jogo).publicadoras && (midia as Jogo).publicadoras.length > 0 && (<div className="flex items-center gap-1 col-span-2"><span className="font-semibold orbe-text-secondary">Publicador(es):</span> {(midia as Jogo).publicadoras.join(', ')}</div>)}
                       {type === 'jogo' && (midia as Jogo).plataformas_jogo && (midia as Jogo).plataformas_jogo.length > 0 && (<div className="flex items-center gap-1 col-span-2"><Gamepad2 className="h-4 w-4" /><span className="font-semibold orbe-text-secondary mr-1">Plataformas:</span> {(midia as Jogo).plataformas_jogo.map(p => p.nome).join(', ')}</div>)}

@@ -132,6 +132,7 @@ export interface Relation {
 export interface Anime extends Serie {
   titleRomaji?: string;
   titleEnglish?: string;
+  titleNative?: string;
   mal_link?: string;
   fonte: string;
   estudio: string;
