@@ -2,10 +2,14 @@ import { Filme, Genre } from '@/types';
 import { format } from 'date-fns';
 
 interface FilmeInfoBlockProps {
-  filme: Filme;
+  filme: Filme | null;
 }
 
 const FilmeInfoBlock: React.FC<FilmeInfoBlockProps> = ({ filme }) => {
+  if (!filme) {
+    return <div>Carregando informações...</div>; 
+  }
+
   const formatDuration = (minutes: number | null | undefined) => {
     if (typeof minutes !== 'number' || isNaN(minutes)) {
       return null;
