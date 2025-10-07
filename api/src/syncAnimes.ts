@@ -218,13 +218,13 @@ async function processAnimeBatch(animeIds: number[]): Promise<void> {
             const existingRelatedAnilistIds = new Set(existingRelatedAnimes.map((a: any) => a.anilistId));
 
             const relationsToCreate = anime.relations?.edges
-                .filter((edge: any) => existingRelatedAnilistIds.has(edge.node.id))
+                ?.filter((edge: any) => existingRelatedAnilistIds.has(edge.node.id))
                 .map((edge: any) => ({
                     relationType: edge.relationType,
                     relatedAnime: {
                         connect: { anilistId: edge.node.id }
                     }
-                }));
+                })) || [];
 
             const relationalData = {
                 genres: { create: anime.genres?.map((name: string) => ({ genero: { connectOrCreate: { where: { name }, create: { name } } } })) },

@@ -93,12 +93,12 @@ export default function Home() {
       <main className="container mx-auto py-8 space-y-12">
         
         <section>
-          <h2 className="text-xl font-bold mb-4 text-center">Filmes</h2>
+          <h2 className="text-2xl font-bold mb-4 text-center orbe-text-secondary">Filmes</h2>
           {isLoading || !initialData ? <CarouselSkeleton /> : <MediaCarousel mediaType="filmes" initialData={initialData.filmes} startIndex={calculateStartIndex(initialData.filmes)} />}
         </section>
 
         <section>
-          <h2 className="text-xl font-bold mt-8 mb-4 text-center">Animes</h2>
+          <h2 className="text-2xl font-bold mt-8 mb-4 text-center orbe-text-secondary">Animes</h2>
           {isLoading || !initialData ? <CarouselSkeleton /> : <AnimeCarousel initialData={initialData.animes} />}
         </section>
 
