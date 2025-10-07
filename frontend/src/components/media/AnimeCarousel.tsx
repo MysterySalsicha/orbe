@@ -182,12 +182,12 @@ const AnimeCarousel: React.FC<AnimeCarouselProps> = ({ initialData }) => {
   return (
     <div>
       <div className="flex flex-col md:flex-row md:justify-between md:items-center mb-4 px-4">
-        <h2 
+        <h3 
           className="text-xl font-bold h-8 cursor-pointer"
           onClick={() => emblaApi?.scrollTo(startIndex)}
         >
           {currentTitle || 'Carregando...'}
-        </h2>
+        </h3>
         <div className="flex justify-between items-center w-full mt-2 md:mt-0 md:w-auto md:gap-4">
             <div className="flex items-center gap-2">
                 <DropdownMenu>

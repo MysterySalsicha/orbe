@@ -129,9 +129,9 @@ const MediaCarousel: React.FC<MediaCarouselProps> = ({ mediaType, initialData, s
   return (
     <div className={className}>
       <div className="flex flex-col md:flex-row md:justify-between md:items-center mb-4 px-4">
-        <h2 className="text-2xl font-bold h-8 cursor-pointer" onClick={() => emblaApi?.scrollTo(startIndex)}>
+        <h3 className="text-xl font-bold h-8 cursor-pointer" onClick={() => emblaApi?.scrollTo(startIndex)}>
           {currentTitle || 'Carregando...'}
-        </h2>
+        </h3>
         <div className="flex justify-end items-center w-full md:w-auto mt-2 md:mt-0">
           <div className="flex items-center gap-2">
             <DropdownMenu>

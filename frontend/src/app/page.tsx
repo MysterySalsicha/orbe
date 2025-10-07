@@ -103,12 +103,12 @@ export default function Home() {
         </section>
 
         <section>
-          <h2 className="text-xl font-bold mt-8 mb-4 text-center">Séries</h2>
+          <h2 className="text-2xl font-bold mt-8 mb-4 text-center orbe-text-secondary">Séries</h2>
           {isLoading || !initialData ? <CarouselSkeleton /> : <MediaCarousel mediaType="series" initialData={initialData.series} startIndex={calculateStartIndex(initialData.series)} />}
         </section>
 
         <section>
-          <h2 className="text-xl font-bold mt-8 mb-4 text-center">Jogos</h2>
+          <h2 className="text-2xl font-bold mt-8 mb-4 text-center orbe-text-secondary">Jogos</h2>
           {isLoading || !initialData ? <CarouselSkeleton /> : <MediaCarousel mediaType="jogos" initialData={initialData.jogos} startIndex={calculateStartIndex(initialData.jogos)} />}
         </section>
 
