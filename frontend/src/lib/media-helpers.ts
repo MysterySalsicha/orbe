@@ -139,3 +139,23 @@ export const getGameStores = (item: Jogo): { name: string; icon: string; url: st
       url: website.url,
     }));
 };
+
+/**
+ * Traduz uma função (job) de inglês para português.
+ * @param role A função em inglês.
+ * @returns A função traduzida ou a original se não houver tradução.
+ */
+export const translateRole = (role: string): string => {
+  const roleDictionary: { [key: string]: string } = {
+    'Director': 'Diretor(a)',
+    'Screenplay': 'Roteiro',
+    'Writer': 'Escritor(a)',
+    'Creator': 'Criador(a)',
+    'Producer': 'Produtor(a)',
+    'Original Story': 'História Original',
+    'Voice Actor': 'Dublador(a)',
+    // Adicione outras traduções comuns aqui
+  };
+
+  return roleDictionary[role] || role;
+};

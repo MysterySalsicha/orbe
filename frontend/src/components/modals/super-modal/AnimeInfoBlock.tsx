@@ -1,56 +1,56 @@
-import { Anime, Genre } from '@/types';
+'use client';
+
+import { Anime } from '@/types';
+import { useTheme } from '@/hooks/useTheme';
+import { ExternalLink } from 'lucide-react';
 
 interface AnimeInfoBlockProps {
-  anime: Anime | null;
+  anime: Anime;
 }
 
 const AnimeInfoBlock: React.FC<AnimeInfoBlockProps> = ({ anime }) => {
-  if (!anime) {
-    return <div>Carregando informações...</div>;
-  }
+  const { isDark } = useTheme();
+  const labelColor = isDark ? 'text-blue-400' : 'text-yellow-500';
+
+  const dubStatus = anime.dublagem_info ? 'Dublado' : 'Legendado';
 
   return (
-    <div className="space-y-4">
-      <div>
-        <h1 className="text-3xl font-bold text-foreground mb-1">{anime.titleEnglish || anime.titleRomaji}</h1>
-        {(anime.titleRomaji || anime.titleNative) && (anime.titleEnglish !== (anime.titleRomaji || anime.titleNative)) && (
-          <h2 className="text-lg text-gray-400">{anime.titleRomaji || anime.titleNative}</h2>
-        )}
-      </div>
-      <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
-        <div className="col-span-2">
-          <span className="font-semibold text-yellow-600 dark:text-blue-400">Lançamento: </span>
-          <span className="text-muted-foreground">{anime.startDate ? `${String(anime.startDate.day).padStart(2, '0')}/${String(anime.startDate.month).padStart(2, '0')}/${anime.startDate.year}` : 'N/A'}</span>
+    <div className="flex-1 space-y-4">
+      <h1 className="text-3xl md:text-4xl font-bold text-foreground">{anime.titleEnglish || anime.titleRomaji}</h1>
+      {anime.titleRomaji && anime.titleRomaji !== anime.titleEnglish && (
+        <h2 className="text-lg md:text-xl text-gray-400 -mt-2">{anime.titleRomaji}</h2>
+      )}
+      {anime.titleNative && anime.titleNative !== anime.titleRomaji && (
+         <h2 className="text-md md:text-lg text-gray-500 -mt-2">{anime.titleNative}</h2>
+      )}
+      
+      <div className="space-y-2 text-sm">
+        <div>
+          <span className={`font-semibold ${labelColor} mr-2`}>Fonte:</span>
+          <span className="text-muted-foreground">{anime.fonte}</span>
         </div>
-        {anime.numero_episodios && (
-          <div>
-            <span className="font-semibold text-yellow-600 dark:text-blue-400">Episódios: </span>
-            <span className="text-muted-foreground">{anime.numero_episodios}</span>
-          </div>
-        )}
-        {anime.fonte && (
-          <div>
-            <span className="font-semibold text-yellow-600 dark:text-blue-400">Fonte: </span>
-            <span className="text-muted-foreground">{anime.fonte}</span>
-          </div>
-        )}
         {anime.estudio && (
-          <div className="col-span-2">
-            <span className="font-semibold text-yellow-600 dark:text-blue-400">Estúdio: </span>
+          <div>
+            <span className={`font-semibold ${labelColor} mr-2`}>Estúdio:</span>
             <span className="text-muted-foreground">{anime.estudio}</span>
           </div>
         )}
-        {anime.generos_api && anime.generos_api.length > 0 && (
-          <div className="col-span-2">
-            <span className="font-semibold text-yellow-600 dark:text-blue-400">Gêneros: </span>
-            <div className="flex flex-wrap gap-2 mt-1">
-              {anime.generos_api.map((genre: Genre) => (
-                <span key={genre.id} className="bg-muted px-2 py-1 rounded-full text-xs text-muted-foreground">{genre.name}</span>
-              ))}
-            </div>
-          </div>
-        )}
+        <div>
+          <span className={`font-semibold ${labelColor} mr-2`}>Status de Dublagem:</span>
+          <span className="text-muted-foreground">{dubStatus}</span>
+        </div>
       </div>
+
+      {anime.mal_link && (
+        <a 
+          href={anime.mal_link} 
+          target="_blank" 
+          rel="noopener noreferrer"
+          className={`inline-flex items-center gap-2 text-sm font-semibold ${labelColor} hover:underline`}
+        >
+          Ver no MyAnimeList <ExternalLink size={16} />
+        </a>
+      )}
     </div>
   );
 };

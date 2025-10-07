@@ -6,7 +6,13 @@ import { PrismaClient } from '@prisma/client';
 import { anilistApi } from './clients';
 import { logger } from './logger';
 
-const prisma = new PrismaClient();
+const prisma = new PrismaClient({
+  datasources: {
+    db: {
+      url: process.env.DIRECT_URL,
+    },
+  },
+});
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 async function anilistApiWithRetry(query: string, variables: any, maxRetries = 5, initialDelay = 1000) {
@@ -16,13 +22,15 @@ async function anilistApiWithRetry(query: string, variables: any, maxRetries = 5
             return await anilistApi.post('', { query, variables });
         } catch (error: any) {
             const isNetworkError = error.code === 'ENOTFOUND' || error.code === 'ECONNRESET';
-            if (isNetworkError) {
+            const isRateLimitError = error.response && error.response.status === 429;
+            if (isNetworkError || isRateLimitError) {
                 attempt++;
                 if (attempt >= maxRetries) {
                     throw error;
                 }
                 const delayTime = initialDelay * Math.pow(2, attempt);
-                logger.info(`Tentativa ${attempt} falhou com erro de rede. Tentando novamente em ${delayTime}ms...`);
+                const reason = isRateLimitError ? 'rate limit' : 'rede';
+                logger.info(`Tentativa ${attempt} falhou com erro de ${reason}. Tentando novamente em ${delayTime}ms...`);
                 await delay(delayTime);
             } else {
                 throw error;
@@ -53,7 +61,7 @@ async function fetchAllAnimeIdsForSeasons(year: number, seasons: string[]): Prom
             try {
                 logger.info(`Buscando animes: Ano ${year}, Estação ${season}, Página ${page}...`);
                 const variables = { page, perPage: 50, season: season.toUpperCase(), seasonYear: year, type: 'ANIME' };
-                const response = await anilistApi.post('', { query, variables });
+                const response = await anilistApiWithRetry(query, variables);
                 const pageData = response.data.data.Page;
 
                 if (pageData.media) {
@@ -191,6 +199,17 @@ async function processAnimeBatch(animeIds: number[]): Promise<void> {
                 }
             })) || [];
 
+            const uniqueStaffKeys = new Set();
+            const uniqueStaffToCreate = staffToCreate.filter((staffMember: any) => {
+              const key = `${staffMember.staff.connectOrCreate.where.anilistId}-${staffMember.role}`;
+              if (uniqueStaffKeys.has(key)) {
+                return false;
+              } else {
+                uniqueStaffKeys.add(key);
+                return true;
+              }
+            });
+
             const relatedAnimeIds = anime.relations?.edges.map((edge: any) => edge.node.id) || [];
             const existingRelatedAnimes = await prisma.anime.findMany({
                 where: { anilistId: { in: relatedAnimeIds } },
@@ -215,7 +234,7 @@ async function processAnimeBatch(animeIds: number[]): Promise<void> {
                 externalLinks: { create: anime.externalLinks?.map((link: any) => ({ url: link.url, site: link.site })) },
                 ranks: { create: anime.rankings?.map((rank: any) => ({ rank: rank.rank, type: rank.type, context: rank.context, year: rank.year, allTime: rank.allTime })) },
                 airingSchedule: { create: anime.airingSchedule?.nodes?.map((schedule: any) => ({ airingAt: new Date(schedule.airingAt * 1000), episode: schedule.episode })) },
-                staff: { create: staffToCreate },
+                staff: { create: uniqueStaffToCreate },
                 sourceRelations: { create: relationsToCreate },
             };
 

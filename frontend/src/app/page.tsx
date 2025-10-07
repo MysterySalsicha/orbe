@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import Carousel from '@/components/ui/Carousel';
+import MediaCarousel from '@/components/ui/MediaCarousel';
 import AnimeCarousel from '@/components/media/AnimeCarousel';
 import MidiaCardSkeleton from '@/components/media/MidiaCardSkeleton';
 import type { Midia, Anime } from '@/types';
@@ -94,7 +94,7 @@ export default function Home() {
         
         <section>
           <h2 className="text-xl font-bold mb-4 text-center">Filmes</h2>
-          {isLoading || !initialData ? <CarouselSkeleton /> : <Carousel mediaType="filmes" initialData={initialData.filmes} startIndex={calculateStartIndex(initialData.filmes)} />}
+          {isLoading || !initialData ? <CarouselSkeleton /> : <MediaCarousel mediaType="filmes" initialData={initialData.filmes} startIndex={calculateStartIndex(initialData.filmes)} />}
         </section>
 
         <section>
@@ -104,12 +104,12 @@ export default function Home() {
 
         <section>
           <h2 className="text-xl font-bold mt-8 mb-4 text-center">Séries</h2>
-          {isLoading || !initialData ? <CarouselSkeleton /> : <Carousel mediaType="series" initialData={initialData.series} startIndex={calculateStartIndex(initialData.series)} />}
+          {isLoading || !initialData ? <CarouselSkeleton /> : <MediaCarousel mediaType="series" initialData={initialData.series} startIndex={calculateStartIndex(initialData.series)} />}
         </section>
 
         <section>
           <h2 className="text-xl font-bold mt-8 mb-4 text-center">Jogos</h2>
-          {isLoading || !initialData ? <CarouselSkeleton /> : <Carousel mediaType="jogos" initialData={initialData.jogos} startIndex={calculateStartIndex(initialData.jogos)} />}
+          {isLoading || !initialData ? <CarouselSkeleton /> : <MediaCarousel mediaType="jogos" initialData={initialData.jogos} startIndex={calculateStartIndex(initialData.jogos)} />}
         </section>
 
       </main>

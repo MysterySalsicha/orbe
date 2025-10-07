@@ -79,6 +79,7 @@ router.get('/filmes/:id/details', cacheMiddleware(TWENTY_FOUR_HOURS), async (req
         crew: { include: { pessoa: true } },
         videos: true,
         streamingProviders: { include: { provider: true } },
+        runtime: true,
       },
     });
 
@@ -207,6 +208,8 @@ router.get('/series/:id/details', cacheMiddleware(TWENTY_FOUR_HOURS), async (req
         videos: true,
         seasons: true,
         streamingProviders: { include: { provider: true } },
+        numberOfSeasons: true,
+        numberOfEpisodes: true,
       },
     });
     if (!serie) {

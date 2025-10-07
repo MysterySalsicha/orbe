@@ -1,90 +1,53 @@
 'use client';
 
+import { Filme, CalendarModalData } from '@/types';
+import FilmeInfoBlock from './FilmeInfoBlock';
+import { Carousel, CarouselContent, CarouselItem } from '@/components/ui/carousel';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import Image from 'next/image';
-import { Calendar, ShoppingCart } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { format, parseISO } from 'date-fns';
-import PlatformIcon from '@/components/ui/PlatformIcons';
-import type { Filme, CastMember, CalendarModalData, Video } from '@/types';
-import useEmblaCarousel from 'embla-carousel-react';
 
 interface FilmeModalContentProps {
-  filme: Filme; // Recebe o objeto de detalhes completo da API
+  filme: Filme;
   openCalendarModal: (data: CalendarModalData) => void;
 }
 
-const FilmeModalContent: React.FC<FilmeModalContentProps> = ({ filme, openCalendarModal }) => {
-
-  const [emblaRef] = useEmblaCarousel({ align: 'start', dragFree: true });
-
-  // Encontra o trailer oficial na lista de vídeos
-  const trailer = filme.videos?.find(
-    (video: Video) => video.type === 'Trailer' && video.official === true
-  );
-  const trailerKey = trailer ? trailer.key : filme.videos?.[0]?.key;
-
-  const getImageUrl = (path: string | null | undefined) => {
-    if (!path) return '/placeholder-avatar.jpg';
-    return path; // A URL completa já vem do mapper
-  };
-
-  // --- Lógica do Botão "Comprar Ingresso" ---
-  const today = new Date();
-  const ninetyDaysAgo = new Date();
-  ninetyDaysAgo.setDate(today.getDate() - 90);
-  
-  let isMovieInTheaters = false;
-  if (filme.data_lancamento_api) {
-    try {
-        const releaseDate = parseISO(filme.data_lancamento_api);
-        isMovieInTheaters = 
-          filme.status === 'Released' && 
-          releaseDate <= today && 
-          releaseDate >= ninetyDaysAgo;
-    } catch (e) {
-        isMovieInTheaters = false;
-    }
+const FilmeModalContent: React.FC<FilmeModalContentProps> = ({ filme }) => {
+  if (!filme) {
+    return <div>Carregando...</div>;
   }
 
-  const canBuyTicket = !!(filme.ingresso_link && filme.ingresso_link.trim() !== '');
+  const trailerKey = filme.trailer_key || filme.videos?.find(v => v.type === 'Trailer')?.key;
 
   return (
-    <div className="space-y-6">
-      {/* Botões de Ação */}
-      <div className="flex flex-wrap items-center gap-4 mb-6">
-        {isMovieInTheaters && (
-          canBuyTicket ? (
-            <Button asChild>
-              <a href={filme.ingresso_link} target="_blank" rel="noopener noreferrer">
-                <ShoppingCart className="h-5 w-5 mr-2" />Comprar Ingresso
-              </a>
-            </Button>
-          ) : (
-            <Button disabled>
-              <ShoppingCart className="h-5 w-5 mr-2" />Comprar ingresso indisponível
-            </Button>
-          )
-        )}
-
-        {filme.data_lancamento_api && new Date(filme.data_lancamento_api) > today && (
-          <Button variant="outline" onClick={() => openCalendarModal({ midia: filme, type: 'filme' })}>
-            <Calendar className="h-5 w-5 mr-2" />Adicionar ao Calendário
-          </Button>
-        )}
+    <div className="p-4 md:p-6 space-y-6">
+      {/* Bloco Superior: Pôster e Informações Principais */}
+      <div className="flex flex-col md:flex-row gap-6">
+        <div className="w-48 flex-shrink-0 mx-auto md:mx-0">
+          <Image
+            src={filme.poster_curado || filme.poster_url_api || '/placeholder-poster.jpg'}
+            alt={`Pôster de ${filme.titulo_curado || filme.titulo_api}`}
+            width={500}
+            height={750}
+            className="rounded-lg shadow-lg w-full"
+          />
+        </div>
+        <div className="flex-1">
+          <FilmeInfoBlock filme={filme} />
+        </div>
       </div>
 
       {/* Sinopse */}
       {filme.sinopse && (
-        <div>
-          <h3 className="text-lg font-semibold orbe-text-secondary mb-2">Sinopse</h3>
+        <section>
+          <h2 className="text-xl font-bold mb-2 text-yellow-500 dark:text-blue-400">Sinopse</h2>
           <p className="text-muted-foreground leading-relaxed">{filme.sinopse}</p>
-        </div>
+        </section>
       )}
-
+      
       {/* Trailer */}
       {trailerKey && (
-        <div>
-          <h3 className="text-lg font-semibold orbe-text-secondary mb-2">Trailer</h3>
+        <section>
+          <h2 className="text-xl font-bold mb-2 text-yellow-500 dark:text-blue-400">Trailer</h2>
           <div className="relative aspect-video w-full rounded-lg overflow-hidden">
             <iframe
               src={`https://www.youtube.com/embed/${trailerKey}`}
@@ -96,27 +59,44 @@ const FilmeModalContent: React.FC<FilmeModalContentProps> = ({ filme, openCalend
               className="absolute top-0 left-0 w-full h-full"
             ></iframe>
           </div>
-        </div>
+        </section>
       )}
 
-      {/* Elenco */}
+      {/* Carrossel de Elenco */}
       {filme.elenco && filme.elenco.length > 0 && (
-        <div>
-          <h3 className="text-lg font-semibold orbe-text-secondary mb-3">Elenco</h3>
-          <div className="overflow-hidden" ref={emblaRef}>
-            <div className="flex space-x-4">
-              {filme.elenco.slice(0, 15).map((ator: CastMember) => (
-                <div key={ator.nome} className="flex-shrink-0 text-center w-24">
-                  <div className="w-20 h-20 bg-muted rounded-full mb-2 overflow-hidden mx-auto">
-                    <Image src={getImageUrl(ator.foto_url)} alt={ator.nome} width={80} height={80} className="w-full h-full object-cover" unoptimized={true} />
-                  </div>
-                  <p className="text-xs font-medium text-foreground line-clamp-1">{ator.nome}</p>
-                  <p className="text-xs text-muted-foreground line-clamp-1">{ator.personagem}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
+        <section>
+          <h2 className="text-xl font-bold mb-4 text-yellow-500 dark:text-blue-400">Elenco</h2>
+          <TooltipProvider>
+            <Carousel opts={{ align: 'start', dragFree: true }} className="w-full">
+              <CarouselContent>
+                {filme.elenco.map(ator => (
+                  <CarouselItem key={ator.id} className="basis-auto">
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <div className="text-center w-24 cursor-pointer">
+                          <div className="w-20 h-20 bg-muted rounded-full mb-2 overflow-hidden mx-auto">
+                            <Image
+                              src={ator.foto_url || '/placeholder-avatar.jpg'}
+                              alt={ator.nome}
+                              width={80}
+                              height={80}
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                          <p className="font-semibold text-xs truncate w-full">{ator.nome}</p>
+                          <p className="text-xs text-muted-foreground truncate w-full">{ator.personagem}</p>
+                        </div>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>{ator.nome} como {ator.personagem}</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </CarouselItem>
+                ))}
+              </CarouselContent>
+            </Carousel>
+          </TooltipProvider>
+        </section>
       )}
     </div>
   );
