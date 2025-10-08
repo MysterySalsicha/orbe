@@ -31,6 +31,12 @@ const FilmeInfoBlock = ({ filme }: { filme: FilmeDetalhes }) => {
           <span className="font-bold text-yellow-500 dark:text-blue-400">Duração: </span>
           {formatRuntime(filme.runtime)}
         </div>
+        {filme.status && (
+          <div>
+            <span className="font-bold text-yellow-500 dark:text-blue-400">Status: </span>
+            {filme.status}
+          </div>
+        )}
       </div>
       {director && (
         <div>

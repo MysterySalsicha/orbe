@@ -34,7 +34,7 @@ const FilmeModalContent: React.FC<FilmeModalContentProps> = ({ filme, openCalend
       <div className="flex flex-col md:flex-row gap-6">
         <div className="w-48 flex-shrink-0 mx-auto md:mx-0">
           <Image
-            src={filme.posterPath || '/placeholder-poster.jpg'}
+            src={filme.posterPath ? `https://image.tmdb.org/t/p/original${filme.posterPath}` : '/placeholder-poster.jpg'}
             alt={`Pôster de ${filme.title}`}
             width={500}
             height={750}
@@ -69,10 +69,10 @@ const FilmeModalContent: React.FC<FilmeModalContentProps> = ({ filme, openCalend
       </div>
 
       {/* Sinopse */}
-      {filme.synopsis && (
+      {filme.overview && (
         <section>
           <h2 className="text-xl font-bold mb-2 text-yellow-500 dark:text-blue-400">Sinopse</h2>
-          <p className="text-muted-foreground leading-relaxed">{filme.synopsis}</p>
+          <p className="text-muted-foreground leading-relaxed">{filme.overview}</p>
         </section>
       )}
       
@@ -108,7 +108,7 @@ const FilmeModalContent: React.FC<FilmeModalContentProps> = ({ filme, openCalend
                         <div className="text-center w-24 cursor-pointer">
                           <div className="w-20 h-20 bg-muted rounded-full mb-2 overflow-hidden mx-auto">
                             <Image
-                              src={ator.pessoa.profilePath || '/placeholder-avatar.jpg'}
+                              src={ator.pessoa.profilePath ? `https://image.tmdb.org/t/p/original${ator.pessoa.profilePath}` : '/placeholder-avatar.jpg'}
                               alt={ator.pessoa.name}
                               width={80}
                               height={80}
