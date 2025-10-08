@@ -480,7 +480,7 @@ export interface FilmeDetalhes {
 
   runtime: number | null;
 
-  synopsis: string | null;
+  overview: string | null;
 
   posterPath: string | null;
 
