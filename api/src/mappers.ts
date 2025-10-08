@@ -31,6 +31,7 @@ export const mapFilmeToMidia = (filme: any) => {
     videos: filme.videos?.map((v: any) => ({ key: v.key, site: v.site, nome: v.name })) ?? [],
     homepage: filme.homepage, // Adicionado para o botão Assistir
     trailer_key: filme.videos?.find((v: any) => v.site === 'YouTube' && v.type === 'Trailer')?.key || filme.videos?.[0]?.key || null, // Extrai a chave do trailer
+    em_prevenda: filme.em_prevenda, // Adicionado para o status de pré-venda
   };
   return mappedFilme;
 };

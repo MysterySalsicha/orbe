@@ -75,11 +75,10 @@ router.get('/filmes/:id/details', cacheMiddleware(TWENTY_FOUR_HOURS), async (req
       where: { tmdbId: Number(id) },
       include: {
         genres: { include: { genero: true } },
-        cast: { include: { pessoa: true } },
         crew: { include: { pessoa: true } },
-        videos: true,
+        cast: { include: { pessoa: true } },
         streamingProviders: { include: { provider: true } },
-
+        videos: true
       },
     });
 
@@ -88,7 +87,7 @@ router.get('/filmes/:id/details', cacheMiddleware(TWENTY_FOUR_HOURS), async (req
     if (!filme) {
       return res.status(404).json({ error: 'Filme não encontrado.' });
     }
-    res.json(mapFilmeToMidia(filme));
+    res.json(filme);
   } catch (error) {
     logger.error(`Erro ao buscar detalhes do filme: ${error}`);
     res.status(500).json({ error: 'Erro ao buscar detalhes do filme.' });

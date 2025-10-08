@@ -7,7 +7,8 @@ import {
   Bookmark,
   Star,
   Check,
-  EyeOff
+  EyeOff,
+  Ticket
 } from 'lucide-react';
 import PlatformIcon from '@/components/ui/PlatformIcons';
 import { format, parseISO } from 'date-fns';
@@ -188,7 +189,11 @@ const MidiaCard = React.forwardRef<HTMLDivElement, MidiaCardProps>((
                   loading="lazy"
                   className={`object-cover object-center transition-all duration-300 group-hover:scale-105 w-full h-full ${isAdultContent ? 'blur-md hover:blur-none' : ''}`}
                 />
-                <div className="absolute top-2 right-2">
+                                {type === 'filme' && (midia as any).em_prevenda && (
+                                  <div className="absolute top-2 right-2 z-10 rounded-md bg-yellow-500 px-2 py-1 text-xs font-bold text-white">
+                                    PRÉ-VENDA
+                                  </div>
+                                )}                <div className="absolute top-2 right-2">
                   <button
                     onClick={handleMenuToggle}
                     className="bg-black/50 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300 hover:bg-black/70"

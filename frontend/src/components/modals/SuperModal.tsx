@@ -24,7 +24,7 @@ import AnimeInfoBlock from './super-modal/AnimeInfoBlock';
 import SerieInfoBlock from './super-modal/SerieInfoBlock';
 import FilmeInfoBlock from './super-modal/FilmeInfoBlock';
 import JogoEditForm from './super-modal/JogoEditForm';
-import type { Filme, Serie, Jogo, Anime, Plataforma } from '@/types';
+import type { Filme, Serie, Jogo, Anime, Plataforma, FilmeDetalhes } from '@/types';
 
 const SuperModal: React.FC = () => {
   const { isSuperModalOpen, superModalData, closeSuperModal, isAuthenticated, user, openCalendarModal, closeCalendarModal, isCalendarModalOpen } = useAppStore();
@@ -151,7 +151,7 @@ const SuperModal: React.FC = () => {
     if (isEditMode) {
         switch (type) {
             case 'filme':
-                return <FilmeEditForm filme={details as Filme} onSave={handleSave} onCancel={handleCancel} />;
+                return <FilmeEditForm filme={details as any as Filme} onSave={handleSave} onCancel={handleCancel} />;
             case 'serie':
                 return <SerieEditForm serie={details as Serie} onSave={handleSave} onCancel={handleCancel} />;
             case 'anime':
@@ -168,7 +168,7 @@ const SuperModal: React.FC = () => {
       case 'anime':
         return <AnimeModalContent anime={details as Anime} openCalendarModal={openCalendarModal} />;
       case 'filme':
-        return <FilmeModalContent filme={details as Filme} openCalendarModal={openCalendarModal} />;
+        return <FilmeModalContent filme={details as unknown as FilmeDetalhes} openCalendarModal={openCalendarModal} />;
       case 'serie':
         return <SerieModalContent serie={details as Serie} openCalendarModal={openCalendarModal} />;
       case 'jogo':

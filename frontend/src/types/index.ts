@@ -379,14 +379,130 @@ export type UserAction =
 export type LoadingState = 'idle' | 'loading' | 'success' | 'error';
 
 // Tipos para configurações de carrossel
+
 export interface CarouselConfig {
+
   itemsPerView: number;
+
   spaceBetween: number;
+
   breakpoints: {
+
     [key: number]: {
+
       itemsPerView: number;
+
       spaceBetween: number;
+
     };
+
   };
+
 }
+
+
+
+// Tipos para Detalhes de Mídia (estrutura completa da API)
+
+
+
+export interface Pessoa {
+
+  id: number;
+
+  name: string;
+
+  profilePath: string | null;
+
+}
+
+
+
+export interface CrewMember {
+
+  job: string;
+
+  pessoa: Pessoa;
+
+}
+
+
+
+export interface CastMemberDetalhes {
+
+  character: string;
+
+  pessoa: Pessoa;
+
+}
+
+
+
+export interface FilmeGenre {
+
+  genero: Genre;
+
+}
+
+
+
+export interface StreamingProviderInfo {
+
+  id: number;
+
+  name: string;
+
+  logoPath: string | null;
+
+}
+
+
+
+export interface FilmeStreamingProvider {
+
+  provider: StreamingProviderInfo;
+
+}
+
+
+
+export interface FilmeDetalhes {
+
+  id: number;
+
+  tmdbId: number;
+
+  title: string;
+
+  originalTitle: string | null;
+
+  releaseDate: string | null;
+
+  runtime: number | null;
+
+  synopsis: string | null;
+
+  posterPath: string | null;
+
+  backdropPath: string | null;
+
+  status: string;
+
+  em_prevenda: boolean;
+
+  ingresso_link: string | null;
+
+  genres: FilmeGenre[];
+
+  crew: CrewMember[];
+
+  cast: CastMemberDetalhes[];
+
+  streamingProviders: FilmeStreamingProvider[];
+
+  videos: Video[];
+
+}
+
+
 

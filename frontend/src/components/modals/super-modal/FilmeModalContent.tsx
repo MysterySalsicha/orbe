@@ -1,22 +1,32 @@
 'use client';
 
-import { Filme, CalendarModalData } from '@/types';
+import { FilmeDetalhes, CalendarModalData } from '@/types';
 import FilmeInfoBlock from './FilmeInfoBlock';
 import { Carousel, CarouselContent, CarouselItem } from '@/components/ui/carousel';
+import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import Image from 'next/image';
 
 interface FilmeModalContentProps {
-  filme: Filme;
+  filme: FilmeDetalhes;
   openCalendarModal: (data: CalendarModalData) => void;
 }
 
-const FilmeModalContent: React.FC<FilmeModalContentProps> = ({ filme }) => {
+const FilmeModalContent: React.FC<FilmeModalContentProps> = ({ filme, openCalendarModal }) => {
   if (!filme) {
     return <div>Carregando...</div>;
   }
 
-  const trailerKey = filme.trailer_key || filme.videos?.find(v => v.type === 'Trailer')?.key;
+  const trailerKey = filme.videos?.find(v => v.type === 'Trailer' && v.official)?.key;
+
+  // Lógica dos botões
+  const releaseDate = filme.releaseDate ? new Date(filme.releaseDate) : null;
+  const now = new Date();
+  const ninetyDaysAgo = new Date();
+  ninetyDaysAgo.setDate(now.getDate() - 90);
+  
+  const isMovieInTheaters = filme.status === 'Released' && releaseDate && releaseDate > ninetyDaysAgo && releaseDate <= now;
+  const isFutureRelease = releaseDate && releaseDate > now;
 
   return (
     <div className="p-4 md:p-6 space-y-6">
@@ -24,8 +34,8 @@ const FilmeModalContent: React.FC<FilmeModalContentProps> = ({ filme }) => {
       <div className="flex flex-col md:flex-row gap-6">
         <div className="w-48 flex-shrink-0 mx-auto md:mx-0">
           <Image
-            src={filme.poster_curado || filme.poster_url_api || '/placeholder-poster.jpg'}
-            alt={`Pôster de ${filme.titulo_curado || filme.titulo_api}`}
+            src={filme.posterPath || '/placeholder-poster.jpg'}
+            alt={`Pôster de ${filme.title}`}
             width={500}
             height={750}
             className="rounded-lg shadow-lg w-full"
@@ -33,14 +43,36 @@ const FilmeModalContent: React.FC<FilmeModalContentProps> = ({ filme }) => {
         </div>
         <div className="flex-1">
           <FilmeInfoBlock filme={filme} />
+
+          <div className="flex items-center gap-4 mt-4">
+            {/* Botão Adicionar ao Calendário */}
+            {isFutureRelease && (
+              <Button onClick={() => openCalendarModal({ midia: filme as any, type: 'filme' })}>Adicionar ao Calendário</Button>
+            )}
+
+            {/* Botão Comprar Ingresso */}
+            {isMovieInTheaters && (
+              filme.ingresso_link ? (
+                <Button asChild>
+                  <a href={filme.ingresso_link} target="_blank" rel="noopener noreferrer">
+                    Comprar Ingresso
+                  </a>
+                </Button>
+              ) : (
+                <Button disabled>
+                  Ingresso Indisponível
+                </Button>
+              )
+            )}
+          </div>
         </div>
       </div>
 
       {/* Sinopse */}
-      {filme.sinopse && (
+      {filme.synopsis && (
         <section>
           <h2 className="text-xl font-bold mb-2 text-yellow-500 dark:text-blue-400">Sinopse</h2>
-          <p className="text-muted-foreground leading-relaxed">{filme.sinopse}</p>
+          <p className="text-muted-foreground leading-relaxed">{filme.synopsis}</p>
         </section>
       )}
       
@@ -63,32 +95,32 @@ const FilmeModalContent: React.FC<FilmeModalContentProps> = ({ filme }) => {
       )}
 
       {/* Carrossel de Elenco */}
-      {filme.elenco && filme.elenco.length > 0 && (
+      {filme.cast && filme.cast.length > 0 && (
         <section>
           <h2 className="text-xl font-bold mb-4 text-yellow-500 dark:text-blue-400">Elenco</h2>
           <TooltipProvider>
             <Carousel opts={{ align: 'start', dragFree: true }} className="w-full">
               <CarouselContent>
-                {filme.elenco.map(ator => (
-                  <CarouselItem key={ator.id} className="basis-auto">
+                {filme.cast.map(ator => (
+                  <CarouselItem key={ator.pessoa.id} className="basis-auto">
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <div className="text-center w-24 cursor-pointer">
                           <div className="w-20 h-20 bg-muted rounded-full mb-2 overflow-hidden mx-auto">
                             <Image
-                              src={ator.foto_url || '/placeholder-avatar.jpg'}
-                              alt={ator.nome}
+                              src={ator.pessoa.profilePath || '/placeholder-avatar.jpg'}
+                              alt={ator.pessoa.name}
                               width={80}
                               height={80}
                               className="w-full h-full object-cover"
                             />
                           </div>
-                          <p className="font-semibold text-xs truncate w-full">{ator.nome}</p>
-                          <p className="text-xs text-muted-foreground truncate w-full">{ator.personagem}</p>
+                          <p className="font-semibold text-xs truncate w-full">{ator.pessoa.name}</p>
+                          <p className="text-xs text-muted-foreground truncate w-full">{ator.character}</p>
                         </div>
                       </TooltipTrigger>
                       <TooltipContent>
-                        <p>{ator.nome} como {ator.personagem}</p>
+                        <p>{ator.pessoa.name} como {ator.character}</p>
                       </TooltipContent>
                     </Tooltip>
                   </CarouselItem>

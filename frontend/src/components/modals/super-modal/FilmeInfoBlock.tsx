@@ -1,61 +1,51 @@
 'use client';
+import { FilmeDetalhes } from '@/types'; // Adapte o tipo se necessário
 
-import { Filme } from '@/types'; // Assuming this type exists
-import { useTheme } from '@/hooks/useTheme';
-import { format } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
-
-interface FilmeInfoBlockProps {
-  filme: Filme;
-}
-
-const formatDuration = (minutes: number | undefined) => {
-  if (typeof minutes !== 'number' || isNaN(minutes) || minutes <= 0) {
-    return 'N/A';
-  }
+// Função para formatar a duração
+const formatRuntime = (minutes: number | null | undefined) => {
+  if (!minutes) return 'N/A';
   const hours = Math.floor(minutes / 60);
-  const remainingMinutes = minutes % 60;
-  if (hours > 0) {
-    return `${hours}h ${remainingMinutes > 0 ? `${remainingMinutes}m` : ''}`.trim();
-  }
-  return `${remainingMinutes}m`;
+  const mins = minutes % 60;
+  return `${hours}h ${mins}m`;
 };
 
-const FilmeInfoBlock: React.FC<FilmeInfoBlockProps> = ({ filme }) => {
-  const { isDark } = useTheme();
-  const labelColor = isDark ? 'text-blue-400' : 'text-yellow-500';
+const FilmeInfoBlock = ({ filme }: { filme: FilmeDetalhes }) => {
+  if (!filme) return null; // Retorna nada se não houver dados
 
-  const releaseDate = filme.data_lancamento_api ? format(new Date(filme.data_lancamento_api), 'dd/MM/yyyy', { locale: ptBR }) : 'N/A';
+  const director = filme.crew?.find(member => member.job === 'Director');
 
   return (
-    <div className="flex-1 space-y-4">
-      <h1 className="text-3xl md:text-4xl font-bold text-foreground">{filme.titulo_curado || filme.titulo_api}</h1>
-      
-      <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
-        <div>
-          <span className={`font-semibold ${labelColor} mr-2`}>Lançamento:</span>
-          <span className="text-muted-foreground">{releaseDate}</span>
-        </div>
-        <div>
-          <span className={`font-semibold ${labelColor} mr-2`}>Duração:</span>
-          <span className="text-muted-foreground">{formatDuration(filme.duracao)}</span>
-        </div>
-        {filme.diretor && (
-          <div className="col-span-2">
-            <span className={`font-semibold ${labelColor} mr-2`}>Direção:</span>
-            <span className="text-muted-foreground">{filme.diretor}</span>
-          </div>
+    <div className="flex flex-col space-y-4">
+      <div>
+        <h1 className="text-3xl font-bold">{filme.title}</h1>
+        {filme.originalTitle && filme.title !== filme.originalTitle && (
+          <h2 className="text-lg text-gray-400">{filme.originalTitle}</h2>
         )}
       </div>
-
-      {filme.generos_api && filme.generos_api.length > 0 && (
+      <div className="grid grid-cols-2 gap-4 text-sm">
         <div>
-          <h4 className={`font-semibold ${labelColor} mb-2`}>Gêneros</h4>
-          <div className="flex flex-wrap gap-2">
-            {filme.generos_api.map((genre) => (
-              <span key={genre.id} className="bg-muted text-muted-foreground px-3 py-1 rounded-full text-xs font-medium">
-                {genre.name}
-              </span>
+          <span className="font-bold text-yellow-500 dark:text-blue-400">Lançamento: </span>
+          {new Date(filme.releaseDate!).toLocaleDateString('pt-BR', { timeZone: 'UTC' })}
+        </div>
+        <div>
+          <span className="font-bold text-yellow-500 dark:text-blue-400">Duração: </span>
+          {formatRuntime(filme.runtime)}
+        </div>
+      </div>
+      {director && (
+        <div>
+          <span className="font-bold text-yellow-500 dark:text-blue-400">Direção: </span>
+          {director.pessoa.name}
+        </div>
+      )}
+      {filme.genres && filme.genres.length > 0 && (
+        <div>
+          <span className="font-bold text-yellow-500 dark:text-blue-400">Gêneros:</span>
+          <div className="flex flex-wrap gap-2 mt-2">
+            {filme.genres.map(({ genero }) => (
+              <div key={genero.id} className="bg-gray-700 text-white text-xs px-2 py-1 rounded-full">
+                {genero.name}
+              </div>
             ))}
           </div>
         </div>
