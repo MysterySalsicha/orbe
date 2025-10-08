@@ -87,7 +87,15 @@ router.get('/filmes/:id/details', cacheMiddleware(TWENTY_FOUR_HOURS), async (req
     if (!filme) {
       return res.status(404).json({ error: 'Filme não encontrado.' });
     }
-    res.json(filme);
+
+    // Converte BigInt para string para serialização JSON
+    const serializableFilme = {
+      ...filme,
+      budget: filme.budget ? filme.budget.toString() : null,
+      revenue: filme.revenue ? filme.revenue.toString() : null,
+    };
+
+    res.json(serializableFilme);
   } catch (error) {
     logger.error(`Erro ao buscar detalhes do filme: ${error}`);
     res.status(500).json({ error: 'Erro ao buscar detalhes do filme.' });
