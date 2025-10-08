@@ -2,28 +2,18 @@
   "name": "api",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "src/index.ts",
   "scripts": {
-    "start": "node dist/index.js",
+    "start": "ts-node src/index.ts",
     "build": "tsc",
-    "dev": "cross-env NODE_ENV=development nodemon src/index.ts",
+    "dev": "nodemon src/index.ts",
     "sync": "ts-node src/sync.ts",
     "sync:movies": "ts-node src/syncMovies.ts",
     "sync:series": "ts-node src/syncSeries.ts",
     "sync:animes": "ts-node src/syncAnimes.ts",
     "sync:games": "ts-node src/syncGames.ts",
-    "db:clear": "ts-node src/clearDb.ts",
-    "check-releases": "ts-node src/scheduleChecker.ts",
-    "detetive:validar-links": "ts-node src/detetive.ts",
-    "detetive:checar-prevenda": "ts-node src/detetivePreVenda.ts",
-    "scrape:awards": "ts-node src/scrapeAwards.ts",
-    "postinstall": "prisma generate",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "sync:detetive": "ts-node src/detetive.ts"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "type": "commonjs",
   "dependencies": {
     "@prisma/client": "^6.16.2",
     "axios": "^1.12.2",
@@ -36,20 +26,19 @@
     "ioredis": "^5.8.0",
     "jsonwebtoken": "^9.0.2",
     "moviedb-promise": "^4.0.7",
-    "prisma": "^6.16.2",
-    "ws": "^8.18.3"
+    "puppeteer": "^24.23.0",
+    "string-similarity": "^4.0.4"
   },
   "devDependencies": {
     "@types/bcrypt": "^6.0.0",
-    "@types/cheerio": "^0.22.35",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.3",
-    "@types/ioredis": "^4.28.10",
     "@types/jsonwebtoken": "^9.0.10",
-    "@types/node": "^24.5.2",
+    "@types/string-similarity": "^4.0.2",
     "@types/ws": "^8.18.1",
-    "nodemon": "^3.1.10",
-    "ts-node": "^10.9.2",
-    "typescript": "^5.9.2"
-  }
+    "nodemon": "^3.0.1",
+    "ts-node": "^10.9.2"
+  },
+  "author": "",
+  "license": "ISC"
 }

@@ -83,13 +83,11 @@ async function processSerieBatch(serieIds: number[], prisma: any): Promise<void>
 
       const brProviders = serieDetails['watch/providers']?.results?.BR;
       if (!brProviders) {
-        logger.info(`Série ID ${id} "${serieDetails.name}" não possui provedores de streaming no Brasil. Pulando.`);
         continue;
       }
 
       const firstAirDate: Date | null = serieDetails.first_air_date ? new Date(serieDetails.first_air_date) : null;
       if (!firstAirDate) {
-        logger.info(`Série ID ${id} "${serieDetails.name}" não possui data de primeira exibição. Pulando.`);
         continue;
       }
 

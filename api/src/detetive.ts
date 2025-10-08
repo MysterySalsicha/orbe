@@ -1,100 +1,151 @@
-import { PrismaClient, Prisma } from '@prisma/client';
+import { PrismaClient } from '@prisma/client';
+import puppeteer, { Browser } from 'puppeteer';
+import * as cheerio from 'cheerio';
+import * as dotenv from 'dotenv';
 import { logger } from './logger';
-import axios from 'axios';
 
-const prisma = new PrismaClient();
+dotenv.config({ path: '.env' });
 
-const delay = (ms: number) => new Promise(res => setTimeout(res, ms));
+const prisma = new PrismaClient({
+  datasources: { db: { url: process.env.DIRECT_URL } },
+});
 
-const slugify = (text: string) => {
-  return text
-    .toString()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .toLowerCase()
-    .trim()
-    .replace(/\s+/g, '-')
-    .replace(/[^a-z0-9-]/g, '')
-    .replace(/-+/g, '-');
-};
+const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
-async function validateIngressoLink(movie: { id: number; title: string }): Promise<string | null> {
-    const slug = slugify(movie.title);
-    const url = `https://www.ingresso.com/filme/${slug}`;
+async function prismaUpdateWithRetry<T>(
+  operation: () => Promise<T>,
+  maxRetries = 5,
+  initialDelay = 1000
+): Promise<T> {
+  let attempt = 0;
+  while (attempt < maxRetries) {
     try {
-        // Usamos um HEAD request para ser mais rápido e economizar dados
-        await axios.head(url, { timeout: 5000 });
-        logger.info(`Link da Ingresso.com validado para "${movie.title}": ${url}`);
-        return url;
+      return await operation();
     } catch (error: any) {
-        if (error.response && error.response.status === 404) {
-            logger.warn(`Link da Ingresso.com não encontrado para "${movie.title}" (404).`);
-        } else {
-            logger.error(`Erro ao validar link da Ingresso.com para "${movie.title}":`, error.message);
+      if (error.message.includes('Server has closed the connection')) {
+        attempt++;
+        if (attempt >= maxRetries) {
+          throw error;
         }
-        return null;
+        const delayTime = initialDelay * Math.pow(2, attempt);
+        logger.warn(`Prisma update failed due to connection loss. Retrying in ${delayTime}ms... (Attempt ${attempt}/${maxRetries})`);
+        await delay(delayTime);
+        // Reconnect Prisma client if necessary, though it often handles this internally
+        await prisma.$disconnect();
+        await prisma.$connect();
+      } else {
+        throw error;
+      }
     }
+  }
+  throw new Error("Maximum retries reached for Prisma update.");
 }
 
-export async function runDetetiveDigital() {
-  logger.info('Iniciando Detetive Digital: Validação de links da Ingresso.com...');
+function slugify(text: string): string {
+  if (!text) return '';
+  return text
+    .toString()
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^\w\s-]/g, '')
+    .replace(/\s+/g, '-')
+    .replace(/--+/g, '-');
+}
 
-  const twoMonthsFromNow = new Date();
-  twoMonthsFromNow.setMonth(twoMonthsFromNow.getMonth() + 2);
-
+async function runDetetive() {
+  let browser: Browser | undefined;
   try {
-    const moviesToValidate = await prisma.filme.findMany({
+    logger.info('--- Iniciando Detetive Digital ---');
+    
+    const startDate = new Date('2025-08-01');
+    const endDate = new Date('2026-12-31');
+
+    const targetMovies = await prisma.filme.findMany({
       where: {
-        ingresso_link: null,
-        data_lancamento_api: {
-          lte: twoMonthsFromNow,
-          gte: new Date(new Date().setDate(new Date().getDate() - 30)),
+        releaseDate: {
+          gte: startDate,
+          lte: endDate,
         },
-      } as Prisma.FilmeWhereInput,
-      select: { id: true, tmdbId: true, title: true, releaseDate: true },
+        OR: [
+          { voteCount: { gt: 25 } },
+          { popularity: { gt: 10 } }
+        ]
+      },
     });
 
-    if (moviesToValidate.length === 0) {
-      logger.info('Nenhum filme encontrado para validar links da Ingresso.com.');
-      return;
-    }
+    logger.info(`Encontrados ${targetMovies.length} filmes para verificar.`);
 
-    for (const movie of moviesToValidate) {
-      const ingressoLink = await validateIngressoLink(movie);
-      if (ingressoLink) {
-        await prisma.filme.update({
-          where: { id: movie.id },
-          data: {
-            ingresso_link: ingressoLink,
-            ultima_verificacao_ingresso: new Date(),
-          },
-        });
-        logger.info(`Link da Ingresso.com salvo para "${movie.title}".`);
-      } else {
-        // Criar notificação para o admin
-        await prisma.notification.create({
-          data: {
-            userId: 1, // Assumindo que o admin tem userId = 1
-            type: 'FALHA_LINK_INGRESSO',
-            message: `Link do Ingresso.com não encontrado para: "${movie.title}" (TMDB ID: ${movie.tmdbId})`,
-            relatedMediaId: movie.tmdbId,
-            relatedMediaType: 'filme',
-          },
-        });
-        logger.warn(`Notificação de falha de link criada para "${movie.title}".`);
+    if (targetMovies.length === 0) return;
+
+    browser = await puppeteer.launch();
+
+    for (const filme of targetMovies) {
+      try {
+        if (!filme.title) {
+          logger.info(`❌ Pulando filme ID ${filme.id} por falta de título.`);
+          continue;
+        }
+
+        logger.info(`Verificando filme: "${filme.title}"`);
+        
+        const slug = slugify(filme.title);
+        const directUrl = `https://www.ingresso.com/filme/${slug}`;
+
+        const page = await browser.newPage();
+        await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36');
+        
+        const response = await page.goto(directUrl, { waitUntil: 'networkidle2' });
+
+        if (response && response.ok()) {
+          const isPreSale = await page.evaluate(() => {
+            const posterElement = document.querySelector('div[data-testid="movie-poster"]');
+            if (!posterElement) {
+              return false;
+            }
+            
+            const style = window.getComputedStyle(posterElement, '::after');
+            const content = style.getPropertyValue('content');
+            
+            return content.includes('pré-venda');
+          });
+
+          await prismaUpdateWithRetry(() => prisma.filme.update({
+            where: { id: filme.id },
+            data: {
+              ingresso_link: directUrl,
+              ultima_verificacao_ingresso: new Date(),
+              em_prevenda: isPreSale,
+            },
+          }));
+          const logMessage = filme.ingresso_link
+            ? `🔄 Link existente para "${filme.title}" (Pré-venda: ${isPreSale}) revisitado.`
+            : `✨ Novo link encontrado para "${filme.title}" (Pré-venda: ${isPreSale}).`;
+          logger.info(logMessage);
+        } else {
+           logger.info(`❌ Nenhum link direto encontrado para "${filme.title}"`);
+        }
+        await page.close();
+      
+      } catch (error: any) {
+        if (error.message.includes('404')) {
+          logger.info(`❌ Nenhum link direto encontrado para "${filme.title}" (Página 404).`);
+        } else {
+          logger.error(`Erro ao verificar o filme "${filme.title}":`, error.message);
+        }
+      } finally {
+        await delay(3000);
       }
-      await delay(500); // Pausa para não sobrecarregar o ingresso.com
     }
-
-    logger.info('Detetive Digital: Validação de links concluída.');
-
-  } catch (error) {
-    logger.error('Erro no Detetive Digital (validação de links):', error);
+  } catch (e: any) {
+    logger.error("Erro fatal no Detetive Digital:", e.message);
   } finally {
+    if (browser) {
+      await browser.close();
+    }
     await prisma.$disconnect();
+    logger.info('--- Detetive Digital finalizado ---');
   }
 }
 
-if (require.main === module) {
-  runDetetiveDigital();
-}
+runDetetive();

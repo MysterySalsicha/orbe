@@ -38,6 +38,7 @@ model Filme {
   ingresso_link   String?
   em_prevenda     Boolean?  @default(false)
   ultima_verificacao_ingresso DateTime?
+  releaseType                 String?
 
   // Relacionamentos
   genres          FilmeGenero[]

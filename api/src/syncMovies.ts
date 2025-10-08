@@ -48,7 +48,7 @@ async function fetchMovieIdsForPeriod(startDate: string, endDate: string): Promi
           page,
           region: 'BR', // Filtrar por lançamentos no Brasil
           sort_by: 'primary_release_date.asc',
-          with_release_type: '2,3,4', // 2: Theatrical (limited), 3: Theatrical (wide), 4: Digital
+          with_release_type: '2|3|4', // 2: Theatrical (limited), 3: Theatrical (wide), 4: Digital
         },
       });
 
@@ -84,9 +84,10 @@ async function processMovieBatch(movieIds: number[], prisma: PrismaClient): Prom
 
       const brReleases = movieDetails.release_dates?.results?.find((r: any) => r.iso_3166_1 === 'BR');
       let releaseDate: Date | null = null;
+      let relevantRelease: any = undefined;
 
       if (brReleases && brReleases.release_dates.length > 0) {
-        let relevantRelease = brReleases.release_dates.find((rd: any) => rd.type === 3);
+        relevantRelease = brReleases.release_dates.find((rd: any) => rd.type === 3);
         if (!relevantRelease) relevantRelease = brReleases.release_dates.find((rd: any) => rd.type === 2);
         if (!relevantRelease) relevantRelease = brReleases.release_dates.find((rd: any) => rd.type === 4);
         if (!relevantRelease) relevantRelease = brReleases.release_dates[0];
@@ -94,7 +95,6 @@ async function processMovieBatch(movieIds: number[], prisma: PrismaClient): Prom
       }
 
       if (!releaseDate) {
-        logger.info(`Filme ID ${id} "${movieDetails.title}" não possui data de lançamento relevante no Brasil. Pulando.`);
         continue;
       }
 
@@ -129,6 +129,7 @@ async function processMovieBatch(movieIds: number[], prisma: PrismaClient): Prom
         posterPath: movieDetails.poster_path,
         backdropPath: movieDetails.backdrop_path,
         imdbId: movieDetails.imdb_id,
+        releaseType: relevantRelease?.type ? String(relevantRelease.type) : null,
         collection: movieDetails.belongs_to_collection ? {
           connectOrCreate: {
             where: { id: movieDetails.belongs_to_collection.id },
@@ -175,7 +176,7 @@ async function processMovieBatch(movieIds: number[], prisma: PrismaClient): Prom
         create: { ...scalarData, ...relationalData },
       });
 
-      logger.info(`✅ Filme [${id}] "${movieDetails.title}" sincronizado.`);
+      logger.info(`✅ Filme [${id}] "${movieDetails.title}" (Release Type: ${relevantRelease?.type}) sincronizado.`);
 
     } catch (error) {
       logger.error(`❌ Erro ao processar o filme ID ${id}. Pulando: ${error}`);
@@ -195,12 +196,13 @@ export async function syncMovies(prisma: PrismaClient, startDate: string, endDat
   }
 
   while (currentStartDate <= finalEndDate) {
-    const currentEndDate = new Date(currentStartDate);
-    currentEndDate.setMonth(currentEndDate.getMonth() + 1);
-    currentEndDate.setDate(0);
-
     const startStr = currentStartDate.toISOString().split('T')[0];
-    const endStr = (currentEndDate > finalEndDate ? finalEndDate : currentEndDate).toISOString().split('T')[0];
+
+    // Lógica correta para obter o último dia do mês corrente
+    const endOfMonth = new Date(currentStartDate.getFullYear(), currentStartDate.getMonth() + 1, 0);
+    const endStr = (endOfMonth > finalEndDate ? finalEndDate : endOfMonth).toISOString().split('T')[0];
+
+    logger.info(`Buscando IDs de filmes lançados entre ${startStr} e ${endStr}...`);
     
     let monthlyIds = await fetchMovieIdsForPeriod(startStr, endStr);
     
@@ -218,6 +220,7 @@ export async function syncMovies(prisma: PrismaClient, startDate: string, endDat
         }
     }
 
+    // Lógica correta para avançar para o primeiro dia do próximo mês
     currentStartDate.setMonth(currentStartDate.getMonth() + 1);
     currentStartDate.setDate(1);
   }
