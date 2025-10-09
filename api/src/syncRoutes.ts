@@ -49,7 +49,7 @@ router.post('/run-sync', async (req, res) => {
         }
         break;
       case 'games':
-        await syncGames(prisma);
+        await syncGames(prisma, startDate, endDate);
         break;
       default:
         logger.warn(`Tipo de mídia desconhecido para sincronização: ${mediaType}`);
