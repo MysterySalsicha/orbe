@@ -355,10 +355,18 @@ export async function syncAnimes(year: number, seasons: string[], limit?: number
 }
 
 const main = async () => {
-  const startYear = 2023;
-  const endYear = 2026;
-  const seasons = ['WINTER', 'SPRING', 'SUMMER', 'FALL']; // All seasons for individual sync
-  const limit = process.argv[3] ? parseInt(process.argv[3]) : undefined;
+  const startYearArg = process.argv[2];
+  const endYearArg = process.argv[3];
+  const limit = process.argv[4] ? parseInt(process.argv[4]) : undefined;
+
+  if (!startYearArg || !endYearArg) {
+    console.error('Uso: ts-node src/syncAnimes.ts <startYear> <endYear> [limit]');
+    process.exit(1);
+  }
+
+  const startYear = parseInt(startYearArg);
+  const endYear = parseInt(endYearArg);
+  const seasons = ['WINTER', 'SPRING', 'SUMMER', 'FALL'];
   
   for (let year = startYear; year <= endYear; year++) {
     try {
@@ -367,8 +375,6 @@ const main = async () => {
       logger.info(`--- Sincronização para o ano ${year} concluída com sucesso ---`);
     } catch (error) {
       logger.error(`--- Erro fatal na sincronização de animes para o ano ${year}: ${error} ---`);
-      // Decide whether to continue with the next year or stop.
-      // For now, let's continue.
     }
   }
 };
