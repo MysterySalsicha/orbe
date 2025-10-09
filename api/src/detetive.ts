@@ -88,6 +88,9 @@ async function runDetetive() {
         const response = await page.goto(directUrl, { waitUntil: 'networkidle2' });
 
         if (response && response.ok()) {
+          const pageContent = await page.content();
+          const hasNoSessionsText = pageContent.includes('Não há sessões disponíveis no momento.');
+
           const isPreSale = await page.evaluate(() => {
             const posterElement = document.querySelector('div[data-testid="movie-poster"]');
             if (!posterElement) {
@@ -106,11 +109,12 @@ async function runDetetive() {
               ingresso_link: directUrl,
               ultima_verificacao_ingresso: new Date(),
               em_prevenda: isPreSale,
+              tem_sessoes: !hasNoSessionsText, // Adicionado
             },
           }));
           const logMessage = filme.ingresso_link
-            ? `🔄 Link existente para "${filme.title}" (Pré-venda: ${isPreSale}) revisitado.`
-            : `✨ Novo link encontrado para "${filme.title}" (Pré-venda: ${isPreSale}).`;
+            ? `🔄 Link existente para "${filme.title}" (Pré-venda: ${isPreSale}, Sessões: ${!hasNoSessionsText}) revisitado.`
+            : `✨ Novo link encontrado para "${filme.title}" (Pré-venda: ${isPreSale}, Sessões: ${!hasNoSessionsText}).`;
           logger.info(logMessage);
         } else {
            logger.info(`❌ Nenhum link direto encontrado para "${filme.title}"`);
