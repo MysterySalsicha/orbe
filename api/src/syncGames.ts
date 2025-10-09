@@ -201,10 +201,18 @@ async function fetchAllGameIdsForPeriod(startDateStr: string, endDateStr: string
 }
 
 
-export async function syncGames(prisma: PrismaClient, limit?: number) {
+export async function syncGames(prisma: PrismaClient, startDate?: string, endDate?: string, limit?: number) {
+    const startDateArg = startDate || process.argv[2];
+    const endDateArg = endDate || process.argv[3];
+
+    if (!startDateArg || !endDateArg) {
+        logger.error('Datas de início e fim são necessárias para a sincronização de jogos.');
+        return;
+    }
+
     try {
         await getIgdbAccessToken();
-        const events = await fetchAndSyncEvents(prisma, process.argv[2], process.argv[3]);
+        const events = await fetchAndSyncEvents(prisma, startDateArg, endDateArg);
 
         const processedEventGameIds = new Set<number>();
 
@@ -229,8 +237,8 @@ export async function syncGames(prisma: PrismaClient, limit?: number) {
             }
         }
 
-        const startDateGeneral = process.argv[2];
-        const endDateGeneral = process.argv[3];
+        const startDateGeneral = startDateArg;
+        const endDateGeneral = endDateArg;
 
         if (!startDateGeneral || !endDateGeneral) {
             logger.error('Uso: ts-node src/syncGames.ts <startDate> <endDate> [limit]');

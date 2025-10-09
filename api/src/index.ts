@@ -10,6 +10,7 @@ import cors from 'cors';
 import mediaRoutes from './mediaRoutes';
 import webhookRoutes from './webhookRoutes';
 import userRoutes from './userRoutes';
+import syncRoutes from './syncRoutes';
 
 const app = express();
 const server = http.createServer(app);
@@ -54,6 +55,7 @@ app.use(express.json());
 app.use('/api', mediaRoutes);
 app.use('/api', webhookRoutes);
 app.use('/api', userRoutes);
+app.use('/api', syncRoutes);
 
 // Rota de Registro
 app.post('/register', async (req, res) => {
