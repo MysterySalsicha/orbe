@@ -14,10 +14,11 @@ import { logger } from './logger';
 const main = async () => {
   const startDate = process.argv[2];
   const endDate = process.argv[3];
-  const limit = process.argv[4] ? parseInt(process.argv[4]) : undefined;
+  const limit = process.argv[4] && process.argv[4] !== 'undefined' ? parseInt(process.argv[4]) : undefined;
+  const specificSeason = process.argv[5] as 'WINTER' | 'SPRING' | 'SUMMER' | 'FALL' | undefined;
 
   if (!startDate || !endDate) {
-    logger.error('Uso: ts-node src/sync.ts <startDate> <endDate> [limit]');
+    logger.error('Uso: ts-node src/sync.ts <startDate> <endDate> [limit] [season]');
     process.exit(1);
   }
 
@@ -42,11 +43,12 @@ const main = async () => {
 
 ------------- ANIMES ----------
 `);
+    const seasonsToSync = specificSeason ? [specificSeason] : ['WINTER', 'SPRING', 'SUMMER', 'FALL'];
     const startYear = new Date(startDate).getFullYear();
     const endYear = new Date(endDate).getFullYear();
     for (let year = startYear; year <= endYear; year++) {
-        logger.info(`Sincronizando animes para o ano ${year}...`);
-        await syncAnimes(year, ['WINTER', 'SPRING', 'SUMMER', 'FALL'], limit);
+        logger.info(`Sincronizando animes para o ano ${year} (Estações: ${seasonsToSync.join(', ')})...`);
+        await syncAnimes(year, seasonsToSync, limit);
     }
     logger.info(`--- Sincronização de ANIMES concluída ---\n\n`);
 
