@@ -5,6 +5,7 @@ dotenv.config({ path: path.resolve(__dirname, '../.env') });
 import { logger } from './logger';
 import { tmdb, tmdbApi } from './clients';
 import { Cast, Crew } from 'moviedb-promise';
+import { PrismaClient } from '@prisma/client';
 import { prisma } from './clients';
 
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));

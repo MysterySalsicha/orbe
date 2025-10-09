@@ -2,6 +2,7 @@ import * as path from 'path';
 import * as dotenv from 'dotenv';
 dotenv.config({ path: path.resolve(__dirname, '../.env') });
 
+import { PrismaClient } from '@prisma/client';
 import { logger } from './logger';
 import { tmdb, tmdbApi } from './clients';
 import { prisma } from './clients';
@@ -72,7 +73,7 @@ async function fetchSeriesIdsForPeriod(startDate: string, endDate: string): Prom
   }
 }
 
-async function processSerieBatch(serieIds: number[], prisma: any): Promise<void> {
+async function processSerieBatch(serieIds: number[], prisma: PrismaClient): Promise<void> {
   for (const id of serieIds) {
     try {
       const serieDetails = await tmdbApiWithRetry(() => tmdb.tvInfo({
