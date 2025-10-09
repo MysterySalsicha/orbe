@@ -12,7 +12,7 @@ const SYNC_SECRET = process.env.SYNC_SECRET || 'super-secret-sync-key';
 
 // Middleware to protect the sync endpoint
 router.use('/run-sync', (req, res, next) => {
-  const secret = req.headers['x-sync-secret'] || req.body.secret;
+  const secret = req.headers['x-sync-secret'] || (req.body && req.body.secret);
   if (secret !== SYNC_SECRET) {
     logger.warn('Tentativa de sincronização não autorizada.');
     return res.status(403).json({ error: 'Não autorizado.' });
