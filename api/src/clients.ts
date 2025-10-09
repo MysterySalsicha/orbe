@@ -31,6 +31,7 @@ const igdbApi = axios.create({
   headers: {
     'Client-ID': igdbClientId,
   },
+  httpsAgent: insecureAgent, // Adicionado para ignorar erros de certificado
 });
 
 const anilistApi = axios.create({
