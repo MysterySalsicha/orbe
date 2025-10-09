@@ -2,6 +2,8 @@ import * as path from 'path';
 import * as dotenv from 'dotenv';
 dotenv.config({ path: path.resolve(__dirname, '../.env') });
 
+import { logger } from './logger';
+import { anilistApi } from './clients';
 import { prisma } from './clients';
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -73,7 +75,9 @@ async function fetchAllAnimeIdsForSeasons(year: number, seasons: string[]): Prom
     return seasonAnimeIds;
 }
 
-async function processAnimeBatch(animeIds: number[]): Promise<void> {
+async function processAnimeBatch(animeIds: number[]): Promise<{ successCount: number, errorCount: number, skippedCount: number }> {
+    let successCount = 0, errorCount = 0, skippedCount = 0;
+
     const detailQuery = `
       query ($id: Int) {
         Media(id: $id, type: ANIME) {
@@ -141,12 +145,12 @@ async function processAnimeBatch(animeIds: number[]): Promise<void> {
             const response = await anilistApiWithRetry(detailQuery, { id });
             const anime = response.data.data.Media;
 
-            if (!anime) continue;
-
-            if (animeIds.indexOf(id) === 0) { // Log detalhado apenas para o primeiro item do lote
-                logger.info('--- DADOS BRUTOS DA API (ANILIST) ---');
-                logger.info(JSON.stringify(anime, null, 2));
+            if (!anime) {
+                skippedCount++;
+                continue;
             }
+
+
 
             const startDate = (anime.startDate && anime.startDate.year)
                 ? new Date(anime.startDate.year, (anime.startDate.month || 1) - 1, anime.startDate.day || 1)
@@ -221,11 +225,19 @@ async function processAnimeBatch(animeIds: number[]): Promise<void> {
                     }
                 })) || [];
 
-            if (animeIds.indexOf(id) === 0) { // Log detalhado apenas para o primeiro item do lote
-                logger.info('--- DADOS PREPARADOS PARA O BANCO ---');
-                logger.info('Scalar Data:', JSON.stringify(scalarData, null, 2));
-                logger.info('Relational Data:', JSON.stringify(relationalData, null, 2));
-            }
+            const relationalData = {
+                genres: { create: anime.genres?.map((name: string) => ({ genero: { connectOrCreate: { where: { name }, create: { name } } } })) },
+                tags: { create: anime.tags?.map((tag: any) => ({ tag: { connectOrCreate: { where: { id: tag.id }, create: { id: tag.id, name: tag.name, description: tag.description, category: tag.category, isAdult: tag.isAdult } } } })) },
+                studios: { create: anime.studios?.nodes?.map((studio: any) => ({ studio: { connectOrCreate: { where: { anilistId: studio.id }, create: { anilistId: studio.id, name: studio.name } } } })) },
+                streamingLinks: { create: anime.streamingEpisodes?.map((link: any) => ({ url: link.url, site: link.site, thumbnail: link.thumbnail })) },
+                externalLinks: { create: anime.externalLinks?.map((link: any) => ({ url: link.url, site: link.site })) },
+                ranks: { create: anime.rankings?.map((rank: any) => ({ rank: rank.rank, type: rank.type, context: rank.context, year: rank.year, allTime: rank.allTime })) },
+                airingSchedule: { create: anime.airingSchedule?.nodes?.map((schedule: any) => ({ airingAt: new Date(schedule.airingAt * 1000), episode: schedule.episode })) },
+                staff: { create: uniqueStaffToCreate },
+                sourceRelations: { create: relationsToCreate },
+            };
+
+
 
             const existingAnime = await prisma.anime.findUnique({ where: { anilistId: id } });
 
@@ -309,15 +321,20 @@ async function processAnimeBatch(animeIds: number[]): Promise<void> {
                 }
             }
 
+            successCount++;
             logger.info(`✅ Anime [${id}] "${anime.title.romaji}" sincronizado.`);
 
         } catch (error: any) {
+            errorCount++;
             const errorMessage = error.response ? JSON.stringify(error.response.data) : error.message;
             logger.error(`❌ Erro ao processar o anime ID ${id}: ${errorMessage}`);
         } finally {
             await delay(700);
         }
     }
+
+    logger.info(`--- Resumo do Lote (Animes) --- Sucesso: ${successCount}, Erros: ${errorCount}, Pulados: ${skippedCount}`);
+    return { successCount, errorCount, skippedCount };
 }
 
 export async function syncAnimes(year: number, seasons: string[], limit?: number) {

@@ -74,7 +74,7 @@ async function fetchMovieIdsForPeriod(startDate: string, endDate: string): Promi
   }
 }
 
-async function processMovieBatch(movieIds: number[], prisma: PrismaClient): Promise<void> {
+async function processMovieBatch(movieIds: number[], prisma: PrismaClient): Promise<{ successCount: number, errorCount: number, skippedCount: number }> {
   let successCount = 0, errorCount = 0, skippedCount = 0;
 
   for (const id of movieIds) {
@@ -85,10 +85,7 @@ async function processMovieBatch(movieIds: number[], prisma: PrismaClient): Prom
         append_to_response: 'credits,videos,watch/providers,release_dates',
       })) as any;
 
-      if (movieIds.indexOf(id) === 0) { // Log detalhado apenas para o primeiro item do lote
-        logger.info('--- DADOS BRUTOS DA API (TMDB) ---');
-        logger.info(JSON.stringify(movieDetails, null, 2));
-      }
+
 
       const brReleases = movieDetails.release_dates?.results?.find((r: any) => r.iso_3166_1 === 'BR');
       let releaseDate: Date | null = null;
@@ -179,11 +176,7 @@ async function processMovieBatch(movieIds: number[], prisma: PrismaClient): Prom
         }
       };
 
-      if (movieIds.indexOf(id) === 0) { // Log detalhado apenas para o primeiro item do lote
-        logger.info('--- DADOS PREPARADOS PARA O BANCO ---');
-        logger.info('Scalar Data:', JSON.stringify(scalarData, (key, value) => typeof value === 'bigint' ? value.toString() : value, 2));
-        logger.info('Relational Data:', JSON.stringify(relationalData, null, 2));
-      }
+
 
       await prisma.filme.upsert({
         where: { tmdbId: id },
@@ -201,6 +194,7 @@ async function processMovieBatch(movieIds: number[], prisma: PrismaClient): Prom
   }
 
   logger.info(`--- Resumo do Lote (Filmes) --- Sucesso: ${successCount}, Erros: ${errorCount}, Pulados: ${skippedCount}`);
+  return { successCount, errorCount, skippedCount };
 }
 
 
