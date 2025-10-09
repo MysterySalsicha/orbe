@@ -143,6 +143,11 @@ async function processAnimeBatch(animeIds: number[]): Promise<void> {
 
             if (!anime) continue;
 
+            if (animeIds.indexOf(id) === 0) { // Log detalhado apenas para o primeiro item do lote
+                logger.info('--- DADOS BRUTOS DA API (ANILIST) ---');
+                logger.info(JSON.stringify(anime, null, 2));
+            }
+
             const startDate = (anime.startDate && anime.startDate.year)
                 ? new Date(anime.startDate.year, (anime.startDate.month || 1) - 1, anime.startDate.day || 1)
                 : null;
@@ -216,17 +221,11 @@ async function processAnimeBatch(animeIds: number[]): Promise<void> {
                     }
                 })) || [];
 
-            const relationalData = {
-                genres: { create: anime.genres?.map((name: string) => ({ genero: { connectOrCreate: { where: { name }, create: { name } } } })) },
-                tags: { create: anime.tags?.map((tag: any) => ({ tag: { connectOrCreate: { where: { id: tag.id }, create: { id: tag.id, name: tag.name, description: tag.description, category: tag.category, isAdult: tag.isAdult } } } })) },
-                studios: { create: anime.studios?.nodes?.map((studio: any) => ({ studio: { connectOrCreate: { where: { anilistId: studio.id }, create: { anilistId: studio.id, name: studio.name } } } })) },
-                streamingLinks: { create: anime.streamingEpisodes?.map((link: any) => ({ url: link.url, site: link.site, thumbnail: link.thumbnail })) },
-                externalLinks: { create: anime.externalLinks?.map((link: any) => ({ url: link.url, site: link.site })) },
-                ranks: { create: anime.rankings?.map((rank: any) => ({ rank: rank.rank, type: rank.type, context: rank.context, year: rank.year, allTime: rank.allTime })) },
-                airingSchedule: { create: anime.airingSchedule?.nodes?.map((schedule: any) => ({ airingAt: new Date(schedule.airingAt * 1000), episode: schedule.episode })) },
-                staff: { create: uniqueStaffToCreate },
-                sourceRelations: { create: relationsToCreate },
-            };
+            if (animeIds.indexOf(id) === 0) { // Log detalhado apenas para o primeiro item do lote
+                logger.info('--- DADOS PREPARADOS PARA O BANCO ---');
+                logger.info('Scalar Data:', JSON.stringify(scalarData, null, 2));
+                logger.info('Relational Data:', JSON.stringify(relationalData, null, 2));
+            }
 
             const existingAnime = await prisma.anime.findUnique({ where: { anilistId: id } });
 

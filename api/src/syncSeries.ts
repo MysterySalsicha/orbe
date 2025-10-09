@@ -82,6 +82,11 @@ async function processSerieBatch(serieIds: number[], prisma: PrismaClient): Prom
         append_to_response: 'credits,videos,watch/providers,release_dates',
       })) as any;
 
+      if (serieIds.indexOf(id) === 0) { // Log detalhado apenas para o primeiro item do lote
+        logger.info('--- DADOS BRUTOS DA API (TMDB) ---');
+        logger.info(JSON.stringify(serieDetails, null, 2));
+      }
+
       const brProviders = serieDetails['watch/providers']?.results?.BR;
       if (!brProviders) {
         continue;
@@ -152,6 +157,12 @@ async function processSerieBatch(serieIds: number[], prisma: PrismaClient): Prom
             }))
         }
       };
+
+      if (serieIds.indexOf(id) === 0) { // Log detalhado apenas para o primeiro item do lote
+        logger.info('--- DADOS PREPARADOS PARA O BANCO ---');
+        logger.info('Scalar Data:', JSON.stringify(scalarData, null, 2));
+        logger.info('Relational Data:', JSON.stringify(relationalData, null, 2));
+      }
 
       await prisma.serie.upsert({
         where: { tmdbId: id },

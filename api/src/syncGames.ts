@@ -106,6 +106,10 @@ async function processGameBatch(gameIds: number[], prisma: PrismaClient, eventId
         const games = response.data;
 
         for (const game of games) {
+            if (gameIds.indexOf(game.id) === 0) { // Log detalhado apenas para o primeiro item do lote
+                logger.info('--- DADOS BRUTOS DA API (IGDB) ---');
+                logger.info(JSON.stringify(game, null, 2));
+            }
             try {
                 const brReleaseDate = game.release_dates?.find((rd: any) => rd.region === 2)?.date;
                 const firstReleaseDate = brReleaseDate ? new Date(brReleaseDate * 1000) : (game.first_release_date ? new Date(game.first_release_date * 1000) : null);
@@ -140,6 +144,12 @@ async function processGameBatch(gameIds: number[], prisma: PrismaClient, eventId
                     gameModes: { create: game.game_modes?.map((mode: any) => ({ gameMode: { connectOrCreate: { where: { id: mode.id }, create: { id: mode.id, name: mode.name, slug: mode.slug } } } })) ?? [] },
                     gameEngines: { create: game.game_engines?.map((engine: any) => ({ gameEngine: { connectOrCreate: { where: { id: engine.id }, create: { id: engine.id, name: engine.name, slug: engine.slug } } } })) ?? [] },
                 };
+
+                if (gameIds.indexOf(game.id) === 0) { // Log detalhado apenas para o primeiro item do lote
+                    logger.info('--- DADOS PREPARADOS PARA O BANCO ---');
+                    logger.info('Update Data:', JSON.stringify(updateData, null, 2));
+                    logger.info('Create Data (relational):', JSON.stringify(createData, null, 2));
+                }
 
                 const existingGame = await prisma.jogo.findUnique({ where: { igdbId: game.id } });
 

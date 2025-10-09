@@ -83,6 +83,11 @@ async function processMovieBatch(movieIds: number[], prisma: PrismaClient): Prom
         append_to_response: 'credits,videos,watch/providers,release_dates',
       })) as any;
 
+      if (movieIds.indexOf(id) === 0) { // Log detalhado apenas para o primeiro item do lote
+        logger.info('--- DADOS BRUTOS DA API (TMDB) ---');
+        logger.info(JSON.stringify(movieDetails, null, 2));
+      }
+
       const brReleases = movieDetails.release_dates?.results?.find((r: any) => r.iso_3166_1 === 'BR');
       let releaseDate: Date | null = null;
       let relevantRelease: any = undefined;
@@ -170,6 +175,12 @@ async function processMovieBatch(movieIds: number[], prisma: PrismaClient): Prom
             create: movieDetails['watch/providers']?.results?.BR?.flatrate?.map((provider: any) => ({ provider: { connectOrCreate: { where: { tmdbId: provider.provider_id }, create: { tmdbId: provider.provider_id, name: provider.provider_name, logoPath: provider.logo_path } } } }))
         }
       };
+
+      if (movieIds.indexOf(id) === 0) { // Log detalhado apenas para o primeiro item do lote
+        logger.info('--- DADOS PREPARADOS PARA O BANCO ---');
+        logger.info('Scalar Data:', JSON.stringify(scalarData, (key, value) => typeof value === 'bigint' ? value.toString() : value, 2));
+        logger.info('Relational Data:', JSON.stringify(relationalData, null, 2));
+      }
 
       await prisma.filme.upsert({
         where: { tmdbId: id },
