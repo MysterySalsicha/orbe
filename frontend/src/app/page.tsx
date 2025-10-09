@@ -6,24 +6,14 @@ import AnimeCarousel from '@/components/media/AnimeCarousel';
 import MidiaCardSkeleton from '@/components/media/MidiaCardSkeleton';
 import type { Midia, Anime } from '@/types';
 
-const fetchMediaByYear = async (mediaType: 'filmes' | 'series' | 'jogos') => {
-  const currentYear = new Date().getFullYear();
-  const nextYear = currentYear + 1;
-
-  const [currentYearResponse, nextYearResponse] = await Promise.all([
-    fetch(`/api/${mediaType}/by-year?year=${currentYear}`),
-    fetch(`/api/${mediaType}/by-year?year=${nextYear}`)
-  ]);
-
-  if (!currentYearResponse.ok || !nextYearResponse.ok) {
-    console.warn(`Failed to fetch some data for ${mediaType}`);
+const fetchInitialMediaData = async (mediaType: 'filmes' | 'series' | 'jogos') => {
+  const year = new Date().getFullYear();
+  const response = await fetch(`/api/${mediaType}/by-year?year=${year}`);
+  if (!response.ok) {
+    throw new Error(`Failed to fetch initial data for ${mediaType}`);
   }
-
-  const currentYearData: Midia[] = currentYearResponse.ok ? await currentYearResponse.json() : [];
-  const nextYearData: Midia[] = nextYearResponse.ok ? await nextYearResponse.json() : [];
-
-  const combinedData = [...currentYearData, ...nextYearData];
-  return combinedData.sort((a, b) => new Date(a.data_lancamento_api).getTime() - new Date(b.data_lancamento_api).getTime());
+  const data = await response.json();
+  return data.sort((a: Midia, b: Midia) => new Date(a.data_lancamento_api).getTime() - new Date(b.data_lancamento_api).getTime());
 };
 
 const fetchInitialAnimeData = async () => {
@@ -72,9 +62,9 @@ export default function Home() {
     const loadAllData = async () => {
       try {
         const [filmes, series, jogos, animes] = await Promise.all([
-          fetchMediaByYear('filmes'),
-          fetchMediaByYear('series'),
-          fetchMediaByYear('jogos'),
+          fetchInitialMediaData('filmes'),
+          fetchInitialMediaData('series'),
+          fetchInitialMediaData('jogos'),
           fetchInitialAnimeData(),
         ]);
         setInitialData({ filmes, series, jogos, animes });

@@ -1,16 +1,14 @@
 import * as fs from 'fs';
 import * as path from 'path';
 
+const logToFile = process.env.LOG_TO_FILE === 'true';
 const isProduction = process.env.NODE_ENV === 'production';
-let logDirectory: string;
 let logFilePath: string;
 
-// Only set up file logging if not in production
-if (!isProduction) {
-  logDirectory = path.join(__dirname, '..', '..', 'logs');
+if (logToFile && !isProduction) {
+  const logDirectory = path.join(__dirname, '..', '..', 'logs');
   logFilePath = path.join(logDirectory, 'sync.log');
 
-  // Ensure the log directory exists
   if (!fs.existsSync(logDirectory)) {
     fs.mkdirSync(logDirectory, { recursive: true });
   }
@@ -31,8 +29,8 @@ const log = (...args: any[]) => {
     console.log(logMessage);
   }
 
-  // Only write to file if not in production
-  if (!isProduction && logFilePath) {
+  // Only write to file if enabled
+  if (logToFile && !isProduction && logFilePath) {
     fs.appendFile(logFilePath, logMessage + '\n', (err) => {
       if (err) {
         console.error('Failed to write to log file:', err);

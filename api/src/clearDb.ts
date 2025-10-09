@@ -2,16 +2,7 @@ import * as path from 'path';
 import * as dotenv from 'dotenv';
 dotenv.config({ path: path.resolve(__dirname, '../.env') });
 
-import { PrismaClient } from '@prisma/client';
-import { logger } from './logger';
-
-const prisma = new PrismaClient({
-  datasources: {
-    db: {
-      url: process.env.DIRECT_URL,
-    },
-  },
-});
+import { prisma } from './clients';
 
 async function clearDatabase() {
   try {

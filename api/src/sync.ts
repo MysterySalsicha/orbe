@@ -2,8 +2,8 @@ import * as path from 'path';
 import * as dotenv from 'dotenv';
 dotenv.config({ path: path.resolve(__dirname, '../.env') });
 
-import { PrismaClient } from '@prisma/client';
-const prisma = new PrismaClient();
+import { prisma } from './clients';
+
 
 import { syncMovies } from './syncMovies';
 import { syncSeries } from './syncSeries';

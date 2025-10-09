@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import useEmblaCarousel from 'embla-carousel-react';
 import { ChevronLeft, ChevronRight, CalendarDays, ListOrdered, Filter } from 'lucide-react';
 
@@ -53,14 +53,55 @@ const getSeasonDateRange = (year: number, season: Season): { startDate: Date, en
 const AnimeCarousel: React.FC<AnimeCarouselProps> = ({ initialData }) => {
   const [fetchedAnimes, setFetchedAnimes] = useState<Anime[]>(initialData);
   const [carouselItems, setCarouselItems] = useState<CarouselItem[]>([]);
-  const [currentSeason, setCurrentSeason] = useState<Season>(getSeason(new Date()));
-  const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
+  
+  const initialSeason = getSeason(new Date());
+  const initialYear = new Date().getFullYear();
+
+  const [currentSeason, setCurrentSeason] = useState<Season>(initialSeason);
+  const [currentYear, setCurrentYear] = useState(initialYear);
+  
   const [currentTitle, setCurrentTitle] = useState('');
   const [startIndex, setStartIndex] = useState(0);
   const [viewMode, setViewMode] = useState<ViewMode>('launch');
   const [selectedGenre, setSelectedGenre] = useState<string | null>(null);
 
+  const loadedSeasons = useRef<Set<string>>(new Set([`${initialYear}-${initialSeason}`]));
+  const fetchingSeasons = useRef(new Set<string>());
+  const previousSelectedIndex = useRef<number>(0);
+
   const [emblaRef, emblaApi] = useEmblaCarousel({ align: 'center', skipSnaps: true });
+
+  const fetchSeasonData = useCallback(async (year: number, season: Season, direction: 'next' | 'prev' | 'current' = 'current') => {
+    const seasonId = `${year}-${season}`;
+    if (fetchingSeasons.current.has(seasonId) || loadedSeasons.current.has(seasonId)) {
+      return null;
+    }
+    fetchingSeasons.current.add(seasonId);
+
+    try {
+      const response = await fetch(`/api/animes/by-season?year=${year}&season=${season}`);
+      const animes: Anime[] = await response.json();
+      const RELEVANT_FORMATS = ['TV', 'TV_SHORT', 'MOVIE', 'ONA'];
+      const newAnimes = animes.filter(anime => anime.format && RELEVANT_FORMATS.includes(anime.format) && !anime.isAdult);
+      
+      loadedSeasons.current.add(seasonId);
+
+      if (direction === 'current') {
+        setFetchedAnimes(newAnimes);
+      } else if (direction === 'next') {
+        setFetchedAnimes(prev => [...prev, ...newAnimes]);
+      } else { // prev
+        setFetchedAnimes(prev => [...newAnimes, ...prev]);
+      }
+      
+      return newAnimes;
+    } catch (error) {
+      console.error(`Error fetching animes for season ${seasonId}:`, error);
+      return null;
+    } finally {
+      fetchingSeasons.current.delete(seasonId);
+    }
+  }, []);
 
   useEffect(() => {
     const today = new Date();
@@ -79,16 +120,84 @@ const AnimeCarousel: React.FC<AnimeCarouselProps> = ({ initialData }) => {
 
   useEffect(() => {
     if (!emblaApi) return;
-    const onSettle = () => setCurrentTitle(`Temporada de ${SEASON_NAMES[currentSeason]} ${currentYear}`);
-    emblaApi.on('settle', onSettle);
-    onSettle();
-    return () => { emblaApi.off('settle', onSettle); };
-  }, [emblaApi, currentSeason, currentYear]);
 
-  const genres = Array.from(new Set(fetchedAnimes.flatMap(anime => anime.generos_api?.map(g => g.name) || [])));
+    const onSettle = async () => {
+      if (!emblaApi) return;
+
+      // If a fetch is already in progress, do nothing.
+      if (fetchingSeasons.current.size > 0) {
+          return;
+      }
+
+      const selectedIndex = emblaApi.selectedScrollSnap();
+      previousSelectedIndex.current = selectedIndex;
+      
+      const selectedItem = carouselItems[selectedIndex];
+      if (selectedItem?.type === 'media' && selectedItem.data.startDate) {
+          const itemDate = new Date(selectedItem.data.startDate.year, selectedItem.data.startDate.month - 1, selectedItem.data.startDate.day);
+          const season = getSeason(itemDate);
+          const year = itemDate.getFullYear();
+          setCurrentSeason(season);
+          setCurrentYear(year);
+          setCurrentTitle(`Temporada de ${SEASON_NAMES[season]} ${year}`);
+      }
+
+      const buffer = 15;
+      if (carouselItems.length > 0 && selectedIndex >= carouselItems.length - buffer) {
+        const lastAnime = fetchedAnimes[fetchedAnimes.length - 1];
+        if (!lastAnime || !lastAnime.startDate) return;
+        const lastItemDate = new Date(lastAnime.startDate.year, lastAnime.startDate.month - 1, lastAnime.startDate.day);
+        const lastSeason = getSeason(lastItemDate);
+        const lastYear = lastItemDate.getFullYear();
+        
+        const currentSeasonIndex = SEASONS.indexOf(lastSeason);
+        const nextSeasonIndex = (currentSeasonIndex + 1) % 4;
+        const nextSeason = SEASONS[nextSeasonIndex];
+        const nextYear = nextSeasonIndex === 0 ? lastYear + 1 : lastYear;
+        
+        await fetchSeasonData(nextYear, nextSeason, 'next');
+      }
+
+      if (carouselItems.length > 0 && selectedIndex < buffer) {
+        const firstAnime = fetchedAnimes[0];
+        if (!firstAnime || !firstAnime.startDate) return;
+        const firstItemDate = new Date(firstAnime.startDate.year, firstAnime.startDate.month - 1, firstAnime.startDate.day);
+        const firstSeason = getSeason(firstItemDate);
+        const firstYear = firstItemDate.getFullYear();
+
+        const currentSeasonIndex = SEASONS.indexOf(firstSeason);
+        const prevSeasonIndex = (currentSeasonIndex - 1 + 4) % 4;
+        const prevSeason = SEASONS[prevSeasonIndex];
+        const prevYear = prevSeasonIndex === 3 ? firstYear - 1 : firstYear;
+
+        await fetchSeasonData(prevYear, prevSeason, 'prev');
+      }
+    };
+
+    emblaApi.on('settle', onSettle);
+
+    // Set initial title
+    const selectedIndex = emblaApi.selectedScrollSnap();
+    const selectedItem = carouselItems[selectedIndex];
+    if (selectedItem?.type === 'media' && selectedItem.data.startDate) {
+        const itemDate = new Date(selectedItem.data.startDate.year, selectedItem.data.startDate.month - 1, selectedItem.data.startDate.day);
+        const season = getSeason(itemDate);
+        const year = itemDate.getFullYear();
+        setCurrentTitle(`Temporada de ${SEASON_NAMES[season]} ${year}`);
+    }
+
+    return () => { emblaApi.off('settle', onSettle); };
+  }, [emblaApi, carouselItems, fetchedAnimes, fetchSeasonData]);
+
+  // Efeito para definir o título inicial
+  useEffect(() => {
+    setCurrentTitle(`Temporada de ${SEASON_NAMES[initialSeason]} ${initialYear}`);
+  }, [initialSeason, initialYear]);
+
+  const genres = Array.from(new Set(fetchedAnimes.flatMap(anime => anime.generos_api || []))).filter(Boolean);
 
   const filteredAnimes = selectedGenre
-    ? fetchedAnimes.filter(anime => anime.generos_api?.some(g => g.name === selectedGenre))
+    ? fetchedAnimes.filter(anime => anime.generos_api?.includes(selectedGenre))
     : fetchedAnimes;
 
   useEffect(() => {
@@ -96,22 +205,35 @@ const AnimeCarousel: React.FC<AnimeCarouselProps> = ({ initialData }) => {
     let newStartIndex = 0;
 
     if (viewMode === 'launch') {
-        const { startDate: seasonStartDate } = getSeasonDateRange(currentYear, currentSeason);
         const sortedAnimes = [...filteredAnimes].sort((a, b) => {
-            const aIsContinuation = a.nextAiringEpisode && a.startDate && new Date(a.startDate.year, a.startDate.month - 1, a.startDate.day) < seasonStartDate;
-            const bIsContinuation = b.nextAiringEpisode && b.startDate && new Date(b.startDate.year, b.startDate.month - 1, b.startDate.day) < seasonStartDate;
-            const aIsFinished = !a.nextAiringEpisode;
-            const bIsFinished = !b.nextAiringEpisode;
-
-            if (aIsFinished !== bIsFinished) return aIsFinished ? 1 : -1;
-            if (aIsContinuation !== bIsContinuation) return aIsContinuation ? -1 : 1;
-            
             const dateA = a.startDate ? new Date(a.startDate.year, a.startDate.month - 1, a.startDate.day).getTime() : 0;
             const dateB = b.startDate ? new Date(b.startDate.year, b.startDate.month - 1, b.startDate.day).getTime() : 0;
             return dateA - dateB;
         });
         newCarouselItems = sortedAnimes.map(anime => ({ type: 'media', data: anime }));
-        newStartIndex = 0;
+        
+        const today = new Date();
+        const currentSeasonObj = getSeason(today);
+        const currentYearObj = today.getFullYear();
+        if (currentSeason === currentSeasonObj && currentYear === currentYearObj) {
+            const startIndexCandidate = newCarouselItems.findIndex(item => 
+                item.type === 'media' && 
+                item.data.startDate &&
+                new Date(item.data.startDate.year, item.data.startDate.month - 1, item.data.startDate.day) >= today
+            );
+            newStartIndex = startIndexCandidate > -1 ? startIndexCandidate : newCarouselItems.length -1;
+        } else {
+            const searchYear = currentYear;
+            const searchSeason = currentSeason;
+            const startIndexCandidate = newCarouselItems.findIndex(item => 
+                item.type === 'media' && 
+                item.data.startDate &&
+                item.data.startDate.year === searchYear &&
+                getSeason(new Date(item.data.startDate.year, item.data.startDate.month - 1, item.data.startDate.day)) === searchSeason
+            );
+            newStartIndex = startIndexCandidate > -1 ? startIndexCandidate : 0;
+        }
+
     } else { // weekly mode
         const animesByDay: Record<number, Anime[]> = { 0: [], 1: [], 2: [], 3: [], 4: [], 5: [], 6: [] };
         filteredAnimes.forEach(anime => {
@@ -145,38 +267,45 @@ const AnimeCarousel: React.FC<AnimeCarouselProps> = ({ initialData }) => {
 
   useEffect(() => {
     if (emblaApi) {
+        const prevLength = emblaApi.slideNodes().length;
         emblaApi.reInit();
-        emblaApi.scrollTo(startIndex, true);
+        const newLength = emblaApi.slideNodes().length;
+        const itemsAdded = newLength - prevLength;
+
+        if (itemsAdded > 0 && previousSelectedIndex.current < 15) { // Heuristic for prepend
+            emblaApi.scrollTo(previousSelectedIndex.current + itemsAdded, true);
+        } else if (startIndex !== previousSelectedIndex.current) {
+            emblaApi.scrollTo(startIndex, true);
+        }
     }
   }, [carouselItems, startIndex, emblaApi]);
 
   const navigateSeason = async (direction: 'next' | 'prev') => {
-    let newSeason = currentSeason;
+    const seasonIndex = SEASONS.indexOf(currentSeason);
+    let newSeason: Season;
     let newYear = currentYear;
 
-    const currentSeasonIndex = SEASONS.indexOf(currentSeason);
     if (direction === 'next') {
-      const nextSeasonIndex = (currentSeasonIndex + 1) % 4;
+      const nextSeasonIndex = (seasonIndex + 1) % 4;
       newSeason = SEASONS[nextSeasonIndex];
       if (nextSeasonIndex === 0) newYear++;
     } else {
-      const prevSeasonIndex = (currentSeasonIndex - 1 + 4) % 4;
+      const prevSeasonIndex = (seasonIndex - 1 + 4) % 4;
       newSeason = SEASONS[prevSeasonIndex];
       if (prevSeasonIndex === 3) newYear--;
     }
-
-    try {
-        const response = await fetch(`/api/animes/by-season?year=${newYear}&season=${newSeason}`);
-        const animes: Anime[] = await response.json();
-        const RELEVANT_FORMATS = ['TV', 'TV_SHORT', 'MOVIE', 'ONA'];
-        const filteredAnimes = animes.filter(anime => anime.format && RELEVANT_FORMATS.includes(anime.format) && !anime.isAdult);
-        
-        setFetchedAnimes(filteredAnimes);
-        setCurrentSeason(newSeason);
-        setCurrentYear(newYear);
-    } catch (error) {
-        console.error('Error fetching new season animes:', error);
+    
+    if (!loadedSeasons.current.has(`${newYear}-${newSeason}`)) {
+        await fetchSeasonData(newYear, newSeason, 'current');
+    } 
+    
+    const targetIndex = fetchedAnimes.findIndex(anime => anime.startDate && anime.startDate.year === newYear && getSeason(new Date(anime.startDate.year, anime.startDate.month - 1, anime.startDate.day)) === newSeason);
+    if (targetIndex > -1) {
+        emblaApi?.scrollTo(targetIndex);
     }
+    
+    setCurrentSeason(newSeason);
+    setCurrentYear(newYear);
   };
 
   return (
@@ -224,12 +353,12 @@ const AnimeCarousel: React.FC<AnimeCarouselProps> = ({ initialData }) => {
         <div className="flex -ml-6">
           {carouselItems.length === 0
             ? Array.from({ length: 10 }).map((_, index) => (
-                <div key={index} className="relative min-w-0 flex-shrink-0 basis-1/2 sm:basis-1/3 md:basis-1/4 lg:basis-1/5 xl:basis-1/6 pl-6">
+                <div key={`skeleton-${index}`} className="relative min-w-0 flex-shrink-0 basis-1/2 sm:basis-1/3 md:basis-1/4 lg:basis-1/5 xl:basis-1/6 pl-6">
                   <MidiaCardSkeleton />
                 </div>
               ))
-            : carouselItems.map((item, index) => (
-                <div key={index} className="relative min-w-0 flex-shrink-0 basis-1/2 sm:basis-1/3 md:basis-1/4 lg:basis-1/5 xl:basis-1/6 pl-6">
+            : carouselItems.map((item) => (
+                <div key={item.type === 'separator' ? `sep-${item.dayName}` : `media-${item.data.id}`} className="relative min-w-0 flex-shrink-0 basis-1/2 sm:basis-1/3 md:basis-1/4 lg:basis-1/5 xl:basis-1/6 pl-6">
                   {item.type === 'separator' 
                     ? <DaySeparatorCard dayName={item.dayName} /> 
                     : <MidiaCard midia={item.data} type="anime" />}

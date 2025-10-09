@@ -1,7 +1,10 @@
+import { PrismaClient } from '@prisma/client';
 import axios from 'axios';
 import https from 'https';
 import { MovieDb } from 'moviedb-promise';
 import { logger } from './logger';
+
+export const prisma = new PrismaClient();
 
 const insecureAgent = new https.Agent({
   rejectUnauthorized: false,

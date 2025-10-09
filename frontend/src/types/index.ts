@@ -85,7 +85,7 @@ export interface Midia {
   plataformas_curadas?: Plataforma[];
   plataformas_api: Plataforma[];
   generos_curados?: Genre[];
-  generos_api: Genre[];
+  generos_api: string[];
   premiacoes?: Award[];
   trailer_key?: string;
   trailer_url_curado?: string;

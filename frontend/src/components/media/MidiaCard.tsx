@@ -48,7 +48,7 @@ const useCountdown = (targetDate: string | undefined) => {
       const seconds = Math.floor((difference % (1000 * 60)) / 1000);
 
       if (days > 0) {
-        setTimeLeft(`${days}d ${hours}h`);
+        setTimeLeft(`${days}d ${hours}h ${minutes}m`);
       } else {
         setTimeLeft(`${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`);
       }
@@ -70,19 +70,30 @@ const MidiaCard = React.forwardRef<HTMLDivElement, MidiaCardProps>((
     onInteraction,
     isFocused,
   }, ref) => {
+
+  if (!midia) {
+    return null; // Ou um skeleton/placeholder
+  }
+
   const { openSuperModal, openRatingModal } = useAppStore();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   // Processar dados com helpers
   const rating = formatRating(midia, type);
-  const genres = midia.generos_api?.map(g => g.name).filter(Boolean) ?? [];
+  const genres = Array.isArray(midia.generos_api) ? midia.generos_api : [];
   const providers = getStreamingProviders(midia);
   const platforms = type === 'jogo' ? getGamePlatforms(midia as Jogo) : [];
   const dubStatus = type === 'anime' ? getAnimeDubStatus(midia as Anime) : null;
 
+
+
   const isAnime = type === 'anime';
   const nextAiringEpisode = isAnime ? (midia as Anime).nextAiringEpisode : null;
   const countdown = useCountdown(nextAiringEpisode?.airingAt);
+
+  const animeReleaseDate = isAnime ? new Date((midia as Anime).data_lancamento_api) : null;
+  const isFutureRelease = animeReleaseDate ? animeReleaseDate > new Date() : false;
+  const hasNextEpisode = !!nextAiringEpisode;
 
   const userInteraction = userInteractions.find(
     interaction => interaction.midia_id === midia.id && interaction.tipo_midia === type
@@ -90,28 +101,7 @@ const MidiaCard = React.forwardRef<HTMLDivElement, MidiaCardProps>((
 
   const isAdultContent = isAnime && (midia as any).isAdult === true;
 
-  // Lógica corrigida para decidir se mostra o cronômetro
-  const showCountdown = (() => {
-    if (!isAnime || !nextAiringEpisode) {
-      return false;
-    }
-    const startDateString = (midia as Anime).data_lancamento_api;
-    if (startDateString && typeof startDateString === 'string') {
-      try {
-        const startDate = parseISO(startDateString);
-        return startDate <= new Date();
-      } catch (e) {
-        return false; // Retorna falso se a data for inválida
-      }
-    }
-    // Lida com o formato de objeto de data legado, se ainda existir
-    if (startDateString && typeof startDateString === 'object' && 'year' in startDateString) {
-        const dateObj = startDateString as { year: number, month: number, day: number };
-        const startDate = new Date(dateObj.year, dateObj.month - 1, dateObj.day);
-        return startDate <= new Date();
-    }
-    return false;
-  })();
+
 
   const formatReleaseDate = () => {
     const date = midia.data_lancamento_curada || midia.data_lancamento_api;
@@ -127,25 +117,24 @@ const MidiaCard = React.forwardRef<HTMLDivElement, MidiaCardProps>((
     }
   };
 
-  const hasReleased = () => {
+
+
+  const hasReleased = (() => {
     const date = midia.data_lancamento_curada || midia.data_lancamento_api;
     if (!date) return false;
     try {
-      if (typeof date === 'object' && date !== null && 'year' in date) {
-        const dateObj = date as { year: number, month: number, day: number };
-        return new Date(dateObj.year, dateObj.month - 1, dateObj.day) <= new Date();
-      }
-      return parseISO(date as string) <= new Date();
+      const releaseDate = typeof date === 'string' ? parseISO(date) : new Date((date as any).year, (date as any).month - 1, (date as any).day);
+      return releaseDate <= new Date();
     } catch {
       return false;
     }
-  };
+  })();
 
   const menuActions = [
     { icon: Heart, label: 'Favoritar', action: 'favoritar' as UserAction, active: userInteraction?.status === 'favorito' },
     { icon: Bookmark, label: 'Quero Assistir', action: 'quero_assistir' as UserAction, active: userInteraction?.status === 'quero_assistir' },
     ...(type === 'anime' || type === 'serie' ? [{ icon: Star, label: 'Acompanhando', action: 'acompanhando' as UserAction, active: userInteraction?.status === 'acompanhando' }] : []),
-    { icon: Check, label: type === 'jogo' ? 'Já Joguei' : 'Já Assisti', action: (type === 'jogo' ? 'ja_joguei' : 'ja_assisti') as UserAction, active: userInteraction?.status === 'assistido', disabled: !hasReleased() },
+    { icon: Check, label: type === 'jogo' ? 'Já Joguei' : 'Já Assisti', action: (type === 'jogo' ? 'ja_joguei' : 'ja_assisti') as UserAction, active: userInteraction?.status === 'assistido', disabled: !hasReleased },
     { icon: EyeOff, label: 'Não me Interessa', action: 'nao_me_interessa' as UserAction, active: userInteraction?.status === 'oculto' }
   ];
 
@@ -156,7 +145,7 @@ const MidiaCard = React.forwardRef<HTMLDivElement, MidiaCardProps>((
 
   const handleMenuAction = (action: UserAction, event: React.MouseEvent) => {
     event.stopPropagation();
-    if ((action === 'ja_assisti' || action === 'ja_joguei') && !hasReleased()) return;
+    if ((action === 'ja_assisti' || action === 'ja_joguei') && !hasReleased) return;
     if (action === 'ja_assisti' || action === 'ja_joguei') {
       openRatingModal(midia, type, action);
     } else {
@@ -185,12 +174,12 @@ const MidiaCard = React.forwardRef<HTMLDivElement, MidiaCardProps>((
                   alt={midia.titulo_api || 'Imagem da Mídia'}
                   width={200}
                   height={300}
-                  unoptimized
+                  sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, (max-width: 1024px) 25vw, (max-width: 1280px) 20vw, 17vw"
                   loading="lazy"
                   className={`object-cover object-center transition-all duration-300 group-hover:scale-105 w-full h-full ${isAdultContent ? 'blur-md hover:blur-none' : ''}`}
                 />
                                 {type === 'filme' && (midia as any).em_prevenda && (
-                                  <div className="absolute top-2 right-2 z-10 rounded-md bg-yellow-500 px-2 py-1 text-xs font-bold text-white">
+                                  <div className="absolute top-2 right-2 z-10 rounded-md bg-yellow-500 dark:bg-blue-500 px-2 py-1 text-xs font-bold text-white">
                                     PRÉ-VENDA
                                   </div>
                                 )}                <div className="absolute top-2 right-2">
@@ -229,26 +218,38 @@ const MidiaCard = React.forwardRef<HTMLDivElement, MidiaCardProps>((
                   )}
                 </div>
 
-                {/* Data de Lançamento */}
-                {type !== 'anime' && (
+                {/* Data de Lançamento ou Cronômetro para Anime */}
+                {type === 'anime' ? (
+                  isFutureRelease ? (
+                    <p className="text-xs text-gray-400 mb-2">Lançamento: {formatReleaseDate()}</p>
+                  ) : hasNextEpisode ? (
+                    <p className="text-xs font-semibold text-yellow-600 dark:text-blue-400 mb-2">Ep. {(midia as Anime).numero_episodio_atual} em: {countdown}</p>
+                  ) : (
+                    <p className="text-xs text-gray-400 mb-2">Lançamento: {formatReleaseDate()}</p>
+                  )
+                ) : (
                   <p className="text-xs text-gray-400 mb-2">
                     Lançamento: {formatReleaseDate()}
                   </p>
                 )}
 
-                {/* Gêneros e Status de Dublagem */}
-                <div className="flex flex-wrap items-center gap-1 mb-2">
+                {/* Gêneros */}
+                <div className="flex flex-wrap items-center gap-1 mb-1">
                   {genres.slice(0, 2).map(genre => (
                     <span key={genre} className="bg-yellow-200 text-yellow-800 dark:bg-blue-900 dark:text-blue-200 px-2 py-0.5 rounded-full text-xs font-semibold truncate transition-colors">
                       {genre}
                     </span>
                   ))}
-                  {dubStatus && (
+                </div>
+
+                {/* Dub Status */}
+                {dubStatus && (
+                  <div className="mt-1">
                     <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${dubStatus === 'Dublado' ? 'bg-green-200 text-green-800 dark:bg-green-900 dark:text-green-200' : 'bg-gray-200 text-gray-800 dark:bg-gray-700 dark:text-gray-300'} transition-colors`}>
                       {dubStatus}
                     </span>
-                  )}
-                </div>
+                  </div>
+                )}
 
                 {/* Spacer to push providers to the bottom */}
                 <div className="flex-grow" />

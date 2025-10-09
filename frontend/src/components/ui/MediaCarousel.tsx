@@ -69,25 +69,48 @@ const MediaCarousel: React.FC<MediaCarouselProps> = ({ mediaType, initialData, s
 
       const buffer = 15;
       if (selectedIndex >= mediaItems.length - buffer) {
-        const nextYear = Math.max(...Array.from(loadedYears.current)) + 1;
-        const newData = await fetchMediaByYear(nextYear);
-        if (newData) setMediaItems(prev => [...prev, ...newData]);
+        const maxLoadedYear = Math.max(...Array.from(loadedYears.current));
+        const isFetchingFuture = Array.from(fetchingYears.current).some(year => year > maxLoadedYear);
+        if (!isFetchingFuture) {
+            const nextYear = maxLoadedYear + 1;
+            const newData = await fetchMediaByYear(nextYear);
+            if (newData) setMediaItems(prev => [...prev, ...newData]);
+        }
       }
 
       if (selectedIndex < buffer) {
-        const prevYear = Math.min(...Array.from(loadedYears.current)) - 1;
-        const newData = await fetchMediaByYear(prevYear);
-        if (newData) {
-          setMediaItems(prev => [...newData, ...prev]);
+        const minLoadedYear = Math.min(...Array.from(loadedYears.current));
+        const isFetchingPast = Array.from(fetchingYears.current).some(year => year < minLoadedYear);
+        if (!isFetchingPast) {
+            const prevYear = minLoadedYear - 1;
+            const newData = await fetchMediaByYear(prevYear);
+            if (newData) {
+              setMediaItems(prev => [...newData, ...prev]);
+            }
         }
       }
     };
 
     emblaApi.on('settle', onSettle);
-    onSettle();
 
     return () => { emblaApi.off('settle', onSettle); };
   }, [emblaApi, mediaItems, fetchMediaByYear]);
+
+  // Efeito para definir o título inicial
+  useEffect(() => {
+    if (!emblaApi || !initialData[startIndex]) return;
+
+    const initialItem = initialData[startIndex];
+    if (initialItem?.data_lancamento_api) {
+      try {
+        const date = parseISO(initialItem.data_lancamento_api);
+        const title = format(date, "'Lançamentos de' MMMM 'de' yyyy", { locale: ptBR });
+        setCurrentTitle(title.charAt(0).toUpperCase() + title.slice(1));
+      } catch (e) { 
+        setCurrentTitle("Lançamentos"); 
+      }
+    }
+  }, [emblaApi, initialData, startIndex]);
 
   useEffect(() => {
     if (!emblaApi) return;
@@ -120,10 +143,10 @@ const MediaCarousel: React.FC<MediaCarouselProps> = ({ mediaType, initialData, s
     if (targetIndex !== -1) emblaApi.scrollTo(targetIndex);
   };
 
-  const genres = Array.from(new Set(mediaItems.flatMap(item => item.generos_api?.map(g => g.name) || [])));
+  const genres = Array.from(new Set(mediaItems.flatMap(item => item.generos_api || []))).filter(Boolean);
 
   const filteredItems = selectedGenre
-    ? mediaItems.filter(item => item.generos_api?.some(g => g.name === selectedGenre))
+    ? mediaItems.filter(item => item.generos_api?.includes(selectedGenre))
     : mediaItems;
 
   return (

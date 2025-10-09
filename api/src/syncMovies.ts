@@ -5,7 +5,7 @@ dotenv.config({ path: path.resolve(__dirname, '../.env') });
 import { logger } from './logger';
 import { tmdb, tmdbApi } from './clients';
 import { Cast, Crew } from 'moviedb-promise';
-import { Prisma, PrismaClient } from '@prisma/client';
+import { prisma } from './clients';
 
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -229,7 +229,7 @@ export async function syncMovies(prisma: PrismaClient, startDate: string, endDat
 }
 
 const main = async () => {
-  const prisma = new PrismaClient();
+  
   const startDate = process.argv[2];
   const endDate = process.argv[3];
   const limit = process.argv[4] ? parseInt(process.argv[4]) : undefined;

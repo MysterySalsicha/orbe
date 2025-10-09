@@ -28,7 +28,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
 
   // Conexão com WebSocket para notificações em tempo real
   useEffect(() => {
-    const wsUrl = process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:3001';
+    const wsUrl = process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:3001/api/ws';
     let ws: WebSocket;
     let reconnectInterval: NodeJS.Timeout;
 

@@ -43,8 +43,8 @@ const JogoInfoBlock: React.FC<JogoInfoBlockProps> = ({ jogo }) => {
           <h4 className={`font-semibold ${labelColor} mb-2`}>Gêneros</h4>
           <div className="flex flex-wrap gap-2">
             {jogo.generos_api.map((genre) => (
-              <span key={genre.id} className="bg-muted text-muted-foreground px-3 py-1 rounded-full text-xs font-medium">
-                {genre.name}
+              <span key={genre} className="bg-muted text-muted-foreground px-3 py-1 rounded-full text-xs font-medium">
+                {genre}
               </span>
             ))}
           </div>

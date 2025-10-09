@@ -2,11 +2,11 @@ import * as path from 'path';
 import * as dotenv from 'dotenv';
 dotenv.config({ path: path.resolve(__dirname, '../.env') });
 
-import { PrismaClient } from '@prisma/client';
+import { prisma } from './clients';
 import { igdbApi, getIgdbAccessToken } from './clients';
 import { logger } from './logger';
 
-const prisma = new PrismaClient();
+
 
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -269,13 +269,7 @@ export async function syncGames(prisma: PrismaClient, limit?: number) {
 };
 
 const main = async () => {
-    const prisma = new PrismaClient({
-  datasources: {
-    db: {
-      url: process.env.DIRECT_URL,
-    },
-  },
-});
+    
     const startDate = process.argv[2];
     const endDate = process.argv[3];
     const limit = process.argv[4] ? parseInt(process.argv[4]) : undefined;

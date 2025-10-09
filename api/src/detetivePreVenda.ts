@@ -1,10 +1,10 @@
-import { PrismaClient } from '@prisma/client';
+import { prisma } from './clients';
 import { logger } from './logger';
 import axios from 'axios';
 import * as cheerio from 'cheerio';
 import { broadcast } from './index';
 
-const prisma = new PrismaClient();
+
 
 async function checkPreSaleStatus() {
   logger.info('Iniciando Detetive Digital: Verificação de status de pré-venda...');

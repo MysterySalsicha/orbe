@@ -1,9 +1,9 @@
 import { Router, Request, Response, NextFunction, json } from 'express';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from './clients';
 import crypto from 'crypto';
 import { logger } from './logger';
 
-const prisma = new PrismaClient();
+
 const router = Router();
 
 const WEBHOOK_SECRET = process.env.IGDB_WEBHOOK_SECRET || 'um-segredo-muito-dificil-de-adivinhar';

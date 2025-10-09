@@ -1,7 +1,7 @@
 import express from 'express';
 import http from 'http';
 import { WebSocketServer, WebSocket } from 'ws';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from './clients';
 import { logger } from './logger';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
@@ -13,9 +13,9 @@ import userRoutes from './userRoutes';
 
 const app = express();
 const server = http.createServer(app);
-const wss = new WebSocketServer({ server });
+const wss = new WebSocketServer({ server, path: '/api/ws' });
 
-const prisma = new PrismaClient();
+
 const JWT_SECRET = process.env.JWT_SECRET || 'seu_segredo_jwt_super_secreto';
 
 // Gerenciamento de conexões WebSocket

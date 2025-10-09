@@ -7,12 +7,12 @@
     "start": "ts-node src/index.ts",
     "build": "tsc",
     "dev": "nodemon src/index.ts",
-    "sync": "ts-node src/sync.ts",
-    "sync:movies": "ts-node src/syncMovies.ts",
-    "sync:series": "ts-node src/syncSeries.ts",
-    "sync:animes": "ts-node src/syncAnimes.ts",
-    "sync:games": "ts-node src/syncGames.ts",
-    "sync:detetive": "ts-node src/detetive.ts"
+    "sync": "cross-env LOG_TO_FILE=true ts-node src/sync.ts",
+    "sync:movies": "cross-env LOG_TO_FILE=true ts-node src/syncMovies.ts",
+    "sync:series": "cross-env LOG_TO_FILE=true ts-node src/syncSeries.ts",
+    "sync:animes": "cross-env LOG_TO_FILE=true ts-node src/syncAnimes.ts",
+    "sync:games": "cross-env LOG_TO_FILE=true ts-node src/syncGames.ts",
+    "sync:detetive": "cross-env LOG_TO_FILE=true ts-node src/detetive.ts"
   },
   "dependencies": {
     "@prisma/client": "^6.16.2",

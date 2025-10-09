@@ -43,8 +43,8 @@ const SerieInfoBlock = ({ serie }: SerieInfoBlockProps) => {
         <span className={`font-semibold ${labelColor}`}>Gêneros:</span>
         <div className="flex flex-wrap gap-2 mt-2">
           {serie.generos_api?.map((genre) => (
-            <span key={genre.id} className="bg-gray-700 text-white px-3 py-1 rounded-full text-xs">
-              {genre.name}
+            <span key={genre} className="bg-gray-700 text-white px-3 py-1 rounded-full text-xs">
+              {genre}
             </span>
           ))}
         </div>

@@ -1,9 +1,9 @@
 import { Router, Request, Response, NextFunction } from 'express';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from './clients';
 import { logger } from './logger';
 import jwt from 'jsonwebtoken';
 
-const prisma = new PrismaClient();
+
 const router = Router();
 const JWT_SECRET = process.env.JWT_SECRET || 'seu_segredo_jwt_super_secreto';
 

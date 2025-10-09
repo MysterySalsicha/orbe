@@ -1,15 +1,5 @@
 import * as dotenv from 'dotenv';
-import { PrismaClient } from '@prisma/client';
-
-dotenv.config({ path: '.env' });
-
-const prisma = new PrismaClient({
-  datasources: {
-    db: {
-      url: process.env.DIRECT_URL,
-    },
-  },
-});
+import { prisma } from './clients';
 
 async function testConnection() {
   try {

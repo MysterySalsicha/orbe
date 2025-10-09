@@ -1,14 +1,4 @@
-import { PrismaClient } from '@prisma/client';
-import puppeteer, { Browser } from 'puppeteer';
-import * as cheerio from 'cheerio';
-import * as dotenv from 'dotenv';
-import { logger } from './logger';
-
-dotenv.config({ path: '.env' });
-
-const prisma = new PrismaClient({
-  datasources: { db: { url: process.env.DIRECT_URL } },
-});
+import { prisma } from './clients';
 
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 

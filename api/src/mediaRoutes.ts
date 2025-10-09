@@ -1,5 +1,6 @@
 import { Router } from 'express';
-import { PrismaClient, Prisma } from '@prisma/client';
+import { prisma } from './clients';
+import { Prisma } from '@prisma/client';
 import { mapFilmeToMidia, mapSerieToMidia, mapAnimeToMidia, mapJogoToMidia } from './mappers';
 import { logger } from './logger';
 import cacheMiddleware from './cacheMiddleware';
@@ -7,7 +8,7 @@ import adminMiddleware from './adminMiddleware';
 import redisClient from './redisClient';
 
 
-const prisma = new PrismaClient();
+
 const router = Router();
 
 const TWELVE_HOURS = 43200;
@@ -161,6 +162,101 @@ router.get('/filmes/filtros', async (req, res) => {
   }
 });
 
+// Rota para o Carrossel da Homepage de Filmes
+router.get('/filmes/homepage-carousel', async (req, res) => {
+  try {
+    const currentYear = new Date().getFullYear();
+    const startYear = currentYear - 5;
+    const endYear = currentYear + 5;
+
+    const startDate = new Date(startYear, 0, 1);
+    const endDate = new Date(endYear, 11, 31, 23, 59, 59);
+
+    const relevanceFilter: Prisma.FilmeWhereInput = {
+      OR: [
+        { voteCount: { gt: 12 } },
+        { popularity: { gt: 5 } },
+      ],
+    };
+
+    const filmes = await prisma.filme.findMany({
+      where: {
+        AND: [
+          {
+            releaseDate: {
+              gte: startDate,
+              lte: endDate,
+            },
+          },
+          relevanceFilter,
+        ],
+      },
+      orderBy: {
+        releaseDate: 'asc',
+      },
+      include: {
+        genres: { include: { genero: true } },
+        streamingProviders: { include: { provider: true } },
+      },
+    });
+    res.json(filmes.map(mapFilmeToMidia));
+  } catch (error) {
+    logger.error(`Erro ao buscar filmes para o carrossel da homepage: ${error}`);
+    res.status(500).json({ error: 'Erro ao buscar filmes para o carrossel da homepage.' });
+  }
+});
+
+// Rota para Filmes por Ano
+router.get('/filmes/by-year', async (req, res) => {
+  const { year } = req.query;
+  if (!year || isNaN(parseInt(year as string))) {
+    return res.status(400).json({ error: 'Ano inválido fornecido.' });
+  }
+  const parsedYear = parseInt(year as string);
+  const startDate = new Date(parsedYear, 0, 1);
+  const endDate = new Date(parsedYear, 11, 31, 23, 59, 59);
+
+  try {
+    const currentYear = new Date().getFullYear();
+    let relevanceFilter: Prisma.FilmeWhereInput = {};
+
+    if (parsedYear > currentYear) {
+      relevanceFilter = { popularity: { gt: 2 } };
+    } else {
+      relevanceFilter = {
+        OR: [
+          { voteCount: { gt: 12 } },
+          { popularity: { gt: 5 } },
+        ],
+      };
+    }
+
+    const filmes = await prisma.filme.findMany({
+      where: {
+        AND: [
+          {
+            releaseDate: {
+              gte: startDate,
+              lte: endDate,
+            },
+          },
+          relevanceFilter,
+        ],
+      },
+      orderBy: {
+        releaseDate: 'asc',
+      },
+      include: {
+        genres: { include: { genero: true } },
+        streamingProviders: { include: { provider: true } },
+      },
+    });
+    res.json(filmes.map(mapFilmeToMidia));
+  } catch (error) {
+    logger.error(`Erro ao buscar filmes por ano: ${error}`);
+    res.status(500).json({ error: 'Erro ao buscar filmes por ano.' });
+  }
+});
 
 // Rota para Séries
 router.get('/series', cacheMiddleware(TWELVE_HOURS), async (req, res) => {
@@ -192,6 +288,10 @@ router.get('/series', cacheMiddleware(TWELVE_HOURS), async (req, res) => {
 
     const series = await prisma.serie.findMany({
       where,
+      include: {
+        genres: { include: { genero: true } },
+        streamingProviders: { include: { provider: true } },
+      },
       orderBy,
     });
     res.json({ results: series.map(mapSerieToMidia), total: series.length });
@@ -285,6 +385,102 @@ router.get('/series/filtros', async (req, res) => {
   } catch (error) {
     logger.error('Erro ao buscar filtros de séries:', error);
     res.status(500).json({ error: 'Erro ao buscar opções de filtros.' });
+  }
+});
+
+// Rota para o Carrossel da Homepage de Séries
+router.get('/series/homepage-carousel', async (req, res) => {
+  try {
+    const currentYear = new Date().getFullYear();
+    const startYear = currentYear - 5;
+    const endYear = currentYear + 5;
+
+    const startDate = new Date(startYear, 0, 1);
+    const endDate = new Date(endYear, 11, 31, 23, 59, 59);
+
+    const relevanceFilter: Prisma.SerieWhereInput = {
+      OR: [
+        { voteCount: { gt: 25 } },
+        { popularity: { gt: 10 } },
+      ],
+    };
+
+    const series = await prisma.serie.findMany({
+      where: {
+        AND: [
+          {
+            firstAirDate: {
+              gte: startDate,
+              lte: endDate,
+            },
+          },
+          relevanceFilter,
+        ],
+      },
+      orderBy: {
+        firstAirDate: 'asc',
+      },
+      include: {
+        genres: { include: { genero: true } },
+        streamingProviders: { include: { provider: true } },
+      },
+    });
+    res.json(series.map(mapSerieToMidia));
+  } catch (error) {
+    logger.error(`Erro ao buscar séries para o carrossel da homepage: ${error}`);
+    res.status(500).json({ error: 'Erro ao buscar séries para o carrossel da homepage.' });
+  }
+});
+
+// Rota para Séries por Ano
+router.get('/series/by-year', async (req, res) => {
+  const { year } = req.query;
+  if (!year || isNaN(parseInt(year as string))) {
+    return res.status(400).json({ error: 'Ano inválido fornecido.' });
+  }
+  const parsedYear = parseInt(year as string);
+  const startDate = new Date(parsedYear, 0, 1);
+  const endDate = new Date(parsedYear, 11, 31, 23, 59, 59);
+
+  try {
+    const currentYear = new Date().getFullYear();
+    let relevanceFilter: Prisma.SerieWhereInput = {};
+
+    if (parsedYear > currentYear) {
+      relevanceFilter = { popularity: { gt: 2 } };
+    } else {
+      relevanceFilter = {
+        OR: [
+          { voteCount: { gt: 25 } },
+          { popularity: { gt: 10 } },
+        ],
+      };
+    }
+
+    const series = await prisma.serie.findMany({
+      where: {
+        AND: [
+          {
+            firstAirDate: {
+              gte: startDate,
+              lte: endDate,
+            },
+          },
+          relevanceFilter,
+        ],
+      },
+      orderBy: {
+        firstAirDate: 'asc',
+      },
+      include: {
+        genres: { include: { genero: true } },
+        streamingProviders: { include: { provider: true } },
+      },
+    });
+    res.json(series.map(mapSerieToMidia));
+  } catch (error) {
+    logger.error(`Erro ao buscar séries por ano: ${error}`);
+    res.status(500).json({ error: 'Erro ao buscar séries por ano.' });
   }
 });
 
@@ -562,6 +758,70 @@ router.get('/jogos/filtros', async (req, res) => {
   }
 });
 
+// Rota para o Carrossel da Homepage de Jogos
+router.get('/jogos/homepage-carousel', async (req, res) => {
+  try {
+    const currentYear = new Date().getFullYear();
+    const startYear = currentYear - 5;
+    const endYear = currentYear + 5;
+
+    const startDate = new Date(startYear, 0, 1);
+    const endDate = new Date(endYear, 11, 31, 23, 59, 59);
+
+    const jogos = await prisma.jogo.findMany({
+      where: {
+        firstReleaseDate: {
+          gte: startDate,
+          lte: endDate,
+        },
+      },
+      orderBy: {
+        firstReleaseDate: 'asc',
+      },
+      include: {
+        platforms: { include: { plataforma: true } }
+      }
+    });
+    res.json(jogos.map(mapJogoToMidia));
+  } catch (error) {
+    logger.error(`Erro ao buscar jogos para o carrossel da homepage: ${error}`);
+    res.status(500).json({ error: 'Erro ao buscar jogos para o carrossel da homepage.' });
+  }
+});
+
+// Rota para Jogos por Ano
+router.get('/jogos/by-year', async (req, res) => {
+  const { year } = req.query;
+  if (!year || isNaN(parseInt(year as string))) {
+    return res.status(400).json({ error: 'Ano inválido fornecido.' });
+  }
+  const parsedYear = parseInt(year as string);
+  const startDate = new Date(parsedYear, 0, 1);
+  const endDate = new Date(parsedYear, 11, 31, 23, 59, 59);
+
+  try {
+    const jogos = await prisma.jogo.findMany({
+      where: {
+        firstReleaseDate: {
+          gte: startDate,
+          lte: endDate,
+        },
+      },
+      orderBy: {
+        firstReleaseDate: 'asc',
+      },
+      include: {
+        platforms: { include: { plataforma: true } },
+        genres: { include: { genero: true } },
+      }
+    });
+    res.json(jogos.map(mapJogoToMidia));
+  } catch (error) {
+    logger.error(`Erro ao buscar jogos por ano: ${error}`);
+    res.status(500).json({ error: 'Erro ao buscar jogos por ano.' });
+  }
+});
+
 // Rota de Pesquisa Global
 router.get('/pesquisa', async (req, res) => {
   const { q, category } = req.query;
@@ -660,142 +920,6 @@ router.get('/premios', cacheMiddleware(TWENTY_FOUR_HOURS), async (req, res) => {
   } catch (error) {
     logger.error(`Erro ao buscar premiações: ${error}`);
     res.status(500).json({ error: 'Erro ao buscar premiações.' });
-  }
-});
-
-// Rota para Filmes por Ano
-router.get('/filmes/by-year', async (req, res) => {
-  const { year } = req.query;
-  if (!year || isNaN(parseInt(year as string))) {
-    return res.status(400).json({ error: 'Ano inválido fornecido.' });
-  }
-  const parsedYear = parseInt(year as string);
-  const startDate = new Date(parsedYear, 0, 1);
-  const endDate = new Date(parsedYear, 11, 31, 23, 59, 59);
-
-  try {
-    const currentYear = new Date().getFullYear();
-    let relevanceFilter: Prisma.FilmeWhereInput = {};
-
-    if (parsedYear > currentYear) {
-      relevanceFilter = { popularity: { gt: 2 } };
-    } else {
-      relevanceFilter = {
-        OR: [
-          { voteCount: { gt: 25 } },
-          { popularity: { gt: 10 } },
-        ],
-      };
-    }
-
-    const filmes = await prisma.filme.findMany({
-      where: {
-        AND: [
-          {
-            releaseDate: {
-              gte: startDate,
-              lte: endDate,
-            },
-          },
-          relevanceFilter,
-        ],
-      },
-      orderBy: {
-        releaseDate: 'asc',
-      },
-      include: {
-        genres: { include: { genero: true } },
-        streamingProviders: { include: { provider: true } },
-      },
-    });
-    res.json(filmes.map(mapFilmeToMidia));
-  } catch (error) {
-    logger.error(`Erro ao buscar filmes por ano: ${error}`);
-    res.status(500).json({ error: 'Erro ao buscar filmes por ano.' });
-  }
-});
-
-// Rota para Séries por Ano
-router.get('/series/by-year', async (req, res) => {
-  const { year } = req.query;
-  if (!year || isNaN(parseInt(year as string))) {
-    return res.status(400).json({ error: 'Ano inválido fornecido.' });
-  }
-  const parsedYear = parseInt(year as string);
-  const startDate = new Date(parsedYear, 0, 1);
-  const endDate = new Date(parsedYear, 11, 31, 23, 59, 59);
-
-  try {
-    const currentYear = new Date().getFullYear();
-    let relevanceFilter: Prisma.SerieWhereInput = {};
-
-    if (parsedYear > currentYear) {
-      relevanceFilter = { popularity: { gt: 2 } };
-    } else {
-      relevanceFilter = {
-        OR: [
-          { voteCount: { gt: 25 } },
-          { popularity: { gt: 10 } },
-        ],
-      };
-    }
-
-    const series = await prisma.serie.findMany({
-      where: {
-        AND: [
-          {
-            firstAirDate: {
-              gte: startDate,
-              lte: endDate,
-            },
-          },
-          relevanceFilter,
-        ],
-      },
-      orderBy: {
-        firstAirDate: 'asc',
-      },
-      include: {
-        genres: { include: { genero: true } },
-        streamingProviders: { include: { provider: true } },
-      },
-    });
-    res.json(series.map(mapSerieToMidia));
-  } catch (error) {
-    logger.error(`Erro ao buscar séries por ano: ${error}`);
-    res.status(500).json({ error: 'Erro ao buscar séries por ano.' });
-  }
-});
-
-// Rota para Jogos por Ano
-router.get('/jogos/by-year', async (req, res) => {
-  const { year } = req.query;
-  if (!year || isNaN(parseInt(year as string))) {
-    return res.status(400).json({ error: 'Ano inválido fornecido.' });
-  }
-  const parsedYear = parseInt(year as string);
-  const startDate = new Date(parsedYear, 0, 1);
-  const endDate = new Date(parsedYear, 11, 31, 23, 59, 59);
-
-  try {
-    const jogos = await prisma.jogo.findMany({
-      where: {
-        firstReleaseDate: {
-          gte: startDate,
-          lte: endDate,
-        },
-      },
-      orderBy: {
-        firstReleaseDate: 'asc',
-      },
-      include: {
-        platforms: { include: { plataforma: true } }
-      }
-    });
-    res.json(jogos.map(mapJogoToMidia));
-  } catch (error) {
-    logger.error(`Erro ao buscar jogos por ano: ${error}`);
-    res.status(500).json({ error: 'Erro ao buscar jogos por ano.' });
   }
 });
 
@@ -909,6 +1033,7 @@ router.get('/animes/by-season', async (req, res) => {
             airingSchedule: true,
             genres: { include: { genero: true } },
             studios: { include: { studio: true } },
+            streamingLinks: true, // Adicionado para buscar as plataformas de streaming
             characters: { 
               include: { 
                 character: true, 

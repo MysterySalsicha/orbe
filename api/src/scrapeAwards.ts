@@ -1,9 +1,9 @@
-import { PrismaClient } from '@prisma/client';
+import { prisma } from './clients';
 import { logger } from './logger';
 import axios from 'axios';
 import * as cheerio from 'cheerio';
 
-const prisma = new PrismaClient();
+
 
 interface AwardEntry {
   nome: string; // Nome do prêmio (ex: Oscar)

@@ -32,19 +32,8 @@ export const getStreamingProviders = (item: Midia): { name: string; icon: string
   }));
 
   // Lógica para "Nos Cinemas"
-  if ('duracao' in item && providers.length === 0) { // 'duracao' sugere que é um Filme
-    try {
-      const releaseDate = new Date(item.data_lancamento_api);
-      const today = new Date();
-      const sixtyDaysAgo = new Date();
-      sixtyDaysAgo.setDate(today.getDate() - 60);
-
-      if (releaseDate > sixtyDaysAgo && releaseDate <= today) {
-        return [{ name: 'Nos Cinemas', icon: 'cinema' }];
-      }
-    } catch (e) {
-      // Ignora datas de lançamento inválidas
-    }
+  if (('duracao' in item) && providers.length === 0) { // 'duracao' in item é um proxy para verificar se é um filme
+    return [{ name: 'Nos Cinemas', icon: 'cinema' }];
   }
 
   return providers;
@@ -56,7 +45,7 @@ export const getStreamingProviders = (item: Midia): { name: string; icon: string
  * @returns Uma lista de objetos de plataforma com nome e ícone.
  */
 export const getGamePlatforms = (item: Jogo): { name: string; icon: string }[] => {
-  const platformNames = item.plataformas_jogo?.map(p => p.nome) ?? [];
+  const platformNames = item.plataformas_api?.map(p => p.nome) ?? [];
   const normalized = new Set<string>();
 
   platformNames.forEach(name => {
@@ -108,8 +97,8 @@ export const getAnimeDubStatus = (item: Anime): 'Dublado' | 'Legendado' => {
  * @returns A nota formatada ou null se não houver nota.
  */
 export const formatRating = (item: Midia, type: 'filme' | 'serie' | 'anime' | 'jogo'): string | null => {
-  const rating = item.avaliacao; // Usando a propriedade 'avaliacao' da interface Midia
-  if (typeof rating === 'number') {
+  const rating = item.avaliacao;
+  if (typeof rating === 'number' && rating > 0) {
     return (rating / 10).toFixed(1);
   }
   return null;

@@ -1,7 +1,7 @@
-import { PrismaClient } from '@prisma/client';
+import { prisma } from './clients';
 import { logger } from './logger';
 
-const prisma = new PrismaClient();
+
 
 async function checkReleaseDates() {
   logger.info('Iniciando verificação de lançamentos próximos...');
