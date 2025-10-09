@@ -74,6 +74,8 @@ async function fetchSeriesIdsForPeriod(startDate: string, endDate: string): Prom
 }
 
 async function processSerieBatch(serieIds: number[], prisma: PrismaClient): Promise<void> {
+  let successCount = 0, errorCount = 0, skippedCount = 0;
+
   for (const id of serieIds) {
     try {
       const serieDetails = await tmdbApiWithRetry(() => tmdb.tvInfo({
@@ -89,11 +91,13 @@ async function processSerieBatch(serieIds: number[], prisma: PrismaClient): Prom
 
       const brProviders = serieDetails['watch/providers']?.results?.BR;
       if (!brProviders) {
+        skippedCount++;
         continue;
       }
 
       const firstAirDate: Date | null = serieDetails.first_air_date ? new Date(serieDetails.first_air_date) : null;
       if (!firstAirDate) {
+        skippedCount++;
         continue;
       }
 
@@ -170,12 +174,16 @@ async function processSerieBatch(serieIds: number[], prisma: PrismaClient): Prom
         create: { ...scalarData, ...relationalData },
       });
 
+      successCount++;
       logger.info(`✅ Série [${id}] "${serieDetails.name}" sincronizada.`);
 
     } catch (error) {
+      errorCount++;
       logger.error(`❌ Erro ao processar a série ID ${id}. Pulando: ${error}`);
     }
   }
+
+  logger.info(`--- Resumo do Lote (Séries) --- Sucesso: ${successCount}, Erros: ${errorCount}, Pulados: ${skippedCount}`);
 }
 
 

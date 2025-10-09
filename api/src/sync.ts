@@ -29,14 +29,14 @@ const main = async () => {
 ------------- FILMES ----------
 `);
     await syncMovies(prisma, startDate, endDate, limit);
-    logger.info(`--- Sincronização de FILMES concluída ---`);
+    logger.info(`--- Sincronização de FILMES concluída ---\n\n`);
 
     logger.info(`
 
 ------------- SÉRIES ----------
 `);
     await syncSeries(prisma, startDate, endDate, limit);
-    logger.info(`--- Sincronização de SÉRIES concluída ---`);
+    logger.info(`--- Sincronização de SÉRIES concluída ---\n\n`);
 
     logger.info(`
 
@@ -48,14 +48,14 @@ const main = async () => {
         logger.info(`Sincronizando animes para o ano ${year}...`);
         await syncAnimes(year, ['WINTER', 'SPRING', 'SUMMER', 'FALL'], limit);
     }
-    logger.info(`--- Sincronização de ANIMES concluída ---`);
+    logger.info(`--- Sincronização de ANIMES concluída ---\n\n`);
 
     logger.info(`
 
 ------------- JOGOS ----------
 `);
-    await syncGames(prisma, limit);
-    logger.info(`--- Sincronização de JOGOS concluída ---`);
+    await syncGames(prisma, startDate, endDate, limit);
+    logger.info(`--- Sincronização de JOGOS concluída ---\n\n`);
 
     logger.info(`
 

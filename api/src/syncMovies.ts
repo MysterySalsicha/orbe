@@ -75,6 +75,8 @@ async function fetchMovieIdsForPeriod(startDate: string, endDate: string): Promi
 }
 
 async function processMovieBatch(movieIds: number[], prisma: PrismaClient): Promise<void> {
+  let successCount = 0, errorCount = 0, skippedCount = 0;
+
   for (const id of movieIds) {
     try {
       const movieDetails = await tmdbApiWithRetry(() => tmdb.movieInfo({
@@ -101,19 +103,20 @@ async function processMovieBatch(movieIds: number[], prisma: PrismaClient): Prom
       }
 
       if (!releaseDate) {
+        skippedCount++;
         continue;
       }
 
       const genres = movieDetails.genres?.map((g: any) => g.name) || [];
       const excludedGenres = ['Documentário', 'Música', 'Família', 'Kids'];
       if (genres.some((genre: string) => excludedGenres.includes(genre))) {
-        logger.info(`Filme ID ${id} "${movieDetails.title}" possui gênero excluído. Pulando.`);
+        skippedCount++;
         continue;
       }
 
       const titleKeywordsToExclude = ['Lollapalooza', 'Concerto', 'Show', 'Festival', 'Live', 'Ao Vivo', 'Turnê', 'Tour', 'ABC', 'Alfabeto', 'Crianças', 'Infantil', 'Desenho', 'Brincadeira', 'Aprender', 'Diana', 'Roma', 'Diana e Roma', 'Música', 'Musical', 'Performance', 'Jazzopen', 'Summerjam', 'Bardentreffen', 'Euro Classic', 'Baroque', 'Orchestra', 'Symphony', 'Philharmonic'];
       if (titleKeywordsToExclude.some(keyword => movieDetails.title?.toLowerCase().includes(keyword.toLowerCase()))) {
-        logger.info(`Filme ID ${id} "${movieDetails.title}" possui palavra-chave excluída no título. Pulando.`);
+        skippedCount++;
         continue;
       }
 
@@ -188,12 +191,16 @@ async function processMovieBatch(movieIds: number[], prisma: PrismaClient): Prom
         create: { ...scalarData, ...relationalData },
       });
 
+      successCount++;
       logger.info(`✅ Filme [${id}] "${movieDetails.title}" (Release Type: ${relevantRelease?.type}) sincronizado.`);
 
     } catch (error) {
+      errorCount++;
       logger.error(`❌ Erro ao processar o filme ID ${id}. Pulando: ${error}`);
     }
   }
+
+  logger.info(`--- Resumo do Lote (Filmes) --- Sucesso: ${successCount}, Erros: ${errorCount}, Pulados: ${skippedCount}`);
 }
 
 
