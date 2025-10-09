@@ -73,7 +73,7 @@ async function fetchSeriesIdsForPeriod(startDate: string, endDate: string): Prom
   }
 }
 
-async function processSerieBatch(serieIds: number[], prisma: PrismaClient): Promise<void> {
+async function processSerieBatch(serieIds: number[], prisma: PrismaClient): Promise<{ successCount: number, errorCount: number, skippedCount: number }> {
   let successCount = 0, errorCount = 0, skippedCount = 0;
 
   for (const id of serieIds) {
@@ -177,6 +177,7 @@ async function processSerieBatch(serieIds: number[], prisma: PrismaClient): Prom
   }
 
   logger.info(`--- Resumo do Lote (Séries) --- Sucesso: ${successCount}, Erros: ${errorCount}, Pulados: ${skippedCount}`);
+  return { successCount, errorCount, skippedCount };
 }
 
 

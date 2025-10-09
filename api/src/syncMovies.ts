@@ -10,27 +10,41 @@ import { prisma } from './clients';
 
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
-async function tmdbApiWithRetry<T>(fn: () => Promise<T>, maxRetries = 5, initialDelay = 1000): Promise<T> {
-    let attempt = 0;
-    while (attempt < maxRetries) {
+async function tmdbApiWithRetry<T>(fn: () => Promise<T>, maxApiRetries = 5, maxNetworkRetries = Infinity, initialDelay = 1000): Promise<T> {
+    let apiAttempt = 0;
+    let networkAttempt = 0;
+    while (true) { // Loop infinito, será interrompido em caso de sucesso ou erro não-rede
         try {
             return await fn();
         } catch (error: any) {
             const isNetworkError = error.code === 'ENOTFOUND' || error.code === 'ECONNRESET';
+            const isRateLimitError = error.response && error.response.status === 429;
+
             if (isNetworkError) {
-                attempt++;
-                if (attempt >= maxRetries) {
+                networkAttempt++;
+                if (networkAttempt > maxNetworkRetries) {
+                    logger.error(`❌ Erro de rede persistente após ${maxNetworkRetries} tentativas. Abortando.`);
                     throw error;
                 }
-                const delayTime = initialDelay * Math.pow(2, attempt);
-                logger.info(`Tentativa ${attempt} falhou com erro de rede. Tentando novamente em ${delayTime}ms...`);
+                const delayTime = initialDelay * Math.pow(2, networkAttempt);
+                logger.warn(`⚠️ Erro de rede (Tentativa ${networkAttempt}). Tentando novamente em ${delayTime}ms...`);
                 await delay(delayTime);
+                continue; // Continua o loop infinito
+            } else if (isRateLimitError) {
+                apiAttempt++;
+                if (apiAttempt > maxApiRetries) {
+                    logger.error(`❌ Limite de requisições excedido após ${maxApiRetries} tentativas. Abortando.`);
+                    throw error;
+                }
+                const delayTime = initialDelay * Math.pow(2, apiAttempt);
+                logger.warn(`⏳ Limite de requisições (Tentativa ${apiAttempt}). Tentando novamente em ${delayTime}ms...`);
+                await delay(delayTime);
+                continue; // Continua o loop infinito
             } else {
-                throw error;
+                throw error; // Outros erros, relança imediatamente
             }
         }
     }
-    throw new Error("Número máximo de tentativas atingido");
 }
 
 
