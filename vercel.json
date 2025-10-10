@@ -1,11 +1,18 @@
 {
   "version": 2,
   "builds": [
-    { "src": "frontend/package.json", "use": "@vercel/next" },
-    { "src": "api/src/index.ts", "use": "@vercel/node" }
+    {
+      "src": "api/package.json",
+      "use": "@vercel/node",
+      "config": { "buildCommand": "npm run build" }
+    },
+    {
+      "src": "frontend/package.json",
+      "use": "@vercel/next"
+    }
   ],
   "rewrites": [
-    { "source": "/api/(.*)", "destination": "/api/src/index.ts" },
+    { "source": "/api/(.*)", "destination": "/api/dist/index.js" },
     { "source": "/(.*)", "destination": "/frontend/$1" }
   ]
 }
