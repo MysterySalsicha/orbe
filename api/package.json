@@ -5,7 +5,7 @@
   "main": "src/index.ts",
   "scripts": {
     "start": "ts-node src/index.ts",
-    "build": "tsc",
+    "build": "prisma generate && tsc",
     "dev": "nodemon src/index.ts",
     "sync": "cross-env LOG_TO_FILE=true ts-node src/sync.ts",
     "sync:movies": "cross-env LOG_TO_FILE=true ts-node src/syncMovies.ts",
