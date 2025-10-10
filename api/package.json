@@ -28,6 +28,7 @@
     "ioredis": "^5.8.0",
     "jsonwebtoken": "^9.0.2",
     "moviedb-promise": "^4.0.7",
+    "prisma": "^6.17.1",
     "puppeteer": "^24.23.1",
     "string-similarity": "^4.0.4"
   },
