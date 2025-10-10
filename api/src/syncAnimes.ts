@@ -7,6 +7,36 @@ import { anilistApi } from './clients';
 import { prisma } from './clients';
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
+async function prismaUpdateWithRetry<T>(
+  operation: () => Promise<T>,
+  maxRetries = 5,
+  initialDelay = 1000
+): Promise<T> {
+  let attempt = 0;
+  while (attempt < maxRetries) {
+    try {
+      return await operation();
+    } catch (error: any) {
+      if (error.message.includes('Server has closed the connection')) {
+        attempt++;
+        if (attempt >= maxRetries) {
+          throw error;
+        }
+        const delayTime = initialDelay * Math.pow(2, attempt);
+        logger.warn(`Prisma update failed due to connection loss. Retrying in ${delayTime}ms... (Attempt ${attempt}/${maxRetries})`);
+        await delay(delayTime);
+        // Reconnect Prisma client if necessary, though it often handles this internally
+        await prisma.$disconnect();
+        await prisma.$connect();
+      } else {
+        throw error;
+      }
+    }
+  }
+  throw new Error("Maximum retries reached for Prisma update.");
+}
+
+
 async function anilistApiWithRetry(query: string, variables: any, maxRetries = 5, initialDelay = 1000) {
     let attempt = 0;
     while (attempt < maxRetries) {
@@ -242,7 +272,7 @@ async function processAnimeBatch(animeIds: number[]): Promise<{ successCount: nu
             const existingAnime = await prisma.anime.findUnique({ where: { anilistId: id } });
 
             if (existingAnime) {
-                await prisma.anime.update({
+                await prismaUpdateWithRetry(() => prisma.anime.update({
                     where: { anilistId: id },
                     data: {
                         ...scalarData,
@@ -256,14 +286,14 @@ async function processAnimeBatch(animeIds: number[]): Promise<{ successCount: nu
                         airingSchedule: { deleteMany: {}, create: relationalData.airingSchedule.create },
                         sourceRelations: { deleteMany: {}, create: relationsToCreate },
                     },
-                });
+                }));
             } else {
-                await prisma.anime.create({
+                await prismaUpdateWithRetry(() => prisma.anime.create({
                     data: {
                         ...scalarData,
                         ...relationalData,
                     },
-                });
+                }));
             }
 
             // Handle characters separately
