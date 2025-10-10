@@ -4,9 +4,9 @@
   "description": "",
   "main": "src/index.ts",
   "scripts": {
-    "vercel-build": "prisma generate && tsc",
+    "vercel-build": "npx prisma generate && tsc",
     "start": "ts-node src/index.ts",
-    "build": "prisma generate && tsc",
+    "build": "npx prisma generate && tsc",
     "dev": "nodemon src/index.ts",
     "sync": "cross-env LOG_TO_FILE=true ts-node src/sync.ts",
     "sync:movies": "cross-env LOG_TO_FILE=true ts-node src/syncMovies.ts",
