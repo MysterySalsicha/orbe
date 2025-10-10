@@ -4,7 +4,6 @@
   "description": "",
   "main": "src/index.ts",
   "scripts": {
-    "postinstall": "npx prisma generate",
     "start": "ts-node src/index.ts",
     "build": "tsc",
     "dev": "nodemon src/index.ts",
@@ -17,6 +16,7 @@
   },
   "dependencies": {
     "@prisma/client": "^6.16.2",
+    "@types/puppeteer": "^5.4.7",
     "axios": "^1.12.2",
     "bcrypt": "^6.0.0",
     "cheerio": "^1.1.2",
@@ -27,7 +27,7 @@
     "ioredis": "^5.8.0",
     "jsonwebtoken": "^9.0.2",
     "moviedb-promise": "^4.0.7",
-    "puppeteer": "^24.23.0",
+    "puppeteer": "^24.23.1",
     "string-similarity": "^4.0.4"
   },
   "devDependencies": {

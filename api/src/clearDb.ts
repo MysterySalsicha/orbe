@@ -3,6 +3,7 @@ import * as dotenv from 'dotenv';
 dotenv.config({ path: path.resolve(__dirname, '../.env') });
 
 import { prisma } from './clients';
+import { logger } from './logger';
 
 async function clearDatabase() {
   try {

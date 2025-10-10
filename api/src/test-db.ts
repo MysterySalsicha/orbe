@@ -1,16 +1,16 @@
-import * as dotenv from 'dotenv';
-import { prisma } from './clients';
+import { PrismaClient } from '@prisma/client';
 
-async function testConnection() {
+const prisma = new PrismaClient();
+
+async function main() {
   try {
     await prisma.$connect();
-    console.log('✅ Conexão com o banco de dados bem-sucedida!');
+    console.log('Conexão com o banco de dados bem-sucedida!');
   } catch (error) {
-    console.error('❌ Falha ao conectar com o banco de dados:');
-    console.error(error);
+    console.error('Erro ao conectar com o banco de dados:', error);
   } finally {
     await prisma.$disconnect();
   }
 }
 
-testConnection();
+main();

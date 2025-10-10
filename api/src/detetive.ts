@@ -1,4 +1,7 @@
+/*
 import { prisma } from './clients';
+import { logger } from './logger';
+import { Browser } from 'puppeteer';
 
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -143,3 +146,4 @@ async function runDetetive() {
 }
 
 runDetetive();
+*/
