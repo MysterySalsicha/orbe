@@ -822,71 +822,150 @@ router.get('/jogos/by-year', async (req, res) => {
   }
 });
 
-// Rota de Pesquisa Global
+// Rota para Conteúdo em Alta (Trending)
+router.get('/trending', async (req, res) => {
+  const { limit = 10 } = req.query;
+  const take = parseInt(limit as string, 10);
+
+  try {
+    const popularFilmes = prisma.filme.findMany({
+      orderBy: { popularity: 'desc' },
+      take,
+    });
+
+    const popularSeries = prisma.serie.findMany({
+      orderBy: { popularity: 'desc' },
+      take,
+    });
+
+    const popularAnimes = prisma.anime.findMany({
+      orderBy: { popularity: 'desc' },
+      take,
+    });
+
+    const popularJogos = prisma.jogo.findMany({
+      orderBy: { rating: 'desc' }, // Jogos usam 'rating' para popularidade
+      take,
+    });
+
+    const [filmes, series, animes, jogos] = await Promise.all([
+      popularFilmes,
+      popularSeries,
+      popularAnimes,
+      popularJogos,
+    ]);
+
+    const trendingResults = [
+      ...filmes.map(mapFilmeToMidia),
+      ...series.map(mapSerieToMidia),
+      ...animes.map(mapAnimeToMidia),
+      ...jogos.map(mapJogoToMidia),
+    ];
+
+    // Embaralhar e limitar o resultado final para diversidade
+    const shuffled = trendingResults.sort(() => 0.5 - Math.random());
+    res.json(shuffled.slice(0, take));
+
+  } catch (error) {
+    logger.error(`Erro ao buscar conteúdo em alta: $Failed to edit, Expected 1 occurrence but found 2 for old_string in file: C:\Users\igor.ssantos\OneDrive - JSL SA\Documentos\orbe_novo\api\src\mediaRoutes.ts`);
+    res.status(500).json({ error: 'Erro interno ao buscar conteúdo em alta.' });
+  }
+});
+
+// Rota de Pesquisa Global Avançada
 router.get('/pesquisa', async (req, res) => {
   const { q, category } = req.query;
 
   if (!q || typeof q !== 'string') {
-    return res.status(400).json({ error: 'O parâmetro de pesquisa \'q\' é obrigatório.' });
+    return res.status(400).json({ error: "O parâmetro de pesquisa 'q' é obrigatório." });
   }
 
   try {
     const searchFilter = { contains: q, mode: 'insensitive' as const };
-    let promises = [];
+    const categoryFilter = category && category !== 'todos' ? (category as string) : null;
 
-    const searchAnimes = () => prisma.anime.findMany({
-      where: {
-        OR: [
-          { titleRomaji: searchFilter },
-          { titleEnglish: searchFilter },
-          { synonyms: { has: q } }
-        ]
-      }
-    });
+    let animePromise = Promise.resolve([] as any[]);
+    let filmePromise = Promise.resolve([] as any[]);
+    let seriePromise = Promise.resolve([] as any[]);
+    let jogoPromise = Promise.resolve([] as any[]);
 
-    const searchFilmes = () => prisma.filme.findMany({ where: { title: searchFilter } });
-    const searchSeries = () => prisma.serie.findMany({ where: { name: searchFilter } });
-    const searchJogos = () => prisma.jogo.findMany({ where: { name: searchFilter } });
-
-    let results = {
-      animes: [] as any[],
-      filmes: [] as any[],
-      series: [] as any[],
-      jogos: [] as any[],
-    };
-
-    switch (category) {
-      case 'animes':
-        results.animes = (await searchAnimes()).map(mapAnimeToMidia);
-        break;
-      case 'filmes':
-        results.filmes = (await searchFilmes()).map(mapFilmeToMidia);
-        break;
-      case 'series':
-        results.series = (await searchSeries()).map(mapSerieToMidia);
-        break;
-      case 'jogos':
-        results.jogos = (await searchJogos()).map(mapJogoToMidia);
-        break;
-      default:
-        const [animes, filmes, series, jogos] = await Promise.all([
-          searchAnimes(),
-          searchFilmes(),
-          searchSeries(),
-          searchJogos(),
-        ]);
-        results.animes = animes.map(mapAnimeToMidia);
-        results.filmes = filmes.map(mapFilmeToMidia);
-        results.series = series.map(mapSerieToMidia);
-        results.jogos = jogos.map(mapJogoToMidia);
-        break;
+    if (!categoryFilter || categoryFilter === 'animes') {
+      animePromise = prisma.anime.findMany({
+        where: {
+          OR: [
+            { titleRomaji: searchFilter },
+            { titleEnglish: searchFilter },
+            { titleNative: searchFilter },
+            { synonyms: { has: q } },
+            { genres: { some: { genero: { name: searchFilter } } } },
+            { tags: { some: { tag: { name: searchFilter } } } },
+            { staff: { some: { staff: { name: searchFilter } } } },
+            { characters: { some: { character: { name: searchFilter } } } },
+            { characters: { some: { voiceActors: { some: { dublador: { name: searchFilter } } } } } },
+          ],
+        },
+      });
     }
 
-    res.json(results);
+    if (!categoryFilter || categoryFilter === 'filmes') {
+      filmePromise = prisma.filme.findMany({
+        where: {
+          OR: [
+            { title: searchFilter },
+            { originalTitle: searchFilter },
+            { genres: { some: { genero: { name: searchFilter } } } },
+            { cast: { some: { pessoa: { name: searchFilter } } } },
+            { crew: { some: { pessoa: { name: searchFilter } } } },
+          ],
+        },
+      });
+    }
+
+    if (!categoryFilter || categoryFilter === 'series') {
+      seriePromise = prisma.serie.findMany({
+        where: {
+          OR: [
+            { name: searchFilter },
+            { originalName: searchFilter },
+            { genres: { some: { genero: { name: searchFilter } } } },
+            { cast: { some: { pessoa: { name: searchFilter } } } },
+            { crew: { some: { pessoa: { name: searchFilter } } } },
+            { createdBy: { some: { pessoa: { name: searchFilter } } } },
+          ],
+        },
+      });
+    }
+
+    if (!categoryFilter || categoryFilter === 'jogos') {
+      jogoPromise = prisma.jogo.findMany({
+        where: {
+          OR: [
+            { name: searchFilter },
+            { genres: { some: { genero: { name: searchFilter } } } },
+            { themes: { some: { theme: { name: searchFilter } } } },
+            { companies: { some: { company: { name: searchFilter } } } },
+          ],
+        },
+      });
+    }
+
+    const [animes, filmes, series, jogos] = await Promise.all([
+      animePromise,
+      filmePromise,
+      seriePromise,
+      jogoPromise,
+    ]);
+
+    res.json({
+      animes: animes.map(mapAnimeToMidia),
+      filmes: filmes.map(mapFilmeToMidia),
+      series: series.map(mapSerieToMidia),
+      jogos: jogos.map(mapJogoToMidia),
+    });
 
   } catch (error) {
-    logger.error(`Erro ao realizar pesquisa: ${error}`);
-    res.status(500).json({ error: 'Erro interno ao realizar pesquisa.' });
+    logger.error(`Erro ao realizar pesquisa avançada: ${error}`);
+    res.status(500).json({ error: 'Erro interno ao realizar pesquisa avançada.' });
   }
 });
 

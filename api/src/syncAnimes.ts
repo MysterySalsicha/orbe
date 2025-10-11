@@ -240,10 +240,10 @@ async function processAnimeBatch(animeIds: number[]): Promise<{ successCount: nu
             });
 
             const relatedAnimeIds = anime.relations?.edges.map((edge: any) => edge.node.id) || [];
-            const existingRelatedAnimes = await prisma.anime.findMany({
+            const existingRelatedAnimes = await prismaUpdateWithRetry(() => prisma.anime.findMany({
                 where: { anilistId: { in: relatedAnimeIds } },
                 select: { anilistId: true }
-            });
+            }));
             const existingRelatedAnilistIds = new Set(existingRelatedAnimes.map((a: any) => a.anilistId));
 
             const relationsToCreate = anime.relations?.edges
@@ -269,7 +269,7 @@ async function processAnimeBatch(animeIds: number[]): Promise<{ successCount: nu
 
 
 
-            const existingAnime = await prisma.anime.findUnique({ where: { anilistId: id } });
+            const existingAnime = await prismaUpdateWithRetry(() => prisma.anime.findUnique({ where: { anilistId: id } }));
 
             if (existingAnime) {
                 await prismaUpdateWithRetry(() => prisma.anime.update({
@@ -298,26 +298,26 @@ async function processAnimeBatch(animeIds: number[]): Promise<{ successCount: nu
 
             // Handle characters separately
             if (anime.characters?.edges) {
-                const existingCharLinks = await prisma.animeCharacter.findMany({
+                const existingCharLinks = await prismaUpdateWithRetry(() => prisma.animeCharacter.findMany({
                     where: { anime: { anilistId: id } },
                     select: { id: true }
-                });
+                }));
                 if (existingCharLinks.length > 0) {
                     const idsToDelete = existingCharLinks.map(link => link.id);
-                    await prisma.animeCharacterVoiceActor.deleteMany({
+                    await prismaUpdateWithRetry(() => prisma.animeCharacterVoiceActor.deleteMany({
                         where: { animeCharacterId: { in: idsToDelete } }
-                    });
-                    await prisma.animeCharacter.deleteMany({
+                    }));
+                    await prismaUpdateWithRetry(() => prisma.animeCharacter.deleteMany({
                         where: { id: { in: idsToDelete } }
-                    });
+                    }));
                 }
 
                 for (const edge of anime.characters.edges) {
-                    const personagem = await prisma.personagem.upsert({
+                    const personagem = await prismaUpdateWithRetry(() => prisma.personagem.upsert({
                         where: { anilistId: edge.node.id },
                         update: { name: edge.node.name.full, image: edge.node.image.large },
                         create: { anilistId: edge.node.id, name: edge.node.name.full, image: edge.node.image.large },
-                    });
+                    }));
 
                     const allVoiceActors = edge.voiceActors || [];
                     const voiceActorsJapanese = allVoiceActors.filter((va: any) => va.language === 'JAPANESE');
@@ -326,7 +326,7 @@ async function processAnimeBatch(animeIds: number[]): Promise<{ successCount: nu
                     const combinedVAs = [...voiceActorsJapanese, ...voiceActorsBrazilian];
                     const uniqueVAs = Array.from(new Map(combinedVAs.map(va => [va.id, va])).values());
 
-                    await prisma.animeCharacter.create({
+                    await prismaUpdateWithRetry(() => prisma.animeCharacter.create({
                         data: {
                             role: edge.role,
                             anime: { connect: { anilistId: id } },
@@ -347,7 +347,7 @@ async function processAnimeBatch(animeIds: number[]): Promise<{ successCount: nu
                                 })),
                             },
                         },
-                    });
+                    }));
                 }
             }
 
